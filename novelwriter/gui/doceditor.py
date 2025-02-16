@@ -34,7 +34,7 @@ from __future__ import annotations
 import bisect
 import logging
 
-from enum import Enum
+from enum import Enum, IntFlag
 from time import time
 
 from PyQt6.QtCore import (
@@ -42,9 +42,9 @@ from PyQt6.QtCore import (
     pyqtSlot
 )
 from PyQt6.QtGui import (
-    QAction, QColor, QCursor, QDragEnterEvent, QDragMoveEvent, QDropEvent,
-    QKeyEvent, QKeySequence, QMouseEvent, QPalette, QPixmap, QResizeEvent,
-    QShortcut, QTextBlock, QTextCursor, QTextDocument, QTextOption
+    QAction, QCursor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QKeyEvent,
+    QKeySequence, QMouseEvent, QPalette, QPixmap, QResizeEvent, QShortcut,
+    QTextBlock, QTextCursor, QTextDocument, QTextOption
 )
 from PyQt6.QtWidgets import (
     QApplication, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMenu,
@@ -59,7 +59,7 @@ from novelwriter.constants import nwConst, nwKeyWords, nwShortcode, nwUnicode
 from novelwriter.core.document import NWDocument
 from novelwriter.enum import (
     nwChange, nwComment, nwDocAction, nwDocInsert, nwDocMode, nwItemClass,
-    nwItemType, nwTrinary
+    nwItemType
 )
 from novelwriter.extensions.configlayout import NColorLabel
 from novelwriter.extensions.eventfilters import WheelEventFilter
@@ -86,6 +86,13 @@ class _SelectAction(Enum):
     MOVE_AFTER     = 3
 
 
+class _TagAction(IntFlag):
+
+    NONE   = 0b00
+    FOLLOW = 0b01
+    CREATE = 0b10
+
+
 class GuiDocEditor(QPlainTextEdit):
     """Gui Widget: Main Document Editor"""
 
@@ -100,6 +107,7 @@ class GuiDocEditor(QPlainTextEdit):
         Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down,
         Qt.Key.Key_PageUp, Qt.Key.Key_PageDown
     )
+    ENTER_KEYS = (Qt.Key.Key_Return, Qt.Key.Key_Enter)
 
     # Custom Signals
     closeEditorRequest = pyqtSignal()
@@ -359,8 +367,9 @@ class GuiDocEditor(QPlainTextEdit):
         else:
             self.setHorizontalScrollBarPolicy(QtScrollAsNeeded)
 
-        # Refresh the tab stops
+        # Refresh sizes
         self.setTabStopDistance(CONFIG.tabWidth)
+        self.setCursorWidth(CONFIG.cursorWidth)
 
         # If we have a document open, we should refresh it in case the
         # font changed, otherwise we just clear the editor entirely,
@@ -927,7 +936,7 @@ class GuiDocEditor(QPlainTextEdit):
           * We also handle automatic scrolling here.
         """
         self._lastActive = time()
-        if self.docSearch.anyFocus() and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+        if self.docSearch.anyFocus() and event.key() in self.ENTER_KEYS:
             return
         elif event == QKeySequence.StandardKey.Redo:
             self.docAction(nwDocAction.REDO)
@@ -1145,11 +1154,11 @@ class GuiDocEditor(QPlainTextEdit):
 
         # Follow
         status = self._processTag(cursor=pCursor, follow=False)
-        if status == nwTrinary.POSITIVE:
+        if status & _TagAction.FOLLOW:
             action = qtAddAction(ctxMenu, self.tr("Follow Tag"))
             action.triggered.connect(qtLambda(self._processTag, cursor=pCursor, follow=True))
             ctxMenu.addSeparator()
-        elif status == nwTrinary.NEGATIVE:
+        elif status & _TagAction.CREATE:
             action = qtAddAction(ctxMenu, self.tr("Create Note for Tag"))
             action.triggered.connect(qtLambda(self._processTag, cursor=pCursor, create=True))
             ctxMenu.addSeparator()
@@ -1325,6 +1334,7 @@ class GuiDocEditor(QPlainTextEdit):
             self.beginSearch()
             return
 
+        prevFocus = QApplication.focusWidget() or self
         resS, resE = self.findAllOccurences()
         if len(resS) == 0 and self._docHandle:
             self.docSearch.setResultCount(0, 0)
@@ -1333,7 +1343,7 @@ class GuiDocEditor(QPlainTextEdit):
                 self.requestNextDocument.emit(self._docHandle, CONFIG.searchLoop)
                 QApplication.processEvents()
                 self.beginSearch()
-                self.setFocus()
+                prevFocus.setFocus()
             return
 
         cursor = self.textCursor()
@@ -1353,7 +1363,7 @@ class GuiDocEditor(QPlainTextEdit):
                 self.requestNextDocument.emit(self._docHandle, CONFIG.searchLoop)
                 QApplication.processEvents()
                 self.beginSearch()
-                self.setFocus()
+                prevFocus.setFocus()
                 return
             else:
                 resIdx = 0 if doLoop else maxIdx
@@ -1914,7 +1924,7 @@ class GuiDocEditor(QPlainTextEdit):
 
     def _processTag(
         self, cursor: QTextCursor | None = None, follow: bool = True, create: bool = False
-    ) -> nwTrinary:
+    ) -> _TagAction:
         """Activated by Ctrl+Enter. Checks that we're in a block
         starting with '@'. We then find the tag under the cursor and
         check that it is not the tag itself. If all this is fine, we
@@ -1924,19 +1934,22 @@ class GuiDocEditor(QPlainTextEdit):
         if cursor is None:
             cursor = self.textCursor()
 
+        status = _TagAction.NONE
         block = cursor.block()
         text = block.text()
         if len(text) == 0:
-            return nwTrinary.NEUTRAL
+            return status
 
         if text.startswith("@") and self._docHandle:
 
             isGood, tBits, tPos = SHARED.project.index.scanThis(text)
             if (
-                not isGood or not tBits or tBits[0] == nwKeyWords.TAG_KEY
-                or tBits[0] not in nwKeyWords.VALID_KEYS
+                not isGood
+                or not tBits
+                or (key := tBits[0]) == nwKeyWords.TAG_KEY
+                or key not in nwKeyWords.VALID_KEYS
             ):
-                return nwTrinary.NEUTRAL
+                return status
 
             tag = ""
             exist = False
@@ -1953,7 +1966,14 @@ class GuiDocEditor(QPlainTextEdit):
 
             if not tag or tag.startswith("@"):
                 # The keyword cannot be looked up, so we ignore that
-                return nwTrinary.NEUTRAL
+                return status
+
+            if not exist and key in nwKeyWords.CAN_CREATE:
+                # Must only be set if we have a tag selected
+                status |= _TagAction.CREATE
+
+            if exist:
+                status |= _TagAction.FOLLOW
 
             if follow and exist:
                 logger.debug("Attempting to follow tag '%s'", tag)
@@ -1965,9 +1985,7 @@ class GuiDocEditor(QPlainTextEdit):
                     itemClass = nwKeyWords.KEY_CLASS.get(tBits[0], nwItemClass.NO_CLASS)
                     self.requestNewNoteCreation.emit(tag, itemClass)
 
-            return nwTrinary.POSITIVE if exist else nwTrinary.NEGATIVE
-
-        return nwTrinary.NEUTRAL
+        return status
 
     def _emitRenameItem(self, block: QTextBlock) -> None:
         """Emit a signal to request an item be renamed."""
@@ -2662,10 +2680,11 @@ class GuiDocEditSearch(QFrame):
 
     def updateTheme(self) -> None:
         """Update theme elements."""
-        qPalette = QApplication.palette()
-        self.setPalette(qPalette)
-        self.searchBox.setPalette(qPalette)
-        self.replaceBox.setPalette(qPalette)
+        palette = QApplication.palette()
+
+        self.setPalette(palette)
+        self.searchBox.setPalette(palette)
+        self.replaceBox.setPalette(palette)
 
         # Set icons
         self.toggleCase.setIcon(SHARED.theme.getIcon("search_case"))
@@ -2681,24 +2700,6 @@ class GuiDocEditSearch(QFrame):
         # Set stylesheets
         self.searchOpt.setStyleSheet("QToolBar {padding: 0;}")
         self.showReplace.setStyleSheet("QToolButton {border: none; background: transparent;}")
-
-        # Construct Box Colours
-        qPalette = self.searchBox.palette()
-        baseCol = qPalette.base().color()
-        rCol = baseCol.redF() + 0.1
-        gCol = baseCol.greenF() - 0.1
-        bCol = baseCol.blueF() - 0.1
-
-        mCol = max(rCol, gCol, bCol, 1.0)
-        errCol = QColor()
-        errCol.setRedF(rCol/mCol)
-        errCol.setGreenF(gCol/mCol)
-        errCol.setBlueF(bCol/mCol)
-
-        self.rxCol = {
-            True: baseCol,
-            False: errCol
-        }
 
         return
 
@@ -2716,7 +2717,7 @@ class GuiDocEditSearch(QFrame):
 
     def anyFocus(self) -> bool:
         """Return True if any of the input boxes have focus."""
-        return self.searchBox.hasFocus() or self.replaceBox.hasFocus()
+        return self.hasFocus() or self.isAncestorOf(QApplication.focusWidget())
 
     ##
     #  Public Slots
@@ -2800,9 +2801,12 @@ class GuiDocEditSearch(QFrame):
         """Highlight the search box to indicate the search string is or
         isn't valid. Take the colour from the replace box.
         """
-        qPalette = self.replaceBox.palette()
-        qPalette.setColor(QPalette.ColorRole.Base, self.rxCol[isValid])
-        self.searchBox.setPalette(qPalette)
+        palette = self.replaceBox.palette()
+        palette.setColor(
+            QPalette.ColorRole.Text,
+            palette.text().color() if isValid else SHARED.theme.errorText
+        )
+        self.searchBox.setPalette(palette)
         return
 
 

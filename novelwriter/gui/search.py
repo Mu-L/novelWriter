@@ -28,19 +28,19 @@ import logging
 from time import time
 
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QAction, QCursor, QKeyEvent
+from PyQt6.QtGui import QAction, QCursor, QKeyEvent, QPalette
 from PyQt6.QtWidgets import (
     QApplication, QFrame, QHBoxLayout, QLabel, QLineEdit, QToolBar,
     QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
 
 from novelwriter import CONFIG, SHARED
-from novelwriter.common import checkInt, cssCol, qtAddAction
+from novelwriter.common import checkInt, qtAddAction
 from novelwriter.core.coretools import DocSearch
 from novelwriter.core.item import NWItem
 from novelwriter.types import (
     QtAlignMiddle, QtAlignRight, QtHeaderStretch, QtHeaderToContents,
-    QtUserRole
+    QtHexArgb, QtUserRole
 )
 
 logger = logging.getLogger(__name__)
@@ -71,10 +71,14 @@ class GuiProjectSearch(QWidget):
         self._blocked = False
         self._map: dict[str, tuple[int, float]] = {}
 
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setBackgroundRole(QPalette.ColorRole.Base)
+        self.setAutoFillBackground(True)
+
         # Header
         self.viewLabel = QLabel(self.tr("Project Search"), self)
         self.viewLabel.setFont(SHARED.theme.guiFontB)
-        self.viewLabel.setContentsMargins(2, 4, 0, 2)
+        self.viewLabel.setContentsMargins(4, 4, 0, 2)
 
         # Options
         self.searchOpt = QToolBar(self)
@@ -151,10 +155,9 @@ class GuiProjectSearch(QWidget):
 
     def updateTheme(self) -> None:
         """Update theme elements."""
-
-        qPalette = self.palette()
-        colBase = cssCol(qPalette.base().color())
-        colFocus = cssCol(qPalette.highlight().color())
+        palette = QApplication.palette()
+        colBase = palette.base().color().name(QtHexArgb)
+        colFocus = palette.highlight().color().name(QtHexArgb)
 
         self.setStyleSheet(
             "QToolBar {padding: 0; background: none;} "

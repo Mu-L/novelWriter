@@ -173,8 +173,8 @@ if __name__ == "__main__":
     cmdIcons = parsers.add_parser(
         "icons", help="Build icon theme files from source."
     )
-    cmdIcons.add_argument("--sources", help="Working directory for sources.")
-    cmdIcons.add_argument("--style", help="What icon style to build.")
+    cmdIcons.add_argument("sources", help="Working directory for sources.")
+    cmdIcons.add_argument("style", help="What icon style to build.")
     cmdIcons.set_defaults(func=utils.icon_themes.main)
 
     # Import Translations
@@ -201,6 +201,24 @@ if __name__ == "__main__":
         "qtlrelease", help="Build the language files for internationalisation."
     )
     cmdBuildQM.set_defaults(func=utils.assets.buildTranslationAssets)
+
+    # Update Docs i18n Sources
+    cmdUpdateDocsPo = parsers.add_parser(
+        "docs-lupdate", help=(
+            "Update translation files for internationalisation of the docs. "
+            "The langauges to be updated can be added as arguments, "
+            "or set to all to update all existing translations."
+        )
+    )
+    cmdUpdateDocsPo.add_argument("lang", nargs="+")
+    cmdUpdateDocsPo.set_defaults(func=utils.assets.updateDocsTranslationSources)
+
+    # Build Docs i18n Files
+    cmdBuildU18nDocs = parsers.add_parser(
+        "docs-lrelease", help="Build the translated PDF manual files."
+    )
+    cmdBuildU18nDocs.add_argument("lang", nargs="+")
+    cmdBuildU18nDocs.set_defaults(func=utils.assets.buildDocsTranslationAssets)
 
     # Build Manual
     cmdBuildManual = parsers.add_parser(

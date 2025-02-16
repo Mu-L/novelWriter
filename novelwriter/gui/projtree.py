@@ -177,6 +177,7 @@ class GuiProjectView(QWidget):
         self.projTree.addAction(trash)
         rename.triggered.connect(self.renameTreeItem)
         delete.triggered.connect(self.projTree.processDeleteRequest)
+        trash.triggered.connect(self.projTree.emptyTrash)
         return
 
     ##
@@ -245,6 +246,7 @@ class GuiProjectToolBar(QWidget):
         iSz = SHARED.theme.baseIconSize
 
         self.setContentsMargins(0, 0, 0, 0)
+        self.setBackgroundRole(QPalette.ColorRole.Base)
         self.setAutoFillBackground(True)
 
         # Widget Label
@@ -335,7 +337,7 @@ class GuiProjectToolBar(QWidget):
         self.outerBox.addWidget(self.tbMoveD)
         self.outerBox.addWidget(self.tbAdd)
         self.outerBox.addWidget(self.tbMore)
-        self.outerBox.setContentsMargins(2, 2, 0, 2)
+        self.outerBox.setContentsMargins(4, 2, 0, 2)
         self.outerBox.setSpacing(0)
 
         self.setLayout(self.outerBox)
@@ -351,10 +353,6 @@ class GuiProjectToolBar(QWidget):
 
     def updateTheme(self) -> None:
         """Update theme elements."""
-        qPalette = self.palette()
-        qPalette.setBrush(QPalette.ColorRole.Window, qPalette.base())
-        self.setPalette(qPalette)
-
         buttonStyle = SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON)
         self.tbQuick.setStyleSheet(buttonStyle)
         self.tbMoveU.setStyleSheet(buttonStyle)
@@ -953,25 +951,19 @@ class GuiProjectTree(QTreeView):
         if model := self._getModel():
             if point is None:
                 point = self.visualRect(self.currentIndex()).center()
-
-            if (
-                point is not None
-                and (node := self._getNode(self.currentIndex()))
-                and (indices := self._selectedRows())
-            ):
-                ctxMenu = _TreeContextMenu(self, model, node, indices)
-                if node is SHARED.project.tree.trash:
-                    ctxMenu.buildTrashMenu()
-                elif len(indices) > 1:
-                    ctxMenu.buildMultiSelectMenu()
-                else:
-                    ctxMenu.buildSingleSelectMenu()
-
-                if viewport := self.viewport():
-                    ctxMenu.exec(viewport.mapToGlobal(point))
-
-                ctxMenu.setParent(None)
-
+            if point is not None:
+                index = self.indexAt(point)
+                if (node := self._getNode(index)) and (indices := self._selectedRows()):
+                    ctxMenu = _TreeContextMenu(self, model, node, indices)
+                    if node is SHARED.project.tree.trash:
+                        ctxMenu.buildTrashMenu()
+                    elif len(indices) > 1:
+                        ctxMenu.buildMultiSelectMenu()
+                    else:
+                        ctxMenu.buildSingleSelectMenu()
+                    if viewport := self.viewport():
+                        ctxMenu.exec(viewport.mapToGlobal(point))
+                    ctxMenu.setParent(None)
         return
 
     ##

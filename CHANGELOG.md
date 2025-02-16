@@ -1,5 +1,151 @@
 # novelWriter Changelog
 
+## Version 2.6.3 [2025-02-16]
+
+### Release Notes
+
+This is a patch release that fixes a translation issue that affected several labels on the user
+interface where the wrong or no translation was used. The bug affected all languages except for
+English.
+
+### Detailed Changelog
+
+**Bugfixes**
+
+* Fix retrieval of translation string for stats and shape constants. This particularly affected the
+  details panel below the project tree, some labels on the outline, the statics panel on the
+  Manuscript tool and the status icon shape menu in Project Settings. It also affected the
+  statistics submenu in the Insert menu. Issue #2246. PRs #2247 and #2249.
+
+----
+
+## Version 2.6.2 [2025-02-16]
+
+### Release Notes
+
+This is a patch release that fixes a few issues with the project tree: The Empty Trash option in
+the menu now works again, and it is no longer possible to accidentally drag and drop project items
+onto the root of the project tree.
+
+In addition, a Czech translation has been added by Tomáš Zmek, and the Italian, Polish and
+Brazilian Portuguese translations have been updated.
+
+### Detailed Changelog
+
+**Bugfixes**
+
+* Fixed a bug where alternative scene formats were ignored when splitting a document. Issue #2233.
+  PR #2234.
+* Fixed the Empty Trash menu entry in the Project menu. It was not connected to the project tree
+  and therefore selecting it did nothing. Issue #2239. PR #2242.
+* Fixed a bug where it was possible to drag items to the root levels as long as they were dropped
+  between existing root items. This action is now properly blocked. PR #2242.
+
+**Improvements**
+
+* Added an extra check in the project tree item model that can prevent a crash in certain
+  circumstances when moving multiple project items. It is probably a corner case caused by
+  competing garbage collectors in Python and Qt, but the additional check should handle. PR #2242.
+
+**Internationalisation**
+
+* Add Czech translation by Tomáš Zmek. PR #2244.
+* Updated Italian, Polish and Brazilian Portuguese translations. PR #2244.
+
+See the [translation activity stream](https://crowdin.com/project/novelwriter/activity-stream) for
+more details.
+
+----
+
+## Version 2.6.1 [2025-02-02]
+
+### Release Notes
+
+This is a patch release that fixes an issue with creating new notes from the editor context menu,
+adds an option to turn off the confirmation box that pops up when closing novelWriter, and improves
+the recent project list on the Welcome dialog.
+
+A French version of the user guide is now also available when the localisation is set to French,
+and the French, Latin American Spanish, Norwegian, US English, German and Japanese translations of
+the application have been updated.
+
+### Detailed Changelog
+
+**Bugfixes**
+
+* Fixed an issue where the "Create Note from Tag" would also show up for `@story` references. These
+  should not create new novel documents. The same menu entry was also removed for `@mention`
+  references, as it is not known what category the would belong to. Issue #2212. PR #2215.
+
+**Improvements**
+
+* A setting was added to Preferences to disable the dialog box when exiting novelWriter. It is
+  available under the "Behaviour" section. Issue #2209. PR#2213.
+* Recent projects on the Welcome dialog box are now tracked using their unique ID as well as their
+  path. This means that if a project is moved, it should not show up twice in the list, but the
+  path should be updated. Issue #2217. PR #2218.
+
+**Documentation**
+
+* A French version of the user guide is nov available from the Help menu if the GUi language is set
+  to French. The French translation was contributed by @Karduin. It is currently directly added to
+  the source, but from 2.7 it will be generated automatically in the same way the English user
+  guide is. Discussion #1834. PR #2220.
+
+**Internationalisation**
+
+* French translations are available up to the 2.6 release. That is, the new exit dialog setting is
+  not translated yet. PR #2214.
+* Latin American Spanish, Norwegian, US English, German and Japanese translations are fully
+  updated. PR #2214.
+
+See the [translation activity stream](https://crowdin.com/project/novelwriter/activity-stream) for
+more details.
+
+----
+
+## Version 2.6 [2025-01-26]
+
+### Release Notes
+
+The 2.6 release fixes a few minor issues from the RC 1 pre-release, and updates most translations.
+
+See the website for complete [Release Notes](https://novelwriter.io/releases/release_2_6.html).
+
+### Detailed Changelog
+
+**Bugfixes**
+
+* Fixed a bug in the novel selector dropdown used a few places that would clear the selection if
+  the novel list was refreshed. PR #2179.
+* Fixed a bug that would crash the app if the project tree was clicked without any project having
+  been loaded. The selection model does not exist prior to a project load. Issue #2173. PR #2181.
+* Replaced a broken link on the dictionary install tool available on Windows. PR #2189.
+* Backported a few code fixes from 2.7 related to freeing memory from closed dialogs and one
+  instance of a potentially uninitialised variable. PR #2202.
+* Fixed word wrapping in the item details panel for status and importance labels with very long
+  names. PR #2202.
+* Fixed the project tree context menu so that it is not opened when right-clicking on an empty area
+  of the tree widget. PR #2202.
+
+**Improvements**
+
+* Chapter headings are now level 1 headings in all manuscript output formats, not just HTML like
+  before. Most applications that post-processes output will assume chapters are level 1.
+  Correspondingly, scenes are now level 2 and sections are level 3. Notes headings remain
+  unchanged. Issue #2205. PR #2206.
+
+**Internationalisation**
+
+* German, US English, Italian, Japanese, Norwegian and Polish have been updated in full. Brazilian
+  Portuguese and Chinese have been partially updated. PR #2207.
+
+**Documentation**
+
+* Documentation has been updated with 2.6 features. PR #2210.
+
+----
+
 ## Version 2.6 RC 1 [2025-01-09]
 
 ### Release Notes
@@ -157,7 +303,7 @@ careful when using this version on live writing projects, and make sure you take
   markup processing and syntax highlighting. It is both slightly faster, and there are issues with
   text encoding in at least some versions of Qt6 or PyQt6. PRs #2028 and #2043.
 * Preparation for Qt6: Added a wrapper function for connecting signals to slots that has a
-  different function signature. Python lambdas generate warnings inn Qt6. PR #2075.
+  different function signature. Python lambdas generate warnings in Qt6. PR #2075.
 * Refactored manuscript formats and moved most of the processing to the Tokenizer class to simplify
   the format classes and also make them more consistent. PRs #2060, #2061 and #2062.
 * The document builder has been refactored to support more generalised format classes. PR #2047.
@@ -1037,7 +1183,7 @@ _These Release Notes also include the changes from the 2.2 Beta 1 and 2.2 RC 1 r
   of 1 second. PR #1634.
 * The document viewer panel now shows the importance label next to each entry, and double-clicking
   an entry will open it in the viewer. All entries also now show the content in tooltips so that
-  the columns can be shrunk to only view the icon if there is too little space. Issue #16220.
+  the columns can be shrunk to only view the icon if there is too little space. Issue #1620.
   PR #1639.
 * The editor toolbar no longer uses the same buttons for markdown and shortcodes style formatting.
   They have each received their separate buttons. Some additional space has been added between the

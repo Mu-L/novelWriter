@@ -201,6 +201,7 @@ class GuiNovelToolBar(QWidget):
         iSz = SHARED.theme.baseIconSize
 
         self.setContentsMargins(0, 0, 0, 0)
+        self.setBackgroundRole(QPalette.ColorRole.Base)
         self.setAutoFillBackground(True)
 
         # Novel Selector
@@ -248,7 +249,7 @@ class GuiNovelToolBar(QWidget):
         self.outerBox.addWidget(self.tbNovel)
         self.outerBox.addWidget(self.tbRefresh)
         self.outerBox.addWidget(self.tbMore)
-        self.outerBox.setContentsMargins(2, 2, 0, 2)
+        self.outerBox.setContentsMargins(4, 2, 0, 2)
         self.outerBox.setSpacing(0)
 
         self.setLayout(self.outerBox)
@@ -269,10 +270,6 @@ class GuiNovelToolBar(QWidget):
         self.tbNovel.setThemeIcon("cls_novel", "red")
         self.tbRefresh.setThemeIcon("refresh", "green")
         self.tbMore.setThemeIcon("more_vertical")
-
-        qPalette = self.palette()
-        qPalette.setBrush(QPalette.ColorRole.Window, qPalette.base())
-        self.setPalette(qPalette)
 
         # StyleSheets
         buttonStyle = SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON)
@@ -393,7 +390,7 @@ class GuiNovelTree(QTreeWidget):
         self.setUniformRowHeights(True)
         self.setAllColumnsShowFocus(True)
         self.setHeaderHidden(True)
-        self.setIndentation(0)
+        self.setIndentation(2)
         self.setColumnCount(4)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
