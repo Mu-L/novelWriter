@@ -104,7 +104,7 @@ class VersionInfoWidget(QWidget):
     @pyqtSlot(str, str)
     def _updateReleaseInfo(self, tag: str, reason: str) -> None:
         """Update the widget release info."""
-        if version := tag.lstrip("v"):
+        if version := formatVersion(tag.lstrip("v")):
             download = f"<a href='#website'>{__domain__}</a>"
             self._lblRelease.setText(self._trLatest.format(
                 f"{version} \u2013 {self._trDownload.format(download)}"
