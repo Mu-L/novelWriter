@@ -336,9 +336,11 @@ def testBaseCommon_formatTime():
 def testBaseCommon_formatVersion():
     """Test the formatVersion function."""
     assert formatVersion("1.2") == "1.2"
+    assert formatVersion("1.2.1") == "1.2 Patch 1"
     assert formatVersion("1.2a1") == "1.2 Alpha 1"
     assert formatVersion("1.2b2") == "1.2 Beta 2"
     assert formatVersion("1.2rc3") == "1.2 RC 3"
+    assert formatVersion("12345") == ""
 
 
 @pytest.mark.base
