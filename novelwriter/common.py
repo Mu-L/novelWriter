@@ -288,6 +288,11 @@ def formatFileFilter(extensions: list[str | tuple[str, str]]) -> str:
     return ";;".join(result)
 
 
+def formatLink(link: str, text: str = "") -> str:
+    """Format a HTML link for use in labels."""
+    return f"<a href='{link}'>{text or link}</a>"
+
+
 ##
 #  String Functions
 ##

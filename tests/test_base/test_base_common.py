@@ -34,10 +34,10 @@ from novelwriter.common import (
     NWConfigParser, appendIfSet, checkBool, checkFloat, checkInt,
     checkIntTuple, checkPath, checkString, checkStringNone, checkUuid, compact,
     decodeMimeHandles, describeFont, elide, encodeMimeHandles, firstFloat,
-    fontMatcher, formatFileFilter, formatInt, formatTime, formatTimeStamp,
-    formatVersion, fuzzyTime, getFileSize, hexToInt, isHandle, isItemClass,
-    isItemLayout, isItemType, isListInstance, isTitleTag, joinLines,
-    jsonCombine, jsonEncode, languageName, makeFileNameSafe, minmax,
+    fontMatcher, formatFileFilter, formatInt, formatLink, formatTime,
+    formatTimeStamp, formatVersion, fuzzyTime, getFileSize, hexToInt, isHandle,
+    isItemClass, isItemLayout, isItemType, isListInstance, isTitleTag,
+    joinLines, jsonCombine, jsonEncode, languageName, makeFileNameSafe, minmax,
     numberToRoman, openExternalPath, processDialogSymbols, processLangCode,
     readTextFile, simplified, transferCase, uniqueCompact, utf16CharMap,
     xmlElement, xmlIndent, xmlSubElem, yesNo
@@ -356,6 +356,13 @@ def testBaseCommon_formatFileFilter():
     assert formatFileFilter([("Stuff", "*.stuff"), "*.txt", "*"]) == (
         "Stuff (*.stuff);;Text files (*.txt);;All files (*)"
     )
+
+
+@pytest.mark.base
+def testBaseCommon_formatLink():
+    """Test the formatLink function."""
+    assert formatLink("a") == "<a href='a'>a</a>"
+    assert formatLink("a", "b") == "<a href='a'>b</a>"
 
 
 @pytest.mark.base
