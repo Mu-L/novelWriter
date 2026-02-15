@@ -340,6 +340,11 @@ def testBaseCommon_formatVersion():
     assert formatVersion("1.2a1") == "1.2 Alpha 1"
     assert formatVersion("1.2b2") == "1.2 Beta 2"
     assert formatVersion("1.2rc3") == "1.2 RC 3"
+    assert formatVersion("26.1") == "2026.1"
+    assert formatVersion("26.1.1") == "2026.1 Patch 1"
+    assert formatVersion("26.1a1") == "2026.1 Alpha 1"
+    assert formatVersion("26.1b2") == "2026.1 Beta 2"
+    assert formatVersion("26.1rc3") == "2026.1 RC 3"
     assert formatVersion("12345") == ""
 
 

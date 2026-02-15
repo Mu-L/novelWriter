@@ -263,6 +263,7 @@ def formatTime(t: int) -> str:
 def formatVersion(value: str) -> str:
     """Format a version number into a more human readable form."""
     major, _, version = value.partition(".")
+    prefix = "20" if checkInt(major, 0) >= 20 else ""
     if "." in version:
         version = version.replace(".", " Patch ")
     elif "a" in version:
@@ -271,7 +272,7 @@ def formatVersion(value: str) -> str:
         version = version.replace("b", " Beta ")
     elif "rc" in version:
         version = version.replace("rc", " RC ")
-    return f"{major}.{version}" if major and version else ""
+    return f"{prefix}{major}.{version}" if major and version else ""
 
 
 def formatFileFilter(extensions: list[str | tuple[str, str]]) -> str:
