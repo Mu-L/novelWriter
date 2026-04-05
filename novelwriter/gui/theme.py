@@ -49,8 +49,8 @@ from novelwriter.enum import (
 from novelwriter.error import logException
 from novelwriter.extensions.modified import NIconToolButton, NPushButton
 from novelwriter.types import (
-    QtBlack, QtColActive, QtColDisabled, QtColInactive, QtFontBold, QtHexArgb,
-    QtPaintAntiAlias, QtTransparent
+    QtBlack, QtColActive, QtColDisabled, QtColInactive, QtFontSemiBold,
+    QtHexArgb, QtPaintAntiAlias, QtTransparent
 )
 
 if TYPE_CHECKING:
@@ -207,15 +207,15 @@ class GuiTheme:
 
         self.guiFont = QApplication.font()
         self.guiFontB = QApplication.font()
-        self.guiFontB.setWeight(QtFontBold)
+        self.guiFontB.setWeight(QtFontSemiBold)
         self.guiFontBU = QApplication.font()
-        self.guiFontBU.setWeight(QtFontBold)
+        self.guiFontBU.setWeight(QtFontSemiBold)
         self.guiFontBU.setUnderline(True)
 
         self.guiFontSmall = QApplication.font()
         self.guiFontSmall.setPointSizeF(sSmaller*self.guiFont.pointSizeF())
         self.guiFontSmallB = QApplication.font()
-        self.guiFontSmallB.setWeight(QtFontBold)
+        self.guiFontSmallB.setWeight(QtFontSemiBold)
         self.guiFontSmallB.setPointSizeF(sSmaller*self.guiFont.pointSizeF())
 
         qMetric = QFontMetrics(self.guiFont)

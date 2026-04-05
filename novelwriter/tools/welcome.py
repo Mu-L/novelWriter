@@ -49,7 +49,7 @@ from novelwriter.extensions.modified import NDialog, NIconToolButton, NSpinBox
 from novelwriter.extensions.switch import NSwitch
 from novelwriter.extensions.versioninfo import VersionInfoWidget
 from novelwriter.types import (
-    QtAlignLeft, QtAlignRightTop, QtFontBold, QtHexArgb, QtScrollAsNeeded,
+    QtAlignLeft, QtAlignRightTop, QtFontSemiBold, QtHexArgb, QtScrollAsNeeded,
     QtSelected
 )
 
@@ -420,7 +420,7 @@ class _ProjectListItem(QStyledItemDelegate):
 
         self._tFont = QApplication.font()
         self._tFont.setPointSizeF(1.2*fPt)
-        self._tFont.setWeight(QtFontBold)
+        self._tFont.setWeight(QtFontSemiBold)
 
         self._dFont = QApplication.font()
         self._dFont.setPointSizeF(fPt)

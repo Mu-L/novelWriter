@@ -161,8 +161,9 @@ QtScrollAsNeeded = Qt.ScrollBarPolicy.ScrollBarAsNeeded
 
 # Font Weight
 
-QtFontBold = QFont.Weight.Bold
 QtFontNormal = QFont.Weight.Normal
+QtFontSemiBold = QFont.Weight.DemiBold
+QtFontBold = QFont.Weight.Bold
 
 # Maps
 

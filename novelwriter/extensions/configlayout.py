@@ -36,7 +36,7 @@ from PyQt6.QtWidgets import (
 
 from novelwriter.constants import nwUnicode
 from novelwriter.enum import nwState
-from novelwriter.types import QtFontBold, QtFontNormal, QtHexArgb, QtScrollAsNeeded
+from novelwriter.types import QtFontNormal, QtFontSemiBold, QtHexArgb, QtScrollAsNeeded
 
 DEFAULT_SCALE = 0.9
 
@@ -273,7 +273,7 @@ class NColorLabel(QLabel):
 
         font = self.font()
         font.setPointSizeF(scale*font.pointSizeF())
-        font.setWeight(QtFontBold if bold else QtFontNormal)
+        font.setWeight(QtFontSemiBold if bold else QtFontNormal)
 
         self.setTextFormat(Qt.TextFormat.RichText)
         self.setFont(font)
