@@ -32,10 +32,7 @@ from PyQt6.QtCore import (
     QAbstractListModel, QModelIndex, QObject, QPoint, QSize, Qt, pyqtSignal,
     pyqtSlot
 )
-from PyQt6.QtGui import (
-    QAction, QCloseEvent, QFont, QKeyEvent, QPainter, QPaintEvent, QPen,
-    QShortcut
-)
+from PyQt6.QtGui import QAction, QCloseEvent, QKeyEvent, QPainter, QPaintEvent, QPen, QShortcut
 from PyQt6.QtWidgets import (
     QApplication, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListView,
     QMenu, QScrollArea, QStackedWidget, QStyledItemDelegate,
@@ -51,7 +48,10 @@ from novelwriter.extensions.configlayout import NWrappedWidgetBox
 from novelwriter.extensions.modified import NDialog, NIconToolButton, NSpinBox
 from novelwriter.extensions.switch import NSwitch
 from novelwriter.extensions.versioninfo import VersionInfoWidget
-from novelwriter.types import QtAlignLeft, QtAlignRightTop, QtHexArgb, QtScrollAsNeeded, QtSelected
+from novelwriter.types import (
+    QtAlignLeft, QtAlignRightTop, QtFontBold, QtHexArgb, QtScrollAsNeeded,
+    QtSelected
+)
 
 logger = logging.getLogger(__name__)
 
@@ -420,7 +420,7 @@ class _ProjectListItem(QStyledItemDelegate):
 
         self._tFont = QApplication.font()
         self._tFont.setPointSizeF(1.2*fPt)
-        self._tFont.setWeight(QFont.Weight.Bold)
+        self._tFont.setWeight(QtFontBold)
 
         self._dFont = QApplication.font()
         self._dFont.setPointSizeF(fPt)

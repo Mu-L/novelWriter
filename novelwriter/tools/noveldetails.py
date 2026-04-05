@@ -44,7 +44,7 @@ from novelwriter.extensions.modified import NNonBlockingDialog
 from novelwriter.extensions.novelselector import NovelSelector
 from novelwriter.extensions.pagedsidebar import NPagedSideBar
 from novelwriter.extensions.switch import NSwitch
-from novelwriter.types import QtAlignRight, QtDecoration, QtRoleDestruct
+from novelwriter.types import QtAlignRight, QtDecoration, QtFontBold, QtRoleDestruct
 
 if TYPE_CHECKING:
     from PyQt6.QtGui import QCloseEvent
@@ -477,7 +477,7 @@ class _ContentsPage(NFixedPage):
                 if tLevel == 0:
                     bFont.setItalic(True)
                 else:
-                    bFont.setBold(True)
+                    bFont.setWeight(QtFontBold)
                     bFont.setUnderline(True)
                 newItem.setFont(self.C_TITLE, bFont)
 

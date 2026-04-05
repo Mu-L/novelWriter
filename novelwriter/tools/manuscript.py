@@ -678,13 +678,9 @@ class _OutlineWidget(QWidget):
         if isinstance(data, dict) and (data != self._outline or force):
             self.listView.clear()
 
-            tFont = self.font()
-            tFont.setBold(True)
+            tFont = SHARED.theme.guiFontB
+            hFont = SHARED.theme.guiFontBU
             tBrush = self.palette().highlight()
-
-            hFont = self.font()
-            hFont.setBold(True)
-            hFont.setUnderline(True)
 
             indent = False
             if root := self.listView.invisibleRootItem():

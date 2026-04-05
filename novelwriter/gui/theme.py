@@ -49,7 +49,7 @@ from novelwriter.enum import (
 from novelwriter.error import logException
 from novelwriter.extensions.modified import NIconToolButton, NPushButton
 from novelwriter.types import (
-    QtBlack, QtColActive, QtColDisabled, QtColInactive, QtHexArgb,
+    QtBlack, QtColActive, QtColDisabled, QtColInactive, QtFontBold, QtHexArgb,
     QtPaintAntiAlias, QtTransparent
 )
 
@@ -162,8 +162,8 @@ class GuiTheme:
         "fontPointSize", "getDecoration", "getHeaderDecoration", "getHeaderDecorationNarrow",
         "getIcon", "getItemIcon", "getPixmap", "getStandardButton", "getToggleIcon",
         "getToolButton", "guiFont", "guiFontB", "guiFontBU", "guiFontFixed", "guiFontSmall",
-        "helpText", "iconCache", "isDarkTheme", "pushButtonIconSize", "sidebarIconSize",
-        "syntaxTheme", "textNHeight", "textNWidth", "toolButtonIconSize",
+        "guiFontSmallB", "helpText", "iconCache", "isDarkTheme", "pushButtonIconSize",
+        "sidebarIconSize", "syntaxTheme", "textNHeight", "textNWidth", "toolButtonIconSize",
     )
 
     def __init__(self) -> None:
@@ -207,12 +207,16 @@ class GuiTheme:
 
         self.guiFont = QApplication.font()
         self.guiFontB = QApplication.font()
-        self.guiFontB.setBold(True)
+        self.guiFontB.setWeight(QtFontBold)
         self.guiFontBU = QApplication.font()
-        self.guiFontBU.setBold(True)
+        self.guiFontBU.setWeight(QtFontBold)
         self.guiFontBU.setUnderline(True)
+
         self.guiFontSmall = QApplication.font()
         self.guiFontSmall.setPointSizeF(sSmaller*self.guiFont.pointSizeF())
+        self.guiFontSmallB = QApplication.font()
+        self.guiFontSmallB.setWeight(QtFontBold)
+        self.guiFontSmallB.setPointSizeF(sSmaller*self.guiFont.pointSizeF())
 
         qMetric = QFontMetrics(self.guiFont)
         fHeight = qMetric.height()

@@ -159,6 +159,11 @@ QtScrollAlwaysOn = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
 QtScrollAlwaysOff = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 QtScrollAsNeeded = Qt.ScrollBarPolicy.ScrollBarAsNeeded
 
+# Font Weight
+
+QtFontBold = QFont.Weight.Bold
+QtFontNormal = QFont.Weight.Normal
+
 # Maps
 
 FONT_WEIGHTS: dict[int, int] = {

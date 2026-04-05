@@ -44,7 +44,7 @@ from novelwriter.core.item import NWItem
 from novelwriter.enum import nwBuildFmt, nwStandardButton, nwToolButton
 from novelwriter.extensions.modified import NDialog, NIconToolButton, NPushButton
 from novelwriter.extensions.progressbars import NProgressSimple
-from novelwriter.types import QtAlignCenter, QtRoleAction, QtRoleDestruct, QtUserRole
+from novelwriter.types import QtAlignCenter, QtFontBold, QtRoleAction, QtRoleDestruct, QtUserRole
 
 if TYPE_CHECKING:
     from PyQt6.QtGui import QCloseEvent
@@ -133,7 +133,7 @@ class GuiManuscriptBuild(NDialog):
         # ===============
 
         font = self.font()
-        font.setBold(True)
+        font.setWeight(QtFontBold)
         font.setUnderline(True)
         font.setPointSizeF(1.5*font.pointSizeF())
 

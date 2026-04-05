@@ -28,7 +28,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont, QPalette
+from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import (
     QAbstractButton, QFrame, QHBoxLayout, QLabel, QLayout, QScrollArea,
     QVBoxLayout, QWidget
@@ -36,7 +36,7 @@ from PyQt6.QtWidgets import (
 
 from novelwriter.constants import nwUnicode
 from novelwriter.enum import nwState
-from novelwriter.types import QtHexArgb, QtScrollAsNeeded
+from novelwriter.types import QtFontBold, QtFontNormal, QtHexArgb, QtScrollAsNeeded
 
 DEFAULT_SCALE = 0.9
 
@@ -273,7 +273,7 @@ class NColorLabel(QLabel):
 
         font = self.font()
         font.setPointSizeF(scale*font.pointSizeF())
-        font.setWeight(QFont.Weight.Bold if bold else QFont.Weight.Normal)
+        font.setWeight(QtFontBold if bold else QtFontNormal)
 
         self.setTextFormat(Qt.TextFormat.RichText)
         self.setFont(font)
