@@ -117,7 +117,8 @@ class GuiManuscript(NToolDialog):
         self.tbEdit.setToolTip(self.tr("Edit Selected Build"))
         self.tbEdit.clicked.connect(self._editSelectedBuild)
 
-        self.lblBuilds = QLabel("<b>{0}</b>".format(self.tr("Builds")), self)
+        self.lblBuilds = QLabel(self.tr("Builds"), self)
+        self.lblBuilds.setFont(SHARED.theme.guiFontB)
 
         self.listToolBox = QHBoxLayout()
         self.listToolBox.addWidget(self.lblBuilds)

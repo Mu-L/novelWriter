@@ -159,11 +159,12 @@ class GuiTheme:
         "_allThemes", "_currentTheme", "_darkThemes", "_guiPalette", "_lightThemes", "_meta",
         "_qColors", "_styleSheets", "_svgColors", "_syntaxList", "accentCol", "baseButtonHeight",
         "baseIconHeight", "baseIconSize", "errorText", "fadedText", "fontPixelSize",
-        "fontPointSize", "getDecoration", "getHeaderDecoration", "getHeaderDecorationNarrow",
-        "getIcon", "getItemIcon", "getPixmap", "getStandardButton", "getToggleIcon",
-        "getToolButton", "guiFont", "guiFontB", "guiFontBU", "guiFontFixed", "guiFontSmall",
-        "guiFontSmallB", "helpText", "iconCache", "isDarkTheme", "pushButtonIconSize",
-        "sidebarIconSize", "syntaxTheme", "textNHeight", "textNWidth", "toolButtonIconSize",
+        "fontPixelSizeLarge", "fontPointSize", "getDecoration", "getHeaderDecoration",
+        "getHeaderDecorationNarrow", "getIcon", "getItemIcon", "getPixmap", "getStandardButton",
+        "getToggleIcon", "getToolButton", "guiFont", "guiFontB", "guiFontBU", "guiFontFixed",
+        "guiFontLarge", "guiFontLargeB", "guiFontSmall", "guiFontSmallB", "helpText", "iconCache",
+        "isDarkTheme", "pushButtonIconSize", "sidebarIconSize", "syntaxTheme", "textNHeight",
+        "textNWidth", "toolButtonIconSize",
     )
 
     def __init__(self) -> None:
@@ -201,7 +202,8 @@ class GuiTheme:
 
         # Fonts
         sSmaller = 10.0/11.0
-        sLarger = 12.0/11.0
+        sMedium = 12.0/11.0
+        sLarger = 13.0/11.0
         sLarge = 15.0/11.0
         sXLarge = 19.0/11.0
 
@@ -218,19 +220,26 @@ class GuiTheme:
         self.guiFontSmallB.setWeight(QtFontSemiBold)
         self.guiFontSmallB.setPointSizeF(sSmaller*self.guiFont.pointSizeF())
 
+        self.guiFontLarge = QApplication.font()
+        self.guiFontLarge.setPointSizeF(sLarger*self.guiFont.pointSizeF())
+        self.guiFontLargeB = QApplication.font()
+        self.guiFontLargeB.setWeight(QtFontSemiBold)
+        self.guiFontLargeB.setPointSizeF(sLarger*self.guiFont.pointSizeF())
+
         qMetric = QFontMetrics(self.guiFont)
         fHeight = qMetric.height()
         fAscent = qMetric.ascent()
 
         self.fontPointSize = self.guiFont.pointSizeF()
         self.fontPixelSize = fHeight
+        self.fontPixelSizeLarge = round(sLarger*fHeight)
         self.baseIconHeight = fAscent
         self.baseButtonHeight = round(sLarge*fAscent)
 
         self.baseIconSize = QSize(fAscent, fAscent)
         self.sidebarIconSize = QSize(round(sXLarge*fAscent), round(sXLarge*fAscent))
         self.toolButtonIconSize = QSize(round(sSmaller*fAscent), round(sSmaller*fAscent))
-        self.pushButtonIconSize = QSize(round(sLarger*fAscent), round(sLarger*fAscent))
+        self.pushButtonIconSize = QSize(round(sMedium*fAscent), round(sMedium*fAscent))
 
         self.textNHeight = qMetric.boundingRect("N").height()
         self.textNWidth = qMetric.boundingRect("N").width()

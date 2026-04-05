@@ -34,6 +34,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget
 )
 
+from novelwriter import SHARED
 from novelwriter.constants import nwUnicode
 from novelwriter.enum import nwState
 from novelwriter.types import QtFontNormal, QtFontSemiBold, QtHexArgb, QtScrollAsNeeded
@@ -161,7 +162,8 @@ class NScrollableForm(QScrollArea):
 
     def addGroupLabel(self, label: str, identifier: int | None = None) -> None:
         """Add a text label to separate groups of settings."""
-        qLabel = QLabel(f"<b>{label}</b>", self)
+        qLabel = QLabel(label, self)
+        qLabel.setFont(SHARED.theme.guiFontB)
         qLabel.setContentsMargins(0, 4, 0, 4)
         if not self._first:
             self._layout.addSpacing(20)
