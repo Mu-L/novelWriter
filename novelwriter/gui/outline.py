@@ -380,14 +380,13 @@ class GuiOutlineTree(QTreeWidget):
             header.sectionMoved.connect(self._columnMoved)
 
         # Pre-Generate Tree Formatting
-        fH1 = self.font()
-        fH1.setBold(True)
-        fH1.setUnderline(True)
-
-        fH2 = self.font()
-        fH2.setBold(True)
-
-        self._hFonts = [self.font(), fH1, fH2, self.font(), self.font()]
+        self._hFonts = [
+            SHARED.theme.guiFont,
+            SHARED.theme.guiFontBU,
+            SHARED.theme.guiFontB,
+            SHARED.theme.guiFont,
+            SHARED.theme.guiFont,
+        ]
         self._dIcon: dict[str, QIcon] = {}
 
         # Internals

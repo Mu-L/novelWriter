@@ -32,10 +32,7 @@ from PyQt6.QtCore import (
     QAbstractListModel, QModelIndex, QObject, QPoint, QSize, Qt, pyqtSignal,
     pyqtSlot
 )
-from PyQt6.QtGui import (
-    QAction, QCloseEvent, QFont, QKeyEvent, QPainter, QPaintEvent, QPen,
-    QShortcut
-)
+from PyQt6.QtGui import QAction, QCloseEvent, QKeyEvent, QPainter, QPaintEvent, QPen, QShortcut
 from PyQt6.QtWidgets import (
     QApplication, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListView,
     QMenu, QScrollArea, QStackedWidget, QStyledItemDelegate,
@@ -47,7 +44,7 @@ from novelwriter.common import formatInt, makeFileNameSafe, qtAddAction, safeIsF
 from novelwriter.constants import nwFiles
 from novelwriter.core.coretools import ProjectBuilder
 from novelwriter.enum import nwItemClass, nwStandardButton
-from novelwriter.extensions.configlayout import NWrappedWidgetBox
+from novelwriter.extensions.configlayout import NColorLabel, NWrappedWidgetBox
 from novelwriter.extensions.modified import NDialog, NIconToolButton, NSpinBox
 from novelwriter.extensions.switch import NSwitch
 from novelwriter.extensions.versioninfo import VersionInfoWidget
@@ -411,19 +408,14 @@ class _ProjectListItem(QStyledItemDelegate):
         super().__init__(parent=parent)
 
         fPx = SHARED.theme.fontPixelSize
-        fPt = SHARED.theme.fontPointSize
-        tPx = round(1.2 * fPx)
+        tPx = SHARED.theme.fontPixelSizeLarge
         iPx = tPx + fPx
 
         self._pPx = (iPx + 4, tPx + 4)  # Painter coordinates
         self._hPx = 8 + tPx + fPx  # Fixed height
 
-        self._tFont = QApplication.font()
-        self._tFont.setPointSizeF(1.2*fPt)
-        self._tFont.setWeight(QFont.Weight.Bold)
-
-        self._dFont = QApplication.font()
-        self._dFont.setPointSizeF(fPt)
+        self._tFont = SHARED.theme.guiFontLargeB
+        self._dFont = SHARED.theme.guiFont
         self._dPen = QPen(SHARED.theme.helpText)
 
         self._icon = SHARED.theme.getPixmap("proj_nwx", (iPx, iPx))
@@ -695,11 +687,15 @@ class _NewProjectForm(QWidget):
         # Assemble
         # ========
 
+        self.lblChSc = NColorLabel(self.tr("Chapters and Scenes"), self, scale=1.15, bold=True)
+        self.lblNotes = NColorLabel(self.tr("Project Notes"), self, scale=1.15, bold=True)
+        self.lblNew = NColorLabel(self.tr("Create New Project"), self, scale=1.15, bold=True)
+
         self.extraBox = QVBoxLayout()
-        self.extraBox.addWidget(QLabel("<b>{0}</b>".format(self.tr("Chapters and Scenes")), self))
+        self.extraBox.addWidget(self.lblChSc)
         self.extraBox.addLayout(self.novelForm)
         self.extraBox.addSpacing(16)
-        self.extraBox.addWidget(QLabel("<b>{0}</b>".format(self.tr("Project Notes")), self))
+        self.extraBox.addWidget(self.lblNotes)
         self.extraBox.addLayout(self.notesForm)
         self.extraBox.setContentsMargins(0, 0, 0, 0)
 
@@ -708,7 +704,7 @@ class _NewProjectForm(QWidget):
         self.extraWidget.setContentsMargins(0, 0, 0, 0)
 
         self.formBox = QVBoxLayout()
-        self.formBox.addWidget(QLabel("<b>{0}</b>".format(self.tr("Create New Project")), self))
+        self.formBox.addWidget(self.lblNew)
         self.formBox.addLayout(self.projectForm)
         self.formBox.addSpacing(16)
         self.formBox.addWidget(self.extraWidget)
