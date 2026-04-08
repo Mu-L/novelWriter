@@ -96,7 +96,7 @@ Note: There are no longer any Mac releases produced for novelWriter. See #2618.
 * The fun Discworld themed titles shown on error windows have been extended with new titles to
   randomly select from. PR #2684.
 * PDM has replaced UV as the dependency manager for development and testing. This should not matter
-  to end users. PRs #2678 and #2685.
+  to end users. Issue #2685. PR #2678.
 
 ----
 
