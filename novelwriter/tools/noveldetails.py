@@ -44,7 +44,7 @@ from novelwriter.extensions.modified import NNonBlockingDialog
 from novelwriter.extensions.novelselector import NovelSelector
 from novelwriter.extensions.pagedsidebar import NPagedSideBar
 from novelwriter.extensions.switch import NSwitch
-from novelwriter.types import QtAlignRight, QtDecoration, QtFontSemiBold, QtRoleDestruct
+from novelwriter.types import QtAlignRight, QtDecorationRole, QtFontSemiBold, QtRoleDestruct
 
 if TYPE_CHECKING:
     from PyQt6.QtGui import QCloseEvent
@@ -459,7 +459,7 @@ class _ContentsPage(NFixedPage):
             if tTitle.strip() == "":
                 tTitle = self.tr("Untitled")
 
-            newItem.setData(self.C_TITLE, QtDecoration, hDec)
+            newItem.setData(self.C_TITLE, QtDecorationRole, hDec)
             newItem.setText(self.C_TITLE, tTitle)
             newItem.setText(self.C_WORDS, f"{wCount:n}")
             newItem.setText(self.C_PAGES, f"{pCount:n}")

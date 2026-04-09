@@ -50,7 +50,7 @@ from novelwriter.error import logException
 from novelwriter.extensions.configlayout import NColorLabel
 from novelwriter.extensions.novelselector import NovelSelector
 from novelwriter.types import (
-    QtAlignLeftTop, QtAlignRight, QtAlignRightTop, QtDecoration,
+    QtAlignLeftTop, QtAlignRight, QtAlignRightTop, QtDecorationRole,
     QtScrollAlwaysOff, QtScrollAsNeeded, QtSizeExpanding, QtUserRole
 )
 
@@ -680,7 +680,7 @@ class GuiOutlineTree(QTreeWidget):
             item = QTreeWidgetItem()
             hDec = SHARED.theme.getHeaderDecoration(iLevel)
 
-            item.setData(self._colIdx[nwOutline.TITLE], QtDecoration, hDec)
+            item.setData(self._colIdx[nwOutline.TITLE], QtDecorationRole, hDec)
             item.setText(self._colIdx[nwOutline.TITLE], novIdx.title)
             item.setData(self._colIdx[nwOutline.TITLE], self.D_HANDLE, tHandle)
             item.setData(self._colIdx[nwOutline.TITLE], self.D_TITLE, sTitle)
