@@ -88,9 +88,14 @@ QtColActive = QPalette.ColorGroup.Active
 QtColInactive = QPalette.ColorGroup.Inactive
 QtColDisabled = QPalette.ColorGroup.Disabled
 
-# Qt Tree and Table Types
+# Model Item Data
 
-QtDecoration = Qt.ItemDataRole.DecorationRole
+QtAccessibleTextRole = Qt.ItemDataRole.AccessibleTextRole
+QtDecorationRole = Qt.ItemDataRole.DecorationRole
+QtDisplayRole = Qt.ItemDataRole.DisplayRole
+QtFontRole = Qt.ItemDataRole.FontRole
+QtTextAlignmentRole = Qt.ItemDataRole.TextAlignmentRole
+QtToolTipRole = Qt.ItemDataRole.ToolTipRole
 QtUserRole = Qt.ItemDataRole.UserRole
 
 # Keyboard and Mouse Buttons
