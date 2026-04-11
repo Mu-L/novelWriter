@@ -548,7 +548,16 @@ class GuiPreferences(NDialog):
         self.scaleHeadings = NSwitch(self)
         self.scaleHeadings.setChecked(CONFIG.scaleHeadings)
         self.mainForm.addRow(
-            self.tr("Use a larger font size for headings"), self.scaleHeadings
+            self.tr("Use a larger font size for headings"), self.scaleHeadings,
+            self.tr("Turning it off only affects the editor.")
+        )
+
+        # Single Asterisk Bold
+        self.singleStarBold = NSwitch(self)
+        self.singleStarBold.setChecked(CONFIG.singleStarBold)
+        self.mainForm.addRow(
+            self.tr("Prefer single asterisk bold"), self.singleStarBold,
+            self.tr("Instead of standard Markdown two asterisks.")
         )
 
         # Highlight Current Line
@@ -1084,16 +1093,19 @@ class GuiPreferences(NDialog):
         CONFIG.tabWidth        = self.tabWidth.value()
 
         # Text Editing
-        lineHighlight = self.lineHighlight.isChecked()
-        scaleHeadings = self.scaleHeadings.isChecked()
+        scaleHeadings  = self.scaleHeadings.isChecked()
+        singleStarBold = self.singleStarBold.isChecked()
+        lineHighlight  = self.lineHighlight.isChecked()
 
-        updateSyntax |= CONFIG.lineHighlight != lineHighlight
         updateSyntax |= CONFIG.scaleHeadings != scaleHeadings
+        updateSyntax |= CONFIG.singleStarBold != singleStarBold
+        updateSyntax |= CONFIG.lineHighlight != lineHighlight
 
         CONFIG.spellLanguage   = self.spellLanguage.currentData()
         CONFIG.autoSelect      = self.autoSelect.isChecked()
         CONFIG.cursorWidth     = self.cursorWidth.value()
         CONFIG.scaleHeadings   = scaleHeadings
+        CONFIG.singleStarBold  = singleStarBold
         CONFIG.lineHighlight   = lineHighlight
         CONFIG.showTabsNSpaces = self.showTabsNSpaces.isChecked()
         CONFIG.showLineEndings = self.showLineEndings.isChecked()
