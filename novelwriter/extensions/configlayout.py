@@ -291,15 +291,15 @@ class NColorLabel(QLabel):
         self._color = color or self._color
         self._faded = faded or self._faded
         self._error = error or self._error
-        self._refeshTextColor()
+        self._refreshTextColor()
 
     def setColorState(self, state: nwState) -> None:
         """Change the colour state."""
         if self._state is not state:
             self._state = state
-            self._refeshTextColor()
+            self._refreshTextColor()
 
-    def _refeshTextColor(self) -> None:
+    def _refreshTextColor(self) -> None:
         """Refresh the colour of the text on the label."""
         palette = self.palette()
         match self._state:
@@ -329,12 +329,12 @@ class NPathColorLabel(NColorLabel):
                     for h, n in value
                 ]))
             ))
-            self._refeshTextColor()
+            self._refreshTextColor()
 
-    def _refeshTextColor(self) -> None:
+    def _refreshTextColor(self) -> None:
         """Refresh the colour of the text on the label."""
-        super()._refeshTextColor()
-        color = self.palette().text().color().name(QtHexArgb)
+        super()._refreshTextColor()
+        color = self.palette().windowText().color().name(QtHexArgb)
         super().setText(self._text.replace("#000000", color))
 
 
