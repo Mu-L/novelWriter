@@ -129,7 +129,25 @@ def testTextPatterns_Words():
 @pytest.mark.core
 def testTextPatterns_Markdown():
     """Test the markdown pattern regexes."""
-    # Bold
+    # Bold, 1 Stars
+    CONFIG.singleStarBold = True
+    regEx = REGEX_PATTERNS.markdownBold
+    assert allMatches(regEx, "one *two* three") == [
+         [("*two*", 4, 9), ("*", 4, 5), ("two", 5, 8), ("*", 8, 9)]
+    ]
+    assert allMatches(regEx, "one **two* three") == [
+        [("*two*", 5, 10), ("*", 5, 6), ("two", 6, 9), ("*", 9, 10)]
+    ]
+    assert allMatches(regEx, "one *two** three") == [
+        [("*two*", 4, 9), ("*", 4, 5), ("two", 5, 8), ("*", 8, 9)]
+    ]
+    assert allMatches(regEx, "one**two**three") == [
+        [("*two*", 4, 9), ("*", 4, 5), ("two", 5, 8), ("*", 8, 9)]
+    ]
+    assert allMatches(regEx, "one*two*three") == []
+
+    # Bold, 2 Stars
+    CONFIG.singleStarBold = False
     regEx = REGEX_PATTERNS.markdownBold
     assert allMatches(regEx, "one **two** three") == [
         [("**two**", 4, 11), ("**", 4, 6), ("two", 6, 9), ("**", 9, 11)]
@@ -137,6 +155,7 @@ def testTextPatterns_Markdown():
     assert allMatches(regEx, "one **two* three") == []
     assert allMatches(regEx, "one *two** three") == []
     assert allMatches(regEx, "one**two**three") == []
+    assert allMatches(regEx, "one*two*three") == []
 
     # Italic
     regEx = REGEX_PATTERNS.markdownItalic
