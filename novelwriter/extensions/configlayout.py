@@ -334,7 +334,7 @@ class NPathColorLabel(NColorLabel):
     def _refeshTextColor(self) -> None:
         """Refresh the colour of the text on the label."""
         super()._refeshTextColor()
-        color = self.palette().text().color().name(QtHexArgb)
+        color = self.palette().windowText().color().name(QtHexArgb)
         super().setText(self._text.replace("#000000", color))
 
 
