@@ -549,7 +549,7 @@ class GuiPreferences(NDialog):
         self.scaleHeadings.setChecked(CONFIG.scaleHeadings)
         self.mainForm.addRow(
             self.tr("Use a larger font size for headings"), self.scaleHeadings,
-            self.tr("Turning it off only affects the editor.")
+            self.tr("Turning this off only affects the editor.")
         )
 
         # Single Asterisk Bold
@@ -557,7 +557,7 @@ class GuiPreferences(NDialog):
         self.singleStarBold.setChecked(CONFIG.singleStarBold)
         self.mainForm.addRow(
             self.tr("Prefer single asterisk bold"), self.singleStarBold,
-            self.tr("Instead of standard Markdown two asterisks.")
+            self.tr("This does not turn off double asterisks for bold.")
         )
 
         # Highlight Current Line
