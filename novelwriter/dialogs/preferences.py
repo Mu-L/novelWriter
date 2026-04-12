@@ -548,7 +548,8 @@ class GuiPreferences(NDialog):
         self.scaleHeadings = NSwitch(self)
         self.scaleHeadings.setChecked(CONFIG.scaleHeadings)
         self.mainForm.addRow(
-            self.tr("Use a larger font size for headings"), self.scaleHeadings
+            self.tr("Use a larger font size for headings"), self.scaleHeadings,
+            self.tr("Turning this off only affects the editor.")
         )
 
         # Highlight Current Line
