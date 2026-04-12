@@ -1774,22 +1774,22 @@
 </context><context>
     <name>GuiItemDetails</name>
     <message>
-        <location filename="../novelwriter/gui/itemdetails.py" line="71" />
+        <location filename="../novelwriter/gui/itemdetails.py" line="65" />
         <source>Label</source>
         <translation>ラベル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/itemdetails.py" line="84" />
+        <location filename="../novelwriter/gui/itemdetails.py" line="78" />
         <source>Status</source>
         <translation>ステータス</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/itemdetails.py" line="97" />
+        <location filename="../novelwriter/gui/itemdetails.py" line="91" />
         <source>Class</source>
         <translation>クラス</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/itemdetails.py" line="109" />
+        <location filename="../novelwriter/gui/itemdetails.py" line="103" />
         <source>Usage</source>
         <translation>用途</translation>
     </message>
@@ -2642,80 +2642,85 @@
         <translation>ビルド</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="150" />
+        <location filename="../novelwriter/tools/manuscript.py" line="151" />
         <source>Details</source>
         <translation>詳細</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="151" />
+        <location filename="../novelwriter/tools/manuscript.py" line="152" />
         <source>Outline</source>
         <translation>アウトライン</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="189" />
+        <location filename="../novelwriter/tools/manuscript.py" line="190" />
         <source>Show page breaks</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="320" />
-        <location filename="../novelwriter/tools/manuscript.py" line="253" />
+        <location filename="../novelwriter/tools/manuscript.py" line="321" />
+        <location filename="../novelwriter/tools/manuscript.py" line="254" />
         <source>My Manuscript</source>
         <translation>私の原稿</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="349" />
+        <location filename="../novelwriter/tools/manuscript.py" line="350" />
         <source>Delete build '{0}'?</source>
         <translation>ビルド '{0}' を削除しますか？</translation>
     </message>
 </context><context>
     <name>GuiManuscriptBuild</name>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="75" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="76" />
         <source>Build Manuscript</source>
         <translation>原稿をビルド</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="91" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="92" />
         <source>Output Format</source>
         <translation>出力形式</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="117" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="118" />
         <source>Table of Contents</source>
         <translation>目次</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="145" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="137" />
+        <source>Build: {0}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../novelwriter/tools/manusbuild.py" line="142" />
         <source>Path</source>
         <translation>パス</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="155" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="152" />
         <source>File Name</source>
         <translation>ファイル名</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="158" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="155" />
         <source>Reset file name to default</source>
         <translation>ファイル名をデフォルトにリセット</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="182" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="179" />
         <source>Open Folder</source>
         <translation>フォルダーを開く</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="277" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="274" />
         <source>Select Folder</source>
         <translation>フォルダーを選択</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="312" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="309" />
         <source>Output folder does not exist.</source>
         <translation>出力フォルダが存在しません。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manusbuild.py" line="320" />
+        <location filename="../novelwriter/tools/manusbuild.py" line="317" />
         <source>The file already exists. Do you want to overwrite it?</source>
         <translation>このファイルはすでに存在します。上書きしますか?</translation>
     </message>
@@ -2740,121 +2745,121 @@
 </context><context>
     <name>GuiNovelToolBar</name>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="191" />
+        <location filename="../novelwriter/gui/noveltree.py" line="188" />
         <source>Outline of {0}</source>
         <translation>{0} のアウトライン</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="197" />
+        <location filename="../novelwriter/gui/noveltree.py" line="194" />
         <source>Novel Root</source>
         <translation>小説のルート</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="202" />
+        <location filename="../novelwriter/gui/noveltree.py" line="199" />
         <source>Refresh</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="208" />
+        <location filename="../novelwriter/gui/noveltree.py" line="205" />
         <source>Last Column</source>
         <translation>最後の列</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="211" />
+        <location filename="../novelwriter/gui/noveltree.py" line="208" />
         <source>Hidden</source>
         <translation>非表示</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="212" />
+        <location filename="../novelwriter/gui/noveltree.py" line="209" />
         <source>Point of View Character</source>
         <translation>視点人物</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="213" />
+        <location filename="../novelwriter/gui/noveltree.py" line="210" />
         <source>Focus Character</source>
         <translation>焦点人物</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="214" />
+        <location filename="../novelwriter/gui/noveltree.py" line="211" />
         <source>Novel Plot</source>
         <translation>小説のプロット</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="338" />
-        <location filename="../novelwriter/gui/noveltree.py" line="217" />
+        <location filename="../novelwriter/gui/noveltree.py" line="335" />
+        <location filename="../novelwriter/gui/noveltree.py" line="214" />
         <source>Column Size</source>
         <translation>列のサイズ</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="221" />
+        <location filename="../novelwriter/gui/noveltree.py" line="218" />
         <source>More Options</source>
         <translation>その他の設定</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="338" />
+        <location filename="../novelwriter/gui/noveltree.py" line="335" />
         <source>Maximum column size in %</source>
         <translation>列の最大サイズ (%)</translation>
     </message>
 </context><context>
     <name>GuiNovelTree</name>
     <message>
-        <location filename="../novelwriter/gui/noveltree.py" line="574" />
+        <location filename="../novelwriter/gui/noveltree.py" line="571" />
         <source>No meta data</source>
         <translation>メタデータなし</translation>
     </message>
 </context><context>
     <name>GuiOutlineDetails</name>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="1010" />
-        <location filename="../novelwriter/gui/outline.py" line="863" />
-        <location filename="../novelwriter/gui/outline.py" line="836" />
+        <location filename="../novelwriter/gui/outline.py" line="1009" />
+        <location filename="../novelwriter/gui/outline.py" line="862" />
+        <location filename="../novelwriter/gui/outline.py" line="835" />
         <source>Title</source>
         <translation>タイトル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="837" />
+        <location filename="../novelwriter/gui/outline.py" line="836" />
         <source>Chapter</source>
         <translation>チャプター</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="838" />
+        <location filename="../novelwriter/gui/outline.py" line="837" />
         <source>Scene</source>
         <translation>シーン</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="839" />
+        <location filename="../novelwriter/gui/outline.py" line="838" />
         <source>Section</source>
         <translation>セクション</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="864" />
+        <location filename="../novelwriter/gui/outline.py" line="863" />
         <source>Document</source>
         <translation>ドキュメント</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="865" />
+        <location filename="../novelwriter/gui/outline.py" line="864" />
         <source>Status</source>
         <translation>ステータス</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="901" />
+        <location filename="../novelwriter/gui/outline.py" line="900" />
         <source>Synopsis</source>
         <translation>あらすじ</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="913" />
+        <location filename="../novelwriter/gui/outline.py" line="912" />
         <source>Title Details</source>
         <translation>タイトルの詳細</translation>
     </message>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="938" />
+        <location filename="../novelwriter/gui/outline.py" line="937" />
         <source>Reference Tags</source>
         <translation>参照タグ</translation>
     </message>
 </context><context>
     <name>GuiOutlineHeaderMenu</name>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="803" />
+        <location filename="../novelwriter/gui/outline.py" line="802" />
         <source>Select Columns</source>
         <translation>列の選択</translation>
     </message>
@@ -2878,7 +2883,7 @@
 </context><context>
     <name>GuiOutlineTree</name>
     <message>
-        <location filename="../novelwriter/gui/outline.py" line="535" />
+        <location filename="../novelwriter/gui/outline.py" line="534" />
         <source>Save Outline As</source>
         <translation>アウトラインを名前を付けて保存</translation>
     </message>
@@ -3000,8 +3005,8 @@
         <translation>ドキュメントのフォント</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="501" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="490" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="488" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="479" />
         <location filename="../novelwriter/dialogs/preferences.py" line="274" />
         <source>Applies to both document editor and viewer.</source>
         <translation>ドキュメントエディターとビューアーの両方に適用されます。</translation>
@@ -3067,550 +3072,555 @@
         <translation>動作</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="345" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="343" />
         <source>Save document interval</source>
         <translation>ドキュメントの保存間隔</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="346" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="344" />
         <source>How often the document is automatically saved.</source>
         <translation>ドキュメントが自動的に保存される頻度。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="357" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="346" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="353" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="344" />
         <source>seconds</source>
         <translation>秒</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="356" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="352" />
         <source>Save project interval</source>
         <translation>プロジェクトの保存間隔</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="357" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="353" />
         <source>How often the project is automatically saved.</source>
         <translation>プロジェクトが自動的に保存される頻度。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="364" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="360" />
         <source>Ask before exiting novelWriter</source>
         <translation>ノベルライターを終了する前に確認する</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="365" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="361" />
         <source>Only applies when a project is open.</source>
         <translation>プロジェクトが開いているときにのみ適用されます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="372" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="368" />
         <source>Centre window on startup</source>
         <translation>起動時にウィンドウを中央に表示</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="373" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="369" />
         <source>Applies to main window and welcome dialog.</source>
         <translation>メインウィンドウとウェルカムダイアログに適用されます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="379" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="375" />
         <source>Project Backup</source>
         <translation>プロジェクトのバックアップ</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="387" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="383" />
         <source>Browse</source>
         <translation>ブラウズ</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="392" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="388" />
         <source>Backup storage location</source>
         <translation>バックアップストレージの場所</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="972" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="393" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="954" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="389" />
         <source>Path: {0}</source>
         <translation>パス: {0}</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="401" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="397" />
         <source>Run backup when the project is closed</source>
         <translation>プロジェクトを閉じたときにバックアップを実行</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="402" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="398" />
         <source>Can be overridden for individual projects in Project Settings.</source>
         <translation>プロジェクト設定で個々のプロジェクトに対して上書きできます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="411" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="407" />
         <source>Ask before running backup</source>
         <translation>バックアップを実行する前に確認</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="412" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="408" />
         <source>If off, backups will run in the background.</source>
         <translation>オフの場合、バックアップはバックグラウンドで実行されます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="418" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="414" />
         <source>Session Timer</source>
         <translation>セッションタイマー</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="427" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="423" />
         <source>Pause the session timer when not writing</source>
         <translation>書き込んでいない時にセッションタイマーを一時停止</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="428" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="424" />
         <source>Also pauses when the application window does not have focus.</source>
         <translation>また、アプリケーションウィンドウにフォーカスがない場合は一時停止します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="439" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="432" />
         <source>Editor inactive time before pausing timer</source>
         <translation>タイマーを一時停止するまでのエディターの非アクティブ時間</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="440" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="433" />
         <source>User activity includes typing and changing the content.</source>
         <translation>ユーザーアクティビティには、入力とコンテンツの変更が含まれます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="441" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="434" />
         <source>minutes</source>
         <translation>分</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="445" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="438" />
         <source>Writing</source>
         <translation>執筆</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="450" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="443" />
         <source>Text Flow</source>
         <translation>テキストフロー</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="462" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="453" />
         <source>Maximum text width in "Normal Mode"</source>
         <translation>"ノーマルモード"でのテキストの最大幅</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="463" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="454" />
         <source>Set to 0 to disable this feature.</source>
         <translation>この機能を無効にするには0に設定してください。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="561" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="514" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="502" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="474" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="544" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="499" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="489" />
         <location filename="../novelwriter/dialogs/preferences.py" line="463" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="454" />
         <source>px</source>
         <translation>px</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="473" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="462" />
         <source>Maximum text width in "Focus Mode"</source>
         <translation>"フォーカスモード"でのテキストの最大幅</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="474" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="463" />
         <source>The maximum width cannot be disabled.</source>
         <translation>最大幅を無効にすることはできません</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="481" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="470" />
         <source>Hide document footer in "Focus Mode"</source>
         <translation>"フォーカスモード"でドキュメントのフッターを非表示</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="482" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="471" />
         <source>Hide the information bar in the document editor.</source>
         <translation>ドキュメントエディターで情報バーを非表示にします。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="489" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="478" />
         <source>Justify the text margins</source>
         <translation>テキストの余白を揃える</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="500" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="487" />
         <source>Minimum text margin</source>
         <translation>テキストの最小マージン</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="512" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="497" />
         <source>Tab width</source>
         <translation>タブの幅</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="513" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="498" />
         <source>The width of a tab key press in the editor and viewer.</source>
         <translation>タブキーを押した時のエディターとビューアーでの幅。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="520" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="505" />
         <source>Text Editing</source>
         <translation>テキスト編集</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="540" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="525" />
         <source>Spell check language</source>
         <translation>スペルチェック言語</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="541" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="526" />
         <source>Available languages are determined by your system.</source>
         <translation>利用可能な言語はシステムによって決定されます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="548" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="533" />
         <source>Auto-select word under cursor</source>
         <translation>カーソルの下にある単語を自動選択</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="549" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="534" />
         <source>Apply formatting to word under cursor if no selection is made.</source>
         <translation>選択が行われていない場合は、カーソルの下にある単語に書式を適用します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="559" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="542" />
         <source>Cursor width</source>
         <translation>カーソル幅</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="560" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="543" />
         <source>The width of the text cursor of the editor.</source>
         <translation>エディターのテキストカーソルの幅。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="568" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="551" />
         <source>Use a larger font size for headings</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="575" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="552" />
+        <source>Turning this off only affects the editor.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../novelwriter/dialogs/preferences.py" line="559" />
         <source>Highlight current line</source>
         <translation>現在の行をハイライト表示</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="582" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="566" />
         <source>Show tabs and spaces</source>
         <translation>タブとスペースを表示</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="589" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="573" />
         <source>Show line endings</source>
         <translation>行末を表示</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="595" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="579" />
         <source>Editor Scrolling</source>
         <translation>エディタースクロール</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="604" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="588" />
         <source>Scroll past the end of the document</source>
         <translation>ドキュメントの最後までスクロール</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="605" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="589" />
         <source>Also centres the cursor when scrolling.</source>
         <translation>また、スクロール時にカーソルを中央に移動します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="612" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="596" />
         <source>Typewriter style scrolling when you type</source>
         <translation>入力時にタイプライタースタイルスクロール</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="613" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="597" />
         <source>Keeps the cursor at a fixed vertical position.</source>
         <translation>カーソルを固定の垂直位置に維持します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="623" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="605" />
         <source>Minimum position for Typewriter scrolling</source>
         <translation>タイプライタースクロールの最小位置</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="624" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="606" />
         <source>Percentage of the editor height from the top.</source>
         <translation>エディターの高さの上からの割合。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="630" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="612" />
         <source>Text Highlighting</source>
         <translation>テキストのハイライト</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="637" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="619" />
         <source>None</source>
         <translation>なし</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="638" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="620" />
         <source>Single Quotes</source>
         <translation>シングルクォート</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="639" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="621" />
         <source>Double Quotes</source>
         <translation>ダブルクォート</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="640" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="622" />
         <source>Both</source>
         <translation>両方</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="643" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="625" />
         <source>Highlight dialogue</source>
         <translation>ダイアログのハイライト</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="644" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="626" />
         <source>Applies to the selected quote styles.</source>
         <translation>選択したクォートスタイルに適用されます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="651" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="633" />
         <source>Allow open-ended dialogue</source>
         <translation>閉じないダイアログを許可</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="652" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="634" />
         <source>Highlight dialogue line with no closing quote.</source>
         <translation>終了引用符の無いダイアログ行をハイライト表示します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="669" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="651" />
         <source>Alternative dialogue symbols</source>
         <translation>代替ダイアログ記号</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="670" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="652" />
         <source>Custom highlighting of dialogue text.</source>
         <translation>ダイアログテキストのカスタムハイライト。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="885" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="870" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="854" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="839" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="688" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="867" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="852" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="836" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="821" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="670" />
         <source>Select Symbol</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="692" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="674" />
         <source>Dialogue line symbols</source>
         <translation>ダイアログ行記号</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="693" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="675" />
         <source>Lines starting with any of these symbols are dialogue.</source>
         <translation>これらの記号で始まる行はダイアログとなります。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="709" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="691" />
         <source>Narrator break symbol</source>
         <translation>ナレーター区切り記号</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="710" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="692" />
         <source>Symbol to indicate a narrator break in dialogue.</source>
         <translation>ダイアログ内のナレーターの区切りを示すシンボルです。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="713" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="695" />
         <source>Alternating dialogue/narration symbol</source>
         <translation>ダイアログ/ナレーションの切替記号</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="714" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="696" />
         <source>Alternates dialogue highlighting within any paragraph.</source>
         <translation>任意の段落内のダイアログのハイライト表示を切り替えます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="721" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="703" />
         <source>Add highlight colour to emphasised text</source>
         <translation>強調テキストにハイライト色を追加</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="738" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="730" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="722" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="720" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="712" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="704" />
         <source>Applies to the document editor only.</source>
         <translation>ドキュメントエディターにのみ適用されます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="729" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="711" />
         <source>Add dotted lines under codes and modifiers</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="737" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="719" />
         <source>Highlight multiple spaces between words</source>
         <translation>単語間にある複数のスペースをハイライト表示</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="744" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="726" />
         <source>Text Automation</source>
         <translation>テキストの自動化</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="754" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="736" />
         <source>Auto-replace text as you type</source>
         <translation>入力時にテキストを自動的に置き換え</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="755" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="737" />
         <source>Allow the editor to replace symbols as you type.</source>
         <translation>入力時にエディターが記号を置き換えることを許可します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="763" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="745" />
         <source>Auto-replace single quotes</source>
         <translation>シングルクォートの自動置換</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="773" />
-        <location filename="../novelwriter/dialogs/preferences.py" line="764" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="755" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="746" />
         <source>Try to guess which is an opening or a closing quote.</source>
         <translation>引用符が開始と終了のどちらかを推測する</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="772" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="754" />
         <source>Auto-replace double quotes</source>
         <translation>ダブルクォートの自動置換</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="781" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="763" />
         <source>Auto-replace dashes</source>
         <translation>ダッシュの自動置換</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="782" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="764" />
         <source>Double and triple hyphens become short and long dashes.</source>
         <translation>二重および三重のハイフンはenおよびemダッシュに置き換えらます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="790" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="772" />
         <source>Auto-replace dots</source>
         <translation>ドットの自動置換</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="791" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="773" />
         <source>Three consecutive dots become ellipsis.</source>
         <translation>３つ連続したドットは省略記号に置き換えられます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="800" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="782" />
         <source>Insert non-breaking space before</source>
         <translation>ノーブレークスペースを前に挿入</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="801" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="783" />
         <source>Automatically add space before any of these symbols.</source>
         <translation>これらの記号の前にスペースを自動的に追加します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="810" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="792" />
         <source>Insert non-breaking space after</source>
         <translation>ノーブレークスペースを後に挿入</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="811" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="793" />
         <source>Automatically add space after any of these symbols.</source>
         <translation>これらの記号の後にスペースを自動的に追加します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="819" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="801" />
         <source>Use thin space instead</source>
         <translation>細いスペースを代わりに使用</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="820" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="802" />
         <source>Inserts a thin space instead of a regular space.</source>
         <translation>通常のスペースの代わりに細いスペースを挿入します。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="826" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="808" />
         <source>Quotation Style</source>
         <translation>クォーテーションスタイル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="842" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="824" />
         <source>Single quote open style</source>
         <translation>シングルクォートオープンスタイル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="843" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="825" />
         <source>The symbol to use for a leading single quote.</source>
         <translation>先頭のシングルクォートに使用する記号です。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="857" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="839" />
         <source>Single quote close style</source>
         <translation>シングルクォートクローズスタイル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="858" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="840" />
         <source>The symbol to use for a trailing single quote.</source>
         <translation>末尾のシングルクォートに使用する記号です。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="873" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="855" />
         <source>Double quote open style</source>
         <translation>ダブルクォートオープンスタイル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="874" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="856" />
         <source>The symbol to use for a leading double quote.</source>
         <translation>先頭のダブルクォートに使用する記号です。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="888" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="870" />
         <source>Double quote close style</source>
         <translation>シングルクォートクローズスタイル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="889" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="871" />
         <source>The symbol to use for a trailing double quote.</source>
         <translation>末尾のダブルクォートに使用する記号です。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="896" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="878" />
         <source>Features</source>
         <translation>機能</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="905" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="887" />
         <source>Enable Vim mode</source>
         <translation>Vimモードを有効にする</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="906" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="888" />
         <source>Switch the editor to use Vim editor commands.</source>
         <translation>エディターでVimエディタのコマンドを使用するように切り替えます。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="968" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="950" />
         <source>Backup Directory</source>
         <translation>バックアップディレクトリー</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="1179" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="1161" />
         <source>Are you sure you want to enable Vim mode?</source>
         <translation>本当にVimモードを有効にしますか？</translation>
     </message>
     <message>
-        <location filename="../novelwriter/dialogs/preferences.py" line="1180" />
+        <location filename="../novelwriter/dialogs/preferences.py" line="1162" />
         <source>This changes how the editor accepts input.</source>
         <translation>この設定はエディタが入力を受け付ける方法を変更します。</translation>
     </message>
@@ -3871,7 +3881,7 @@
 </context><context>
     <name>GuiWelcome</name>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="78" />
+        <location filename="../novelwriter/tools/welcome.py" line="79" />
         <source>Welcome</source>
         <translation>ようこそ</translation>
     </message>
@@ -4524,32 +4534,32 @@
 </context><context>
     <name>_DetailsWidget</name>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="522" />
+        <location filename="../novelwriter/tools/manuscript.py" line="523" />
         <source>Setting</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="522" />
+        <location filename="../novelwriter/tools/manuscript.py" line="523" />
         <source>Value</source>
         <translation>値</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="585" />
+        <location filename="../novelwriter/tools/manuscript.py" line="586" />
         <source>Name</source>
         <translation>名前</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="591" />
+        <location filename="../novelwriter/tools/manuscript.py" line="592" />
         <source>Selection</source>
         <translation>選択</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="603" />
+        <location filename="../novelwriter/tools/manuscript.py" line="604" />
         <source>Title</source>
         <translation>タイトル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="604" />
+        <location filename="../novelwriter/tools/manuscript.py" line="605" />
         <source>Hidden</source>
         <translation>非表示</translation>
     </message>
@@ -4593,12 +4603,12 @@
 </context><context>
     <name>_FormattingTab</name>
     <message>
-        <location filename="../novelwriter/tools/manussettings.py" line="1052" />
+        <location filename="../novelwriter/tools/manussettings.py" line="1050" />
         <source>Select Keyword</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../novelwriter/tools/manussettings.py" line="1075" />
+        <location filename="../novelwriter/tools/manussettings.py" line="1073" />
         <source>Select Font</source>
         <translation type="unfinished">フォントを選択</translation>
     </message>
@@ -4711,161 +4721,161 @@
 </context><context>
     <name>_NewProjectForm</name>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="576" />
+        <location filename="../novelwriter/tools/welcome.py" line="599" />
         <source>Required</source>
         <translation>必須</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="579" />
+        <location filename="../novelwriter/tools/welcome.py" line="602" />
         <source>Project Name</source>
         <translation>プロジェクト名</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="585" />
+        <location filename="../novelwriter/tools/welcome.py" line="608" />
         <source>Optional</source>
         <translation>任意</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="588" />
+        <location filename="../novelwriter/tools/welcome.py" line="611" />
         <source>Author</source>
         <translation>著者</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="596" />
+        <location filename="../novelwriter/tools/welcome.py" line="619" />
         <source>Browse for new project path</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="603" />
+        <location filename="../novelwriter/tools/welcome.py" line="626" />
         <source>Project Path</source>
         <translation>プロジェクトパス</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="611" />
+        <location filename="../novelwriter/tools/welcome.py" line="634" />
         <source>Fill new project</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="615" />
+        <location filename="../novelwriter/tools/welcome.py" line="638" />
         <source>Create a fresh project</source>
         <translation>まっさらなプロジェクトを作成</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="619" />
+        <location filename="../novelwriter/tools/welcome.py" line="642" />
         <source>Create an example project</source>
         <translation>サンプルプロジェクトを作成</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="623" />
+        <location filename="../novelwriter/tools/welcome.py" line="646" />
         <source>Copy an existing project</source>
         <translation>既存のプロジェクトをコピー</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="633" />
+        <location filename="../novelwriter/tools/welcome.py" line="656" />
         <source>Prefill Project</source>
         <translation>プロジェクトのプリフィル</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="650" />
+        <location filename="../novelwriter/tools/welcome.py" line="673" />
         <source>Set to 0 to only add scenes</source>
         <translation>シーンのみを追加するには0に設定してください</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="653" />
+        <location filename="../novelwriter/tools/welcome.py" line="676" />
         <source>Add {0} chapter documents</source>
         <translation>{0} チャプタードキュメントを追加</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="662" />
+        <location filename="../novelwriter/tools/welcome.py" line="685" />
         <source>Add {0} scene documents (to each chapter)</source>
         <translation>{0} シーンドキュメントを追加(各チャプターに)</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="690" />
+        <location filename="../novelwriter/tools/welcome.py" line="713" />
         <source>Add a folder for plot notes</source>
         <translation>プロットノート用のフォルダーを追加</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="691" />
+        <location filename="../novelwriter/tools/welcome.py" line="714" />
         <source>Add a folder for character notes</source>
         <translation>登場人物ノート用のフォルダーを追加</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="692" />
+        <location filename="../novelwriter/tools/welcome.py" line="715" />
         <source>Add a folder for location notes</source>
         <translation>場所ノート用のフォルダーを追加</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="693" />
+        <location filename="../novelwriter/tools/welcome.py" line="716" />
         <source>Add example notes to the above</source>
         <translation>上記にノートの例を追加する</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="699" />
+        <location filename="../novelwriter/tools/welcome.py" line="721" />
         <source>Chapters and Scenes</source>
         <translation>チャプターとシーン</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="702" />
+        <location filename="../novelwriter/tools/welcome.py" line="722" />
         <source>Project Notes</source>
         <translation>プロジェクトノート</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="711" />
+        <location filename="../novelwriter/tools/welcome.py" line="723" />
         <source>Create New Project</source>
         <translation>新規プロジェクトを作成</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="804" />
+        <location filename="../novelwriter/tools/welcome.py" line="831" />
         <source>Fresh Project</source>
         <translation>まっさらなプロジェクト</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="806" />
+        <location filename="../novelwriter/tools/welcome.py" line="833" />
         <source>Example Project</source>
         <translation>サンプルプロジェクト</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="808" />
+        <location filename="../novelwriter/tools/welcome.py" line="835" />
         <source>Template: {0}</source>
         <translation>テンプレート: {0}</translation>
     </message>
 </context><context>
     <name>_NewProjectPage</name>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="546" />
+        <location filename="../novelwriter/tools/welcome.py" line="569" />
         <source>A project name is required.</source>
         <translation>プロジェクト名は必須です。</translation>
     </message>
 </context><context>
     <name>_OpenProjectPage</name>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="270" />
+        <location filename="../novelwriter/tools/welcome.py" line="271" />
         <source>The project path is not reachable.</source>
         <translation>プロジェクトパスに到達できません。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="275" />
+        <location filename="../novelwriter/tools/welcome.py" line="276" />
         <source>Path</source>
         <translation>パス</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="356" />
+        <location filename="../novelwriter/tools/welcome.py" line="357" />
         <source>Remove '{0}' from the recent projects list? The project files will not be deleted.</source>
         <translation>'{0}' を最近のプロジェクトリストから削除しますか？　プロジェクトファイルは削除されません。</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="369" />
+        <location filename="../novelwriter/tools/welcome.py" line="370" />
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="371" />
+        <location filename="../novelwriter/tools/welcome.py" line="372" />
         <source>Remove Project</source>
         <translation>プロジェクトを削除</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="394" />
+        <location filename="../novelwriter/tools/welcome.py" line="395" />
         <source>You must select a location for the example project.</source>
         <translation>サンプルプロジェクトの場所を選択する必要があります。</translation>
     </message>
@@ -4926,44 +4936,44 @@
 </context><context>
     <name>_PreviewWidget</name>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="753" />
+        <location filename="../novelwriter/tools/manuscript.py" line="750" />
         <source>Press the "Preview" button to generate ...</source>
         <translation>"プレビュー" ボタンを押して生成します ...</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="838" />
+        <location filename="../novelwriter/tools/manuscript.py" line="835" />
         <source>Processing ...</source>
         <translation>処理中…</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="848" />
+        <location filename="../novelwriter/tools/manuscript.py" line="845" />
         <source>Done</source>
         <translation>完了</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="910" />
+        <location filename="../novelwriter/tools/manuscript.py" line="907" />
         <source>Built</source>
         <translation>ビルドされた</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/manuscript.py" line="914" />
+        <location filename="../novelwriter/tools/manuscript.py" line="911" />
         <source>No Preview</source>
         <translation>プレビューなし</translation>
     </message>
 </context><context>
     <name>_ProjectListModel</name>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="462" />
+        <location filename="../novelwriter/tools/welcome.py" line="469" />
         <source>Word Count</source>
         <translation>単語カウント</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="463" />
+        <location filename="../novelwriter/tools/welcome.py" line="470" />
         <source>Last Opened</source>
         <translation>最後に開いた</translation>
     </message>
     <message>
-        <location filename="../novelwriter/tools/welcome.py" line="469" />
+        <location filename="../novelwriter/tools/welcome.py" line="482" />
         <source>Select to create an example project</source>
         <translation>選択してサンプルプロジェクトを作成</translation>
     </message>
