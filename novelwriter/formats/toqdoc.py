@@ -35,14 +35,14 @@ from PyQt6.QtGui import (
 from PyQt6.QtPrintSupport import QPrinter
 
 from novelwriter import __version__
-from novelwriter.constants import nwStyles, nwUnicode
+from novelwriter.constants import nwUnicode
 from novelwriter.formats.shared import BlockFmt, BlockTyp, T_Formats, TextFmt, stripEscape
 from novelwriter.formats.tokenizer import HEADING_BLOCKS, META_BLOCKS, Tokenizer
 from novelwriter.types import (
     QtAlignAbsolute, QtAlignCenter, QtAlignJustify, QtAlignLeft, QtAlignRight,
-    QtKeepAnchor, QtMoveAnchor, QtMoveEnd, QtPageBreakAfter, QtPageBreakAuto,
-    QtPageBreakBefore, QtPropLineHeight, QtTransparent, QtVAlignNormal,
-    QtVAlignSub, QtVAlignSuper
+    QtFontBold, QtFontNormal, QtKeepAnchor, QtMoveAnchor, QtMoveEnd,
+    QtPageBreakAfter, QtPageBreakAuto, QtPageBreakBefore, QtPropLineHeight,
+    QtTransparent, QtVAlignNormal, QtVAlignSub, QtVAlignSuper
 )
 
 if TYPE_CHECKING:
@@ -90,8 +90,8 @@ class ToQTextDocument(Tokenizer):
         self._newPage = False
         self._anchors = True
 
-        self._hWeight = QFont.Weight.Bold
-        self._dWeight = QFont.Weight.Normal
+        self._hWeight = QtFontBold
+        self._dWeight = QtFontNormal
         self._dItalic = False
         self._dStrike = False
         self._dUnderline = False
@@ -162,7 +162,7 @@ class ToQTextDocument(Tokenizer):
         self._dUnderline = self._textFont.underline()
 
         # Header Weight
-        self._hWeight = QFont.Weight.Bold if self._boldHeads else self._dWeight
+        self._hWeight = QtFontBold if self._boldHeads else self._dWeight
 
         # Scaled Sizes
         fPt = self._textFont.pointSizeF()
@@ -178,14 +178,13 @@ class ToQTextDocument(Tokenizer):
             BlockTyp.HEAD4: (fPx * self._marginHead4[0], fPx * self._marginHead4[1]),
         }
 
-        hScale = self._scaleHeads
         self._sHead = {
-            BlockTyp.TITLE: (nwStyles.H_SIZES.get(0, 1.0) * fPt) if hScale else fPt,
-            BlockTyp.PART:  (nwStyles.H_SIZES.get(0, 1.0) * fPt) if hScale else fPt,
-            BlockTyp.HEAD1: (nwStyles.H_SIZES.get(1, 1.0) * fPt) if hScale else fPt,
-            BlockTyp.HEAD2: (nwStyles.H_SIZES.get(2, 1.0) * fPt) if hScale else fPt,
-            BlockTyp.HEAD3: (nwStyles.H_SIZES.get(3, 1.0) * fPt) if hScale else fPt,
-            BlockTyp.HEAD4: (nwStyles.H_SIZES.get(4, 1.0) * fPt) if hScale else fPt,
+            BlockTyp.TITLE: fPt * self._sizeTitle,
+            BlockTyp.PART:  fPt * self._sizeTitle,
+            BlockTyp.HEAD1: fPt * self._sizeHead1,
+            BlockTyp.HEAD2: fPt * self._sizeHead2,
+            BlockTyp.HEAD3: fPt * self._sizeHead3,
+            BlockTyp.HEAD4: fPt * self._sizeHead4,
         }
 
         self._mText = (fPx * self._marginText[0], fPx * self._marginText[1])
@@ -348,7 +347,7 @@ class ToQTextDocument(Tokenizer):
 
             # Construct next format
             if fmt == TextFmt.B_B:
-                cFmt.setFontWeight(QFont.Weight.Bold)
+                cFmt.setFontWeight(QtFontBold)
             elif fmt == TextFmt.B_E:
                 cFmt.setFontWeight(self._dWeight)
             elif fmt == TextFmt.I_B:
@@ -457,7 +456,7 @@ class ToQTextDocument(Tokenizer):
             cFmt.setFontItalic(False)
             cFmt.setFontUnderline(False)
             cFmt.setFontStrikeOut(False)
-            cFmt.setFontWeight(QFont.Weight.Normal)
+            cFmt.setFontWeight(QtFontNormal)
             cFmt.setFontPointSize(0.75*self._textFont.pointSizeF())
             cFmt.setForeground(fgCol)
 

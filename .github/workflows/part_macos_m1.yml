@@ -4,6 +4,7 @@ on: workflow_call
 
 jobs:
   buildMac-M1:
+    name: Build on MacOS AARCH64
     runs-on: macos-latest
     permissions:
       contents: read
@@ -13,10 +14,10 @@ jobs:
       MINICONDA_ARCH: arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: nw-assets
           path: novelwriter/assets
@@ -28,7 +29,7 @@ jobs:
           ./setup/macos/build.sh $PYTHON_VERSION $PACKAGE_ARCH $MINICONDA_ARCH
 
       - name: Upload DMG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: novelWriter-${{ steps.build.outputs.BUILD_VERSION }}-MacOS-M1-DMG
           path: dist_macos/*.dmg*

@@ -35,15 +35,16 @@ from typing import TYPE_CHECKING
 
 from novelwriter import SHARED, __hexversion__
 from novelwriter.common import (
-    formatTimeStamp, isHandle, isItemClass, isTitleTag, jsonCombine, jsonEncode
+    formatTimeStamp, isHandle, isItemClass, isTitleTag, jsonCombine,
+    jsonEncode, safeExists
 )
 from novelwriter.constants import nwFiles, nwKeyWords, nwStyles
 from novelwriter.core.indexdata import NOTE_TYPES, TT_NONE, IndexHeading, IndexNode, T_NoteTypes
 from novelwriter.core.novelmodel import NovelModel
 from novelwriter.enum import nwComment, nwItemClass, nwItemLayout, nwItemType, nwNovelExtra
 from novelwriter.error import logException
-from novelwriter.text.comments import processComment
 from novelwriter.text.counting import standardCounter
+from novelwriter.text.formats import processComment, processHeading
 
 if TYPE_CHECKING:
     from collections.abc import ItemsView, Iterable
@@ -241,7 +242,7 @@ class Index:
 
         tStart = time()
         self._indexBroken = False
-        if indexFile.exists():
+        if safeExists(indexFile):
             logger.debug("Loading index file")
             try:
                 with open(indexFile, mode="r", encoding="utf-8") as inFile:
@@ -297,7 +298,8 @@ class Index:
                     "novelWriter.tagsIndex": jsonEncode(self._tagsIndex.packData(), n=1, nmax=2),
                     "novelWriter.itemIndex": jsonEncode(self._itemIndex.packData(), n=1, nmax=4),
                 }))
-        except Exception:
+        except Exception as exc:
+            SHARED.appendErrorMessage(exc)
             logger.error("Failed to save index file")
             logException()
             return False
@@ -381,7 +383,7 @@ class Index:
                 continue
 
             if line.startswith("#"):
-                hDepth, hText = self._splitHeading(line)
+                hDepth, hText = processHeading(line)
                 if hDepth == "H0":
                     continue
 
@@ -436,28 +438,10 @@ class Index:
         """Scan an inactive document for meta data."""
         for line in text.splitlines():
             if line.startswith("#"):
-                hDepth, _ = self._splitHeading(line)
+                hDepth, _ = processHeading(line)
                 if hDepth != "H0":
                     nwItem.setMainHeading(hDepth)
                     break
-
-    def _splitHeading(self, line: str) -> tuple[str, str]:
-        """Split a heading into its heading level and text value."""
-        if line.startswith("# "):
-            return "H1", line[2:].strip()
-        elif line.startswith("## "):
-            return "H2", line[3:].strip()
-        elif line.startswith("### "):
-            return "H3", line[4:].strip()
-        elif line.startswith("#### "):
-            return "H4", line[5:].strip()
-        elif line.startswith("#! "):
-            return "H1", line[3:].strip()
-        elif line.startswith("##! "):
-            return "H2", line[4:].strip()
-        elif line.startswith("###! "):
-            return "H3", line[5:].strip()
-        return "H0", ""
 
     def _indexWordCounts(self, tHandle: str, text: str, sTitle: str) -> None:
         """Count text stats and save the counts to the index."""

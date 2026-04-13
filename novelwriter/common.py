@@ -46,7 +46,7 @@ from novelwriter.enum import nwItemClass, nwItemLayout, nwItemType
 from novelwriter.error import logException
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -262,7 +262,17 @@ def formatTime(t: int) -> str:
 
 def formatVersion(value: str) -> str:
     """Format a version number into a more human readable form."""
-    return value.lower().replace("a", " Alpha ").replace("b", " Beta ").replace("rc", " RC ")
+    major, _, version = value.partition(".")
+    prefix = "20" if checkInt(major, 0) >= 20 else ""
+    if "." in version:
+        version = version.replace(".", " Patch ")
+    elif "a" in version:
+        version = version.replace("a", " Alpha ")
+    elif "b" in version:
+        version = version.replace("b", " Beta ")
+    elif "rc" in version:
+        version = version.replace("rc", " RC ")
+    return f"{prefix}{major}.{version}" if major and version else ""
 
 
 def formatFileFilter(extensions: list[str | tuple[str, str]]) -> str:
@@ -276,6 +286,11 @@ def formatFileFilter(extensions: list[str | tuple[str, str]]) -> str:
         elif isinstance(ext, tuple) and len(ext) == 2:
             result.append(f"{ext[0]} ({ext[1]})")
     return ";;".join(result)
+
+
+def formatLink(link: str, text: str = "") -> str:
+    """Format a HTML link for use in labels."""
+    return f"<a href='{link}'>{text or link}</a>"
 
 
 ##
@@ -447,6 +462,57 @@ def numberToRoman(value: int, toLower: bool = False) -> str:
             break
 
     return roman.lower() if toLower else roman
+
+
+##
+#  Safe I/O Wrappers
+##
+
+def safeIterDir(path: Path, *, alert: bool = False) -> Generator[Path, None, None]:
+    """Call Path.iterdir() with exception handling."""
+    try:
+        yield from path.iterdir()
+    except Exception as exc:
+        logException()
+        if alert:
+            from novelwriter import SHARED
+            SHARED.newStatusMessage(exc, "warning")
+
+
+def safeExists(path: Path, *, alert: bool = False) -> bool:
+    """Call Path.exists() with exception handling."""
+    try:
+        return path.exists()
+    except Exception as exc:
+        logException()
+        if alert:
+            from novelwriter import SHARED
+            SHARED.newStatusMessage(exc, "warning")
+        return False
+
+
+def safeIsFile(path: Path, *, alert: bool = False) -> bool:
+    """Call Path.is_file() with exception handling."""
+    try:
+        return path.is_file()
+    except Exception as exc:
+        logException()
+        if alert:
+            from novelwriter import SHARED
+            SHARED.newStatusMessage(exc, "warning")
+        return False
+
+
+def safeIsDir(path: Path, *, alert: bool = False) -> bool:
+    """Call Path.is_dir() with exception handling."""
+    try:
+        return path.is_dir()
+    except Exception as exc:
+        logException()
+        if alert:
+            from novelwriter import SHARED
+            SHARED.newStatusMessage(exc, "warning")
+        return False
 
 
 ##

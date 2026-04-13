@@ -31,11 +31,15 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QAbstractItemModel, QMimeData, QModelIndex, Qt
 from PyQt6.QtGui import QFont, QIcon
 
+from novelwriter import CONFIG
 from novelwriter.common import decodeMimeHandles, encodeMimeHandles, minmax
 from novelwriter.constants import nwConst
 from novelwriter.core.item import NWItem
 from novelwriter.enum import nwItemClass
-from novelwriter.types import QtAlignRight
+from novelwriter.types import (
+    QtAccessibleTextRole, QtAlignRight, QtDecorationRole, QtDisplayRole,
+    QtFontRole, QtTextAlignmentRole, QtToolTipRole
+)
 
 if TYPE_CHECKING:
     from novelwriter.core.tree import NWTree
@@ -45,18 +49,20 @@ logger = logging.getLogger(__name__)
 INV_ROOT = "invisibleRoot"
 C_FACTOR = 0x0100
 
-C_LABEL_TEXT    = 0x0000 | Qt.ItemDataRole.DisplayRole
-C_LABEL_ICON    = 0x0000 | Qt.ItemDataRole.DecorationRole
-C_LABEL_FONT    = 0x0000 | Qt.ItemDataRole.FontRole
-C_COUNT_TEXT    = 0x0100 | Qt.ItemDataRole.DisplayRole
-C_COUNT_ICON    = 0x0100 | Qt.ItemDataRole.DecorationRole
-C_COUNT_ALIGN   = 0x0100 | Qt.ItemDataRole.TextAlignmentRole
-C_ACTIVE_ICON   = 0x0200 | Qt.ItemDataRole.DecorationRole
-C_ACTIVE_TIP    = 0x0200 | Qt.ItemDataRole.ToolTipRole
-C_ACTIVE_ACCESS = 0x0200 | Qt.ItemDataRole.AccessibleTextRole
-C_STATUS_ICON   = 0x0300 | Qt.ItemDataRole.DecorationRole
-C_STATUS_TIP    = 0x0300 | Qt.ItemDataRole.ToolTipRole
-C_STATUS_ACCESS = 0x0300 | Qt.ItemDataRole.AccessibleTextRole
+C_LABEL_TEXT    = 0x0000 | QtDisplayRole
+C_LABEL_ICON    = 0x0000 | QtDecorationRole
+C_LABEL_FONT    = 0x0000 | QtFontRole
+C_COUNT_TEXT    = 0x0100 | QtDisplayRole
+C_COUNT_ICON    = 0x0100 | QtDecorationRole
+C_COUNT_ALIGN   = 0x0100 | QtTextAlignmentRole
+C_COUNT_TIP     = 0x0100 | QtToolTipRole
+C_COUNT_ACCESS  = 0x0100 | QtAccessibleTextRole
+C_ACTIVE_ICON   = 0x0200 | QtDecorationRole
+C_ACTIVE_TIP    = 0x0200 | QtToolTipRole
+C_ACTIVE_ACCESS = 0x0200 | QtAccessibleTextRole
+C_STATUS_ICON   = 0x0300 | QtDecorationRole
+C_STATUS_TIP    = 0x0300 | QtToolTipRole
+C_STATUS_ACCESS = 0x0300 | QtAccessibleTextRole
 
 NODE_FLAGS = Qt.ItemFlag.ItemIsEnabled
 NODE_FLAGS |= Qt.ItemFlag.ItemIsSelectable
@@ -164,7 +170,11 @@ class ProjectNode:
     def updateCount(self, propagate: bool = True) -> None:
         """Update counts, and propagate upwards in the tree."""
         self._count = self._item.mainCount + sum(c._count for c in self._children)  # noqa: SLF001
-        self._cache[C_COUNT_TEXT] = f"{self._count:n}"
+        text = f"{self._count:n}"
+        info = f"{text} {CONFIG.countUnit}"
+        self._cache[C_COUNT_TEXT] = text
+        self._cache[C_COUNT_TIP] = info
+        self._cache[C_COUNT_ACCESS] = info
         if propagate and (parent := self._parent):
             parent.updateCount()
 

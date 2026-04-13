@@ -30,10 +30,13 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PyQt6.QtGui import QIcon, QPixmap
 
-from novelwriter import SHARED
+from novelwriter import CONFIG, SHARED
 from novelwriter.constants import nwKeyWords, nwLabels, nwStyles, trConst
 from novelwriter.enum import nwNovelExtra
-from novelwriter.types import QtAlignRight
+from novelwriter.types import (
+    QtAccessibleTextRole, QtAlignRight, QtDecorationRole, QtDisplayRole,
+    QtTextAlignmentRole, QtToolTipRole
+)
 
 if TYPE_CHECKING:
     from novelwriter.core.indexdata import IndexHeading, IndexNode
@@ -41,12 +44,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 C_FACTOR = 0x0100
-
-R_TEXT   = Qt.ItemDataRole.DisplayRole
-R_ICON   = Qt.ItemDataRole.DecorationRole
-R_ALIGN  = Qt.ItemDataRole.TextAlignmentRole
-R_TIP    = Qt.ItemDataRole.ToolTipRole
-R_ACCESS = Qt.ItemDataRole.AccessibleTextRole
 R_HANDLE = 0xff01
 R_KEY    = 0xff02
 
@@ -201,21 +198,26 @@ class NovelModel(QAbstractTableModel):
     def _generateEntry(self, handle: str, key: str, head: IndexHeading) -> dict[int, T_NodeData]:
         """Generate a cache entry."""
         iLevel = nwStyles.H_LEVEL.get(head.level, 0)
+        countValue = f"{head.mainCount:n}"
+        countInfo = f"{countValue} {CONFIG.countUnit}"
+
         data = {}
-        data[C_FACTOR*0 | R_TIP] = head.title
-        data[C_FACTOR*0 | R_TEXT] = head.title
-        data[C_FACTOR*0 | R_ICON] = SHARED.theme.getHeaderDecoration(iLevel)
-        data[C_FACTOR*1 | R_TEXT] = f"{head.mainCount:n}"
-        data[C_FACTOR*1 | R_ALIGN] = QtAlignRight
+        data[C_FACTOR*0 | QtToolTipRole] = head.title
+        data[C_FACTOR*0 | QtDisplayRole] = head.title
+        data[C_FACTOR*0 | QtDecorationRole] = SHARED.theme.getHeaderDecoration(iLevel)
+        data[C_FACTOR*1 | QtDisplayRole] = countValue
+        data[C_FACTOR*1 | QtToolTipRole] = countInfo
+        data[C_FACTOR*1 | QtAccessibleTextRole] = countInfo
+        data[C_FACTOR*1 | QtTextAlignmentRole] = QtAlignRight
         if self._columns == 3:
-            data[C_FACTOR*2 | R_ICON] = self._more
+            data[C_FACTOR*2 | QtDecorationRole] = self._more
         else:
             if self._extraKey and (refs := head.getReferencesByKeyword(self._extraKey)):
                 text = ", ".join(refs)
-                data[C_FACTOR*2 | R_TEXT] = text
-                data[C_FACTOR*2 | R_TIP] = f"<b>{self._extraLabel}:</b> {text}"
-                data[C_FACTOR*2 | R_ACCESS] = f"{self._extraLabel}: {text}"
-            data[C_FACTOR*3 | R_ICON] = self._more
+                data[C_FACTOR*2 | QtDisplayRole] = text
+                data[C_FACTOR*2 | QtToolTipRole] = f"<b>{self._extraLabel}:</b> {text}"
+                data[C_FACTOR*2 | QtAccessibleTextRole] = f"{self._extraLabel}: {text}"
+            data[C_FACTOR*3 | QtDecorationRole] = self._more
         data[R_HANDLE] = handle
         data[R_KEY] = key
         return data

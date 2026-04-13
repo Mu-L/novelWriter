@@ -43,9 +43,10 @@ from PyQt6.QtWidgets import QApplication
 
 from novelwriter.common import (
     NWConfigParser, checkInt, checkPath, describeFont, fontMatcher,
-    formatTimeStamp, joinLines, languageName, processDialogSymbols, simplified
+    formatTimeStamp, joinLines, languageName, processDialogSymbols, safeExists,
+    safeIsDir, simplified
 )
-from novelwriter.constants import nwFiles, nwQuotes, nwUnicode
+from novelwriter.constants import nwFiles, nwQuotes, nwUnicode, trStats
 from novelwriter.enum import nwTheme
 from novelwriter.error import formatException, logException
 
@@ -78,20 +79,21 @@ class Config:
         "_manuals", "_nwLangPath", "_qLocale", "_qtLangPath", "_qtTrans", "_recentPaths",
         "_recentProjects", "_splash", "allowOpenDial", "altDialogClose", "altDialogOpen",
         "appHandle", "appName", "askBeforeBackup", "askBeforeExit", "autoSaveDoc", "autoSaveProj",
-        "autoScroll", "autoScrollPos", "autoSelect", "backupOnClose", "cursorWidth", "darkTheme",
-        "dialogLine", "dialogStyle", "doJustify", "doReplace", "doReplaceDQuote", "doReplaceDash",
-        "doReplaceDots", "doReplaceSQuote", "emphLabels", "fmtApostrophe", "fmtDQuoteClose",
-        "fmtDQuoteOpen", "fmtPadAfter", "fmtPadBefore", "fmtPadThin", "fmtSQuoteClose",
-        "fmtSQuoteOpen", "focusWidth", "fontWinSize", "guiFont", "guiLocale", "hasEnchant",
-        "hideFocusFooter", "hideHScroll", "hideVScroll", "highlightEmph", "hostName",
-        "iconColDocs", "iconColTree", "iconTheme", "incNotesWCount", "isDebug", "kernelVer",
-        "lastNotes", "lightTheme", "lineHighlight", "mainPanePos", "mainWinSize", "memInfo",
-        "moveMainWin", "narratorBreak", "narratorDialog", "nativeFont", "osDarwin", "osLinux",
-        "osType", "osUnknown", "osWindows", "outlinePanePos", "prefsWinSize", "scrollPastEnd",
-        "searchCase", "searchLoop", "searchMatchCap", "searchNextFile", "searchProjCase",
-        "searchProjRegEx", "searchProjWord", "searchRegEx", "searchWord", "showEditToolBar",
-        "showFullPath", "showLineEndings", "showMultiSpaces", "showSessionTime", "showTabsNSpaces",
-        "showViewerPanel", "spellLanguage", "stopWhenIdle", "tabWidth", "textFont", "textMargin",
+        "autoScroll", "autoScrollPos", "autoSelect", "backupOnClose", "countUnit", "cursorWidth",
+        "darkTheme", "dialogLine", "dialogStyle", "doJustify", "doReplace", "doReplaceDQuote",
+        "doReplaceDash", "doReplaceDots", "doReplaceSQuote", "dottedModCodes", "emphLabels",
+        "fmtApostrophe", "fmtDQuoteClose", "fmtDQuoteOpen", "fmtPadAfter", "fmtPadBefore",
+        "fmtPadThin", "fmtSQuoteClose", "fmtSQuoteOpen", "focusWidth", "fontWinSize", "guiFont",
+        "guiLocale", "hasEnchant", "hideFocusFooter", "hideHScroll", "hideVScroll",
+        "highlightEmph", "hostName", "iconColDocs", "iconColTree", "iconTheme", "incNotesWCount",
+        "isDebug", "kernelVer", "lastNotes", "lightTheme", "lineHighlight", "mainPanePos",
+        "mainWinSize", "memInfo", "moveMainWin", "narratorBreak", "narratorDialog", "nativeFont",
+        "osDarwin", "osLinux", "osType", "osUnknown", "osWindows", "outlinePanePos",
+        "prefsWinSize", "scaleHeadings", "scrollPastEnd", "searchCase", "searchLoop",
+        "searchMatchCap", "searchNextFile", "searchProjCase", "searchProjRegEx", "searchProjWord",
+        "searchRegEx", "searchWord", "showEditToolBar", "showFullPath", "showLineEndings",
+        "showMultiSpaces", "showSessionTime", "showTabsNSpaces", "showViewerPanel",
+        "singleStarBold", "spellLanguage", "stopWhenIdle", "tabWidth", "textFont", "textMargin",
         "textWidth", "themeMode", "useCharCount", "userIdleTime", "verPyQtString", "verPyQtValue",
         "verPyString", "verQtString", "verQtValue", "viewComments", "viewNotes", "viewPanePos",
         "viewSynopsis", "vimMode", "welcomeWinSize",
@@ -139,7 +141,7 @@ class Config:
         self._nwLangPath = self._appPath / "assets" / "i18n"
         self._qtLangPath = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
 
-        hasLocale = (self._nwLangPath / f"nw_{QLocale.system().name()}.qm").exists()
+        hasLocale = safeExists(self._nwLangPath / f"nw_{QLocale.system().name()}.qm")
         self._qLocale = QLocale.system() if hasLocale else QLocale("en_GB")
         self._dLocale = QLocale.system()
         self._dShortDate = self._dLocale.dateFormat(QLocale.FormatType.ShortFormat)
@@ -148,10 +150,13 @@ class Config:
 
         # PDF Manual
         self._manuals: dict[str, Path] = {}
-        if (assets := self._appPath / "assets").is_dir():
-            for item in assets.iterdir():
-                if item.is_file() and item.stem.startswith("manual") and item.suffix == ".pdf":
-                    self._manuals[item.stem] = item
+        try:
+            if (assets := self._appPath / "assets").is_dir():
+                for item in assets.iterdir():
+                    if item.is_file() and item.stem.startswith("manual") and item.suffix == ".pdf":
+                        self._manuals[item.stem] = item
+        except Exception:
+            logException()
 
         # User Settings
         # =============
@@ -171,6 +176,7 @@ class Config:
         self.lastNotes    = "0x0"          # The latest release notes that have been shown
         self.nativeFont   = True           # Use native font dialog
         self.useCharCount = False          # Use character count as primary count
+        self.countUnit    = "words"        # Primary count unit
         self.vimMode      = False          # Enable Vim mode
 
         # Icons
@@ -213,6 +219,8 @@ class Config:
         self.showTabsNSpaces = False    # Show tabs and spaces in editor
         self.showLineEndings = False    # Show line endings in editor
         self.showMultiSpaces = False    # Highlight multiple spaces in the text
+        self.scaleHeadings   = True     # Use a larger size for headings
+        self.singleStarBold  = False    # Allow single asterisk bold
 
         self.doReplace       = True     # Enable auto-replace as you type
         self.doReplaceSQuote = True     # Smart single quotes
@@ -232,6 +240,7 @@ class Config:
         self.altDialogOpen   = ""       # Alternative dialog symbol, open
         self.altDialogClose  = ""       # Alternative dialog symbol, close
         self.highlightEmph   = True     # Add colour to text emphasis
+        self.dottedModCodes  = False    # Add dotted lines under codes and modifiers
 
         self.stopWhenIdle    = True     # Stop the status bar clock when the user is idle
         self.userIdleTime    = 300      # Time of inactivity to consider user idle
@@ -390,9 +399,9 @@ class Config:
         """
         if isinstance(path, str | Path):
             path = checkPath(path, self._homePath)
-            if not path.is_dir():
+            if not safeIsDir(path):
                 path = path.parent
-            if path.is_dir():
+            if safeIsDir(path):
                 self._recentPaths.setPath(key, path)
 
     def setBackupPath(self, path: Path | str) -> None:
@@ -444,6 +453,11 @@ class Config:
             self.textFont = fontMatcher(font)
             logger.debug("Text font set to: %s", describeFont(self.textFont))
 
+    def setPrimaryCount(self, useCharCount: bool) -> None:
+        """Set the primary count unit. This also updates the unit label."""
+        self.useCharCount = useCharCount
+        self.countUnit = trStats("Characters" if useCharCount else "Words").lower()
+
     ##
     #  Methods
     ##
@@ -467,14 +481,13 @@ class Config:
     def lastPath(self, key: str) -> Path:
         """Return the last path used by the user, if it exists."""
         if path := self._recentPaths.getPath(key):
-            asPath = Path(path)
-            if asPath.is_dir():
+            if safeIsDir(asPath := Path(path)):
                 return asPath
         return self._homePath
 
     def backupPath(self) -> Path:
         """Return the backup path."""
-        if isinstance(self._backupPath, Path) and self._backupPath.is_dir():
+        if isinstance(self._backupPath, Path) and safeIsDir(self._backupPath):
             return self._backupPath
         return self._backPath
 
@@ -486,6 +499,10 @@ class Config:
         self._hasError = False
         self._errData = []
         return message
+
+    def checkMinQtVersion(self, version: int) -> bool:
+        """Check if a minimum Qt version is satisfied."""
+        return self.verPyQtValue >= version and self.verQtValue >= version
 
     def localDate(self, value: datetime) -> str:
         """Return a localised date format."""
@@ -515,15 +532,18 @@ class Config:
         else:
             return []
 
-        for qmFile in self._nwLangPath.iterdir():
-            qmName = qmFile.name
-            if not (qmFile.is_file() and qmName.startswith(fPre) and qmName.endswith(fExt)):
-                continue
+        try:
+            for qmFile in self._nwLangPath.iterdir():
+                qmName = qmFile.name
+                if not (qmFile.is_file() and qmName.startswith(fPre) and qmName.endswith(fExt)):
+                    continue
 
-            qmLang = qmName[len(fPre):-len(fExt)]
-            qmName = languageName(qmLang)
-            if qmLang and qmName and qmLang != "en_GB":
-                langList[qmLang] = qmName
+                qmLang = qmName[len(fPre):-len(fExt)]
+                qmName = languageName(qmLang)
+                if qmLang and qmName and qmLang != "en_GB":
+                    langList[qmLang] = qmName
+        except Exception as exc:
+            logger.error("Failed to load additional language files", exc_info=exc)
 
         return sorted(langList.items(), key=lambda x: x[0])
 
@@ -558,14 +578,16 @@ class Config:
 
         # If the config and data folders don't exist, create them
         # This assumes that the os config and data folders exist
-        self._confPath.mkdir(exist_ok=True)
-        self._dataPath.mkdir(exist_ok=True)
-
         # Also create the themes and icons folders if possible
-        if self._dataPath.is_dir():
-            (self._dataPath / "cache").mkdir(exist_ok=True)
-            (self._dataPath / "icons").mkdir(exist_ok=True)
-            (self._dataPath / "themes").mkdir(exist_ok=True)
+        try:
+            self._confPath.mkdir(exist_ok=True)
+            self._dataPath.mkdir(exist_ok=True)
+            if self._dataPath.is_dir():
+                (self._dataPath / "cache").mkdir(exist_ok=True)
+                (self._dataPath / "icons").mkdir(exist_ok=True)
+                (self._dataPath / "themes").mkdir(exist_ok=True)
+        except Exception:
+            logException()
 
         self._recentPaths.loadCache()
         self._recentProjects.loadCache()
@@ -581,7 +603,7 @@ class Config:
         QLocale.setDefault(self._qLocale)
         self._qtTrans = {}
 
-        hasLocale = (self._nwLangPath / f"nw_{self._qLocale.name()}.qm").exists()
+        hasLocale = safeExists(self._nwLangPath / f"nw_{self._qLocale.name()}.qm")
         self._dLocale = self._qLocale if hasLocale else QLocale.system()
         self._dShortDate = self._dLocale.dateFormat(QLocale.FormatType.ShortFormat)
         self._dShortDateTime = self._dLocale.dateTimeFormat(QLocale.FormatType.ShortFormat)
@@ -600,6 +622,9 @@ class Config:
                         nwApp.installTranslator(qTrans)
                         self._qtTrans[lngFile] = qTrans
 
+        # Refresh translated values
+        self.setPrimaryCount(self.useCharCount)
+
     def loadConfig(self, splash: NSplashScreen | None = None) -> bool:
         """Load preferences from file and replace default settings."""
         self._splash = splash
@@ -610,7 +635,7 @@ class Config:
         conf = NWConfigParser()
         cnfPath = self._confPath / nwFiles.CONF_FILE
 
-        if not cnfPath.exists():
+        if not safeExists(cnfPath):
             # Initial file, so we just create one from defaults
             self.setGuiFont(None)
             self.setTextFont(None)
@@ -698,6 +723,8 @@ class Config:
         self.showTabsNSpaces = conf.rdBool(sec, "showtabsnspaces", self.showTabsNSpaces)
         self.showLineEndings = conf.rdBool(sec, "showlineendings", self.showLineEndings)
         self.showMultiSpaces = conf.rdBool(sec, "showmultispaces", self.showMultiSpaces)
+        self.scaleHeadings   = conf.rdBool(sec, "scaleheadings", self.scaleHeadings)
+        self.singleStarBold  = conf.rdBool(sec, "singlestarbold", self.singleStarBold)
         self.incNotesWCount  = conf.rdBool(sec, "incnoteswcount", self.incNotesWCount)
         self.showFullPath    = conf.rdBool(sec, "showfullpath", self.showFullPath)
         self.dialogStyle     = conf.rdInt(sec, "dialogstyle", self.dialogStyle)
@@ -708,6 +735,7 @@ class Config:
         self.altDialogOpen   = conf.rdStr(sec, "altdialogopen", self.altDialogOpen)
         self.altDialogClose  = conf.rdStr(sec, "altdialogclose", self.altDialogClose)
         self.highlightEmph   = conf.rdBool(sec, "highlightemph", self.highlightEmph)
+        self.dottedModCodes  = conf.rdBool(sec, "dottedmodcodes", self.dottedModCodes)
         self.stopWhenIdle    = conf.rdBool(sec, "stopwhenidle", self.stopWhenIdle)
         self.userIdleTime    = conf.rdInt(sec, "useridletime", self.userIdleTime)
 
@@ -829,6 +857,8 @@ class Config:
             "showtabsnspaces": str(self.showTabsNSpaces),
             "showlineendings": str(self.showLineEndings),
             "showmultispaces": str(self.showMultiSpaces),
+            "scaleheadings":   str(self.scaleHeadings),
+            "singlestarbold":  str(self.singleStarBold),
             "incnoteswcount":  str(self.incNotesWCount),
             "showfullpath":    str(self.showFullPath),
             "dialogstyle":     str(self.dialogStyle),
@@ -839,6 +869,7 @@ class Config:
             "altdialogopen":   str(self.altDialogOpen),
             "altdialogclose":  str(self.altDialogClose),
             "highlightemph":   str(self.highlightEmph),
+            "dottedmodcodes":  str(self.dottedModCodes),
             "stopwhenidle":    str(self.stopWhenIdle),
             "useridletime":    str(self.userIdleTime),
         }
@@ -924,9 +955,9 @@ class RecentProjects:
         """Load the cache file for recent projects."""
         self._data = {}
         self._map = {}
-        cacheFile = self._conf.dataPath(nwFiles.RECENT_FILE)
-        if cacheFile.is_file():
-            try:
+        try:
+            cacheFile = self._conf.dataPath(nwFiles.RECENT_FILE)
+            if cacheFile.is_file():
                 with open(cacheFile, mode="r", encoding="utf-8") as inFile:
                     data = json.load(inFile)
                 for path, entry in data.items():
@@ -937,10 +968,10 @@ class RecentProjects:
                     saved = checkInt(entry.get("time", 0), 0)
                     if path and title:
                         self._setEntry(puuid, path, title, words, chars, saved)
-            except Exception:
-                logger.error("Could not load recent project cache")
-                logException()
-                return False
+        except Exception:
+            logger.error("Could not load recent project cache")
+            logException()
+            return False
         return True
 
     def saveCache(self) -> bool:
@@ -1024,19 +1055,19 @@ class RecentPaths:
     def loadCache(self) -> bool:
         """Load the cache file for recent paths."""
         self._data = {}
-        cacheFile = self._conf.dataPath(nwFiles.RECENT_PATH)
-        if cacheFile.is_file():
-            try:
+        try:
+            cacheFile = self._conf.dataPath(nwFiles.RECENT_PATH)
+            if cacheFile.is_file():
                 with open(cacheFile, mode="r", encoding="utf-8") as inFile:
                     data = json.load(inFile)
                 if isinstance(data, dict):
                     for key, path in data.items():
                         if key in self.KEYS and isinstance(path, str):
                             self._data[key] = path
-            except Exception:
-                logger.error("Could not load recent paths cache")
-                logException()
-                return False
+        except Exception:
+            logger.error("Could not load recent paths cache")
+            logException()
+            return False
         return True
 
     def saveCache(self) -> bool:

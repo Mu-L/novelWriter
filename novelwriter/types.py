@@ -23,12 +23,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """  # noqa
 from __future__ import annotations
 
+from typing import Literal
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import (
     QColor, QFont, QPainter, QPalette, QTextCharFormat, QTextCursor,
     QTextFormat
 )
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QHeaderView, QSizePolicy, QStyle
+
+# Custom Types
+
+T_MsgSeverity = Literal["info", "warning", "error"]
 
 # Alignment Flags
 
@@ -82,9 +88,14 @@ QtColActive = QPalette.ColorGroup.Active
 QtColInactive = QPalette.ColorGroup.Inactive
 QtColDisabled = QPalette.ColorGroup.Disabled
 
-# Qt Tree and Table Types
+# Model Item Data
 
-QtDecoration = Qt.ItemDataRole.DecorationRole
+QtAccessibleTextRole = Qt.ItemDataRole.AccessibleTextRole
+QtDecorationRole = Qt.ItemDataRole.DecorationRole
+QtDisplayRole = Qt.ItemDataRole.DisplayRole
+QtFontRole = Qt.ItemDataRole.FontRole
+QtTextAlignmentRole = Qt.ItemDataRole.TextAlignmentRole
+QtToolTipRole = Qt.ItemDataRole.ToolTipRole
 QtUserRole = Qt.ItemDataRole.UserRole
 
 # Keyboard and Mouse Buttons
@@ -152,6 +163,12 @@ QtHeaderFixed = QHeaderView.ResizeMode.Fixed
 QtScrollAlwaysOn = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
 QtScrollAlwaysOff = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 QtScrollAsNeeded = Qt.ScrollBarPolicy.ScrollBarAsNeeded
+
+# Font Weight
+
+QtFontNormal = QFont.Weight.Normal
+QtFontSemiBold = QFont.Weight.DemiBold
+QtFontBold = QFont.Weight.Bold
 
 # Maps
 

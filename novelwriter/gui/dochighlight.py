@@ -31,17 +31,17 @@ from time import time
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import (
-    QBrush, QColor, QFont, QSyntaxHighlighter, QTextBlockUserData,
-    QTextCharFormat, QTextDocument
+    QBrush, QColor, QSyntaxHighlighter, QTextBlockUserData, QTextCharFormat,
+    QTextDocument
 )
 
 from novelwriter import CONFIG, SHARED
 from novelwriter.common import checkInt, utf16CharMap
 from novelwriter.constants import nwStyles, nwUnicode
 from novelwriter.enum import nwComment
-from novelwriter.text.comments import processComment
+from novelwriter.text.formats import processComment
 from novelwriter.text.patterns import REGEX_PATTERNS, DialogParser
-from novelwriter.types import QtTextUserProperty
+from novelwriter.types import QtFontBold, QtTextUserProperty
 
 logger = logging.getLogger(__name__)
 
@@ -94,17 +94,23 @@ class GuiDocHighlighter(QSyntaxHighlighter):
         syntax = SHARED.theme.syntaxTheme
 
         colEmph = syntax.emph if CONFIG.highlightEmph else None
+        fmtCodes = "dot" if CONFIG.dottedModCodes else ""
+
+        h1Size = nwStyles.H_SIZES[1] if CONFIG.scaleHeadings else None
+        h2Size = nwStyles.H_SIZES[2] if CONFIG.scaleHeadings else None
+        h3Size = nwStyles.H_SIZES[3] if CONFIG.scaleHeadings else None
+        h4Size = nwStyles.H_SIZES[4] if CONFIG.scaleHeadings else None
 
         # Create Character Formats
         self._addCharFormat("text",      syntax.text)
-        self._addCharFormat("header1",   syntax.head, "b", nwStyles.H_SIZES[1])
-        self._addCharFormat("header2",   syntax.head, "b", nwStyles.H_SIZES[2])
-        self._addCharFormat("header3",   syntax.head, "b", nwStyles.H_SIZES[3])
-        self._addCharFormat("header4",   syntax.head, "b", nwStyles.H_SIZES[4])
-        self._addCharFormat("head1h",    syntax.headH, "b", nwStyles.H_SIZES[1])
-        self._addCharFormat("head2h",    syntax.headH, "b", nwStyles.H_SIZES[2])
-        self._addCharFormat("head3h",    syntax.headH, "b", nwStyles.H_SIZES[3])
-        self._addCharFormat("head4h",    syntax.headH, "b", nwStyles.H_SIZES[4])
+        self._addCharFormat("header1",   syntax.head, "b", h1Size)
+        self._addCharFormat("header2",   syntax.head, "b", h2Size)
+        self._addCharFormat("header3",   syntax.head, "b", h3Size)
+        self._addCharFormat("header4",   syntax.head, "b", h4Size)
+        self._addCharFormat("head1h",    syntax.headH, "b", h1Size)
+        self._addCharFormat("head2h",    syntax.headH, "b", h2Size)
+        self._addCharFormat("head3h",    syntax.headH, "b", h3Size)
+        self._addCharFormat("head4h",    syntax.headH, "b", h4Size)
         self._addCharFormat("bold",      colEmph, "b")
         self._addCharFormat("italic",    colEmph, "i")
         self._addCharFormat("strike",    syntax.hidden, "s")
@@ -113,16 +119,16 @@ class GuiDocHighlighter(QSyntaxHighlighter):
         self._addCharFormat("nobreak",   syntax.space, "bg")
         self._addCharFormat("altdialog", syntax.dialA)
         self._addCharFormat("dialog",    syntax.dialN)
-        self._addCharFormat("replace",   syntax.repTag)
+        self._addCharFormat("replace",   syntax.repTag, fmtCodes)
         self._addCharFormat("hidden",    syntax.hidden)
         self._addCharFormat("markup",    syntax.hidden)
         self._addCharFormat("link",      syntax.link, "u")
         self._addCharFormat("note",      syntax.note)
-        self._addCharFormat("code",      syntax.code)
+        self._addCharFormat("code",      syntax.code, fmtCodes)
         self._addCharFormat("keyword",   syntax.key)
         self._addCharFormat("tag",       syntax.tag, "u")
-        self._addCharFormat("modifier",  syntax.mod)
-        self._addCharFormat("value",     syntax.val)
+        self._addCharFormat("modifier",  syntax.mod, fmtCodes)
+        self._addCharFormat("value",     syntax.val, fmtCodes)
         self._addCharFormat("optional",  syntax.opt)
         self._addCharFormat("invalid",   None, "err")
 
@@ -476,13 +482,15 @@ class GuiDocHighlighter(QSyntaxHighlighter):
         if style:
             styles = style.split(",")
             if "b" in styles:
-                charFormat.setFontWeight(QFont.Weight.Bold)
+                charFormat.setFontWeight(QtFontBold)
             if "i" in styles:
                 charFormat.setFontItalic(True)
             if "u" in styles:
                 charFormat.setFontUnderline(True)
             if "s" in styles:
                 charFormat.setFontStrikeOut(True)
+            if "dot" in styles:
+                charFormat.setUnderlineStyle(QTextCharFormat.UnderlineStyle.DotLine)
             if "err" in styles:
                 charFormat.setUnderlineColor(SHARED.theme.syntaxTheme.error)
                 charFormat.setUnderlineStyle(QTextCharFormat.UnderlineStyle.SpellCheckUnderline)

@@ -212,6 +212,7 @@ class GuiPreferences(NDialog):
         self.guiFont.setText(describeFont(self._guiFont))
         self.guiFont.setCursorPosition(0)
         self.guiFontButton = NIconToolButton(self, iSz, "font", "tool")
+        self.guiFontButton.setToolTip(self.tr("Select Font"))
         self.guiFontButton.clicked.connect(self._selectGuiFont)
         self.mainForm.addRow(
             self.tr("Application font"), self.guiFont,
@@ -266,6 +267,7 @@ class GuiPreferences(NDialog):
         self.textFont.setText(describeFont(CONFIG.textFont))
         self.textFont.setCursorPosition(0)
         self.textFontButton = NIconToolButton(self, iSz, "font", "tool")
+        self.textFontButton.setToolTip(self.tr("Select Font"))
         self.textFontButton.clicked.connect(self._selectTextFont)
         self.mainForm.addRow(
             self.tr("Document font"), self.textFont,
@@ -334,10 +336,8 @@ class GuiPreferences(NDialog):
         self.mainForm.addGroupLabel(title, section)
 
         # Document Save Timer
-        self.autoSaveDoc = NSpinBox(self)
-        self.autoSaveDoc.setMinimum(5)
-        self.autoSaveDoc.setMaximum(600)
-        self.autoSaveDoc.setSingleStep(1)
+        self.autoSaveDoc = NSpinBox(self, minVal=5, maxVal=600)
+        self.autoSaveDoc.setFixedNumbersWidth(3)
         self.autoSaveDoc.setValue(CONFIG.autoSaveDoc)
         self.mainForm.addRow(
             self.tr("Save document interval"), self.autoSaveDoc,
@@ -345,10 +345,8 @@ class GuiPreferences(NDialog):
         )
 
         # Project Save Timer
-        self.autoSaveProj = NSpinBox(self)
-        self.autoSaveProj.setMinimum(5)
-        self.autoSaveProj.setMaximum(600)
-        self.autoSaveProj.setSingleStep(1)
+        self.autoSaveProj = NSpinBox(self, minVal=5, maxVal=600)
+        self.autoSaveProj.setFixedNumbersWidth(3)
         self.autoSaveProj.setValue(CONFIG.autoSaveProj)
         self.mainForm.addRow(
             self.tr("Save project interval"), self.autoSaveProj,
@@ -427,11 +425,8 @@ class GuiPreferences(NDialog):
         )
 
         # Inactive Time for Idle
-        self.userIdleTime = NDoubleSpinBox(self)
-        self.userIdleTime.setMinimum(0.5)
-        self.userIdleTime.setMaximum(600.0)
-        self.userIdleTime.setSingleStep(0.5)
-        self.userIdleTime.setDecimals(1)
+        self.userIdleTime = NDoubleSpinBox(self, minVal=0.5, maxVal=600.0, step=0.5, prec=1)
+        self.userIdleTime.setFixedNumbersWidth(5)
         self.userIdleTime.setValue(CONFIG.userIdleTime/60.0)
         self.mainForm.addRow(
             self.tr("Editor inactive time before pausing timer"), self.userIdleTime,
@@ -451,10 +446,8 @@ class GuiPreferences(NDialog):
         self.mainForm.addGroupLabel(title, section)
 
         # Max Text Width in Normal Mode
-        self.textWidth = NSpinBox(self)
-        self.textWidth.setMinimum(0)
-        self.textWidth.setMaximum(10000)
-        self.textWidth.setSingleStep(10)
+        self.textWidth = NSpinBox(self, minVal=0, maxVal=10000, step=10)
+        self.textWidth.setFixedNumbersWidth(5)
         self.textWidth.setValue(CONFIG.textWidth)
         self.mainForm.addRow(
             self.tr('Maximum text width in "Normal Mode"'), self.textWidth,
@@ -462,10 +455,8 @@ class GuiPreferences(NDialog):
         )
 
         # Max Text Width in Focus Mode
-        self.focusWidth = NSpinBox(self)
-        self.focusWidth.setMinimum(200)
-        self.focusWidth.setMaximum(10000)
-        self.focusWidth.setSingleStep(10)
+        self.focusWidth = NSpinBox(self, minVal=200, maxVal=10000, step=10)
+        self.focusWidth.setFixedNumbersWidth(5)
         self.focusWidth.setValue(CONFIG.focusWidth)
         self.mainForm.addRow(
             self.tr('Maximum text width in "Focus Mode"'), self.focusWidth,
@@ -489,10 +480,8 @@ class GuiPreferences(NDialog):
         )
 
         # Document Margins
-        self.textMargin = NSpinBox(self)
-        self.textMargin.setMinimum(0)
-        self.textMargin.setMaximum(900)
-        self.textMargin.setSingleStep(1)
+        self.textMargin = NSpinBox(self, minVal=0, maxVal=900)
+        self.textMargin.setFixedNumbersWidth(3)
         self.textMargin.setValue(CONFIG.textMargin)
         self.mainForm.addRow(
             self.tr("Minimum text margin"), self.textMargin,
@@ -501,10 +490,8 @@ class GuiPreferences(NDialog):
         )
 
         # Tab Width
-        self.tabWidth = NSpinBox(self)
-        self.tabWidth.setMinimum(0)
-        self.tabWidth.setMaximum(200)
-        self.tabWidth.setSingleStep(1)
+        self.tabWidth = NSpinBox(self, minVal=0, maxVal=200)
+        self.tabWidth.setFixedNumbersWidth(3)
         self.tabWidth.setValue(CONFIG.tabWidth)
         self.mainForm.addRow(
             self.tr("Tab width"), self.tabWidth,
@@ -548,15 +535,29 @@ class GuiPreferences(NDialog):
         )
 
         # Cursor Width
-        self.cursorWidth = NSpinBox(self)
-        self.cursorWidth.setMinimum(1)
-        self.cursorWidth.setMaximum(20)
-        self.cursorWidth.setSingleStep(1)
+        self.cursorWidth = NSpinBox(self, minVal=1, maxVal=20)
+        self.cursorWidth.setFixedNumbersWidth(2)
         self.cursorWidth.setValue(CONFIG.cursorWidth)
         self.mainForm.addRow(
             self.tr("Cursor width"), self.cursorWidth,
             self.tr("The width of the text cursor of the editor."),
             unit=self.tr("px")
+        )
+
+        # Scale Headings
+        self.scaleHeadings = NSwitch(self)
+        self.scaleHeadings.setChecked(CONFIG.scaleHeadings)
+        self.mainForm.addRow(
+            self.tr("Use a larger font size for headings"), self.scaleHeadings,
+            self.tr("Turning this off only affects the editor.")
+        )
+
+        # Single Asterisk Bold
+        self.singleStarBold = NSwitch(self)
+        self.singleStarBold.setChecked(CONFIG.singleStarBold)
+        self.mainForm.addRow(
+            self.tr("Prefer single asterisk bold"), self.singleStarBold,
+            self.tr("This does not turn off double asterisks for bold.")
         )
 
         # Highlight Current Line
@@ -605,10 +606,8 @@ class GuiPreferences(NDialog):
         )
 
         # Typewriter Position
-        self.autoScrollPos = NSpinBox(self)
-        self.autoScrollPos.setMinimum(10)
-        self.autoScrollPos.setMaximum(90)
-        self.autoScrollPos.setSingleStep(1)
+        self.autoScrollPos = NSpinBox(self, minVal=10, maxVal=90)
+        self.autoScrollPos.setFixedNumbersWidth(2)
         self.autoScrollPos.setValue(int(CONFIG.autoScrollPos))
         self.mainForm.addRow(
             self.tr("Minimum position for Typewriter scrolling"), self.autoScrollPos,
@@ -676,6 +675,7 @@ class GuiPreferences(NDialog):
         self.dialogLine.setText(" ".join(CONFIG.dialogLine))
 
         self.dialogLineButton = NIconToolButton(self, iSz, "add", "add")
+        self.dialogLineButton.setToolTip(self.tr("Select Symbol"))
         self.dialogLineButton.setMenu(self.mnLineSymbols)
 
         self.mainForm.addRow(
@@ -709,6 +709,14 @@ class GuiPreferences(NDialog):
         self.highlightEmph.setChecked(CONFIG.highlightEmph)
         self.mainForm.addRow(
             self.tr("Add highlight colour to emphasised text"), self.highlightEmph,
+            self.tr("Applies to the document editor only.")
+        )
+
+        # Dotted Codes and Modifiers
+        self.dottedModCodes = NSwitch(self)
+        self.dottedModCodes.setChecked(CONFIG.dottedModCodes)
+        self.mainForm.addRow(
+            self.tr("Add dotted lines under codes and modifiers"), self.dottedModCodes,
             self.tr("Applies to the document editor only.")
         )
 
@@ -818,6 +826,7 @@ class GuiPreferences(NDialog):
         self.fmtSQuoteOpen.setAlignment(QtAlignCenter)
         self.fmtSQuoteOpen.setText(CONFIG.fmtSQuoteOpen)
         self.btnSQuoteOpen = NIconToolButton(self, iSz, "quote", "tool")
+        self.btnSQuoteOpen.setToolTip(self.tr("Select Symbol"))
         self.btnSQuoteOpen.clicked.connect(self._changeSingleQuoteOpen)
         self.mainForm.addRow(
             self.tr("Single quote open style"), self.fmtSQuoteOpen,
@@ -832,6 +841,7 @@ class GuiPreferences(NDialog):
         self.fmtSQuoteClose.setAlignment(QtAlignCenter)
         self.fmtSQuoteClose.setText(CONFIG.fmtSQuoteClose)
         self.btnSQuoteClose = NIconToolButton(self, iSz, "quote", "tool")
+        self.btnSQuoteClose.setToolTip(self.tr("Select Symbol"))
         self.btnSQuoteClose.clicked.connect(self._changeSingleQuoteClose)
         self.mainForm.addRow(
             self.tr("Single quote close style"), self.fmtSQuoteClose,
@@ -847,6 +857,7 @@ class GuiPreferences(NDialog):
         self.fmtDQuoteOpen.setAlignment(QtAlignCenter)
         self.fmtDQuoteOpen.setText(CONFIG.fmtDQuoteOpen)
         self.btnDQuoteOpen = NIconToolButton(self, iSz, "quote", "tool")
+        self.btnDQuoteOpen.setToolTip(self.tr("Select Symbol"))
         self.btnDQuoteOpen.clicked.connect(self._changeDoubleQuoteOpen)
         self.mainForm.addRow(
             self.tr("Double quote open style"), self.fmtDQuoteOpen,
@@ -861,6 +872,7 @@ class GuiPreferences(NDialog):
         self.fmtDQuoteClose.setAlignment(QtAlignCenter)
         self.fmtDQuoteClose.setText(CONFIG.fmtDQuoteClose)
         self.btnDQuoteClose = NIconToolButton(self, iSz, "quote", "tool")
+        self.btnDQuoteClose.setToolTip(self.tr("Select Symbol"))
         self.btnDQuoteClose.clicked.connect(self._changeDoubleQuoteClose)
         self.mainForm.addRow(
             self.tr("Double quote close style"), self.fmtDQuoteClose,
@@ -1036,8 +1048,8 @@ class GuiPreferences(NDialog):
         CONFIG.hideVScroll  = self.hideVScroll.isChecked()
         CONFIG.hideHScroll  = self.hideHScroll.isChecked()
         CONFIG.nativeFont   = self.nativeFont.isChecked()
-        CONFIG.useCharCount = useCharCount
         CONFIG.setGuiFont(self._guiFont)
+        CONFIG.setPrimaryCount(useCharCount)
 
         # Document Style
         CONFIG.showFullPath   = self.showFullPath.isChecked()
@@ -1081,13 +1093,19 @@ class GuiPreferences(NDialog):
         CONFIG.tabWidth        = self.tabWidth.value()
 
         # Text Editing
-        lineHighlight = self.lineHighlight.isChecked()
+        scaleHeadings  = self.scaleHeadings.isChecked()
+        singleStarBold = self.singleStarBold.isChecked()
+        lineHighlight  = self.lineHighlight.isChecked()
 
+        updateSyntax |= CONFIG.scaleHeadings != scaleHeadings
+        updateSyntax |= CONFIG.singleStarBold != singleStarBold
         updateSyntax |= CONFIG.lineHighlight != lineHighlight
 
         CONFIG.spellLanguage   = self.spellLanguage.currentData()
         CONFIG.autoSelect      = self.autoSelect.isChecked()
         CONFIG.cursorWidth     = self.cursorWidth.value()
+        CONFIG.scaleHeadings   = scaleHeadings
+        CONFIG.singleStarBold  = singleStarBold
         CONFIG.lineHighlight   = lineHighlight
         CONFIG.showTabsNSpaces = self.showTabsNSpaces.isChecked()
         CONFIG.showLineEndings = self.showLineEndings.isChecked()
@@ -1106,6 +1124,7 @@ class GuiPreferences(NDialog):
         altDialogOpen   = compact(self.altDialogOpen.text())
         altDialogClose  = compact(self.altDialogClose.text())
         highlightEmph   = self.highlightEmph.isChecked()
+        dottedModCodes  = self.dottedModCodes.isChecked()
         showMultiSpaces = self.showMultiSpaces.isChecked()
 
         updateSyntax |= CONFIG.dialogStyle != dialogueStyle
@@ -1116,6 +1135,7 @@ class GuiPreferences(NDialog):
         updateSyntax |= CONFIG.altDialogOpen != altDialogOpen
         updateSyntax |= CONFIG.altDialogClose != altDialogClose
         updateSyntax |= CONFIG.highlightEmph != highlightEmph
+        updateSyntax |= CONFIG.dottedModCodes != dottedModCodes
         updateSyntax |= CONFIG.showMultiSpaces != showMultiSpaces
 
         CONFIG.dialogStyle     = dialogueStyle
@@ -1126,6 +1146,7 @@ class GuiPreferences(NDialog):
         CONFIG.altDialogOpen   = altDialogOpen
         CONFIG.altDialogClose  = altDialogClose
         CONFIG.highlightEmph   = highlightEmph
+        CONFIG.dottedModCodes  = dottedModCodes
         CONFIG.showMultiSpaces = showMultiSpaces
 
         # Text Automation

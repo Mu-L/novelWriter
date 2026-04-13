@@ -14,6 +14,7 @@ setup.iss
 /setup/windows/build
 .venv
 /uv.lock
+/.pdm-python
 
 # Translations
 /novelwriter/assets/i18n/*.qm
@@ -42,8 +43,8 @@ __pycache__
 /novelwriter/assets/sample.zip
 /sample/cache
 /sample/meta
-*.bak
-*.lock
+/sample/**/*.bak
+/sample/*.lock
 ToC.txt
 
 # PyTest

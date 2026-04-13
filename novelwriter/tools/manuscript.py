@@ -117,7 +117,8 @@ class GuiManuscript(NToolDialog):
         self.tbEdit.setToolTip(self.tr("Edit Selected Build"))
         self.tbEdit.clicked.connect(self._editSelectedBuild)
 
-        self.lblBuilds = QLabel("<b>{0}</b>".format(self.tr("Builds")), self)
+        self.lblBuilds = QLabel(self.tr("Builds"), self)
+        self.lblBuilds.setFont(SHARED.theme.guiFontB)
 
         self.listToolBox = QHBoxLayout()
         self.listToolBox.addWidget(self.lblBuilds)
@@ -186,7 +187,7 @@ class GuiManuscript(NToolDialog):
         self.swtNewPage.setChecked(options.getBool("GuiManuscript", "showNewPage", True))
         self.swtNewPage.clicked.connect(self._generatePreview)
 
-        self.lblNewPage = QLabel(self.tr("Show Page Breaks"), self)
+        self.lblNewPage = QLabel(self.tr("Show page breaks"), self)
         self.lblNewPage.setBuddy(self.swtNewPage)
 
         # Assemble GUI
@@ -630,8 +631,8 @@ class _DetailsWidget(QWidget):
         item.setText(1, "")
         self.listView.addTopLevelItem(item)
         for key in [
-            "text.includeSynopsis", "text.includeComments", "text.includeStory",
-            "text.includeNotes", "text.includeKeywords", "text.includeBodyText",
+            "text.includeBodyText", "text.includeSynopsis", "text.includeComments",
+            "text.includeStory", "text.includeNotes", "text.includeKeywords",
         ]:
             sub = QTreeWidgetItem()
             sub.setText(0, build.getLabel(key))
@@ -678,13 +679,9 @@ class _OutlineWidget(QWidget):
         if isinstance(data, dict) and (data != self._outline or force):
             self.listView.clear()
 
-            tFont = self.font()
-            tFont.setBold(True)
+            tFont = SHARED.theme.guiFontB
+            hFont = SHARED.theme.guiFontBU
             tBrush = self.palette().highlight()
-
-            hFont = self.font()
-            hFont.setBold(True)
-            hFont.setUnderline(True)
 
             indent = False
             if root := self.listView.invisibleRootItem():
@@ -1053,8 +1050,8 @@ class _StatsWidget(QWidget):
 
         self.leftForm = QFormLayout()
         self.leftForm.addRow(trAllWords, self.maxTotalWords)
-        self.leftForm.addRow(trTitleWords, self.maxHeadWords)
         self.leftForm.addRow(trTextWords, self.maxTextWords)
+        self.leftForm.addRow(trTitleWords, self.maxHeadWords)
         self.leftForm.addRow("", QLabel(self))
         self.leftForm.addRow(trTitleCount, self.maxTitleCount)
         self.leftForm.addRow(trParagraphCount, self.maxParCount)
@@ -1078,11 +1075,11 @@ class _StatsWidget(QWidget):
 
         self.rightForm = QFormLayout()
         self.rightForm.addRow(trAllChars, self.maxTotalChars)
-        self.rightForm.addRow(trTitleChars, self.maxHeaderChars)
-        self.rightForm.addRow(trTextChars, self.maxTextChars)
         self.rightForm.addRow(trAllWordChars, self.maxTotalWordChars)
-        self.rightForm.addRow(trTitleWordChars, self.maxHeadWordChars)
+        self.rightForm.addRow(trTextChars, self.maxTextChars)
         self.rightForm.addRow(trTextWordChars, self.maxTextWordChars)
+        self.rightForm.addRow(trTitleChars, self.maxHeaderChars)
+        self.rightForm.addRow(trTitleWordChars, self.maxHeadWordChars)
         self.rightForm.setHorizontalSpacing(12)
         self.rightForm.setVerticalSpacing(4)
 

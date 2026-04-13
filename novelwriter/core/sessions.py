@@ -30,6 +30,7 @@ from pathlib import Path
 from time import time
 from typing import TYPE_CHECKING
 
+from novelwriter import SHARED
 from novelwriter.common import formatTimeStamp
 from novelwriter.constants import nwFiles
 from novelwriter.error import logException
@@ -86,7 +87,7 @@ class NWSessionLog:
         sTime = now - self._start
 
         logger.info(
-            "The session lasted %d sec and added %d words abd %d characters",
+            "The session lasted %d seconds and added %d words and %d characters",
             int(sTime), wDiff, cDiff
         )
         if sTime < 300 and (wDiff == 0 or cDiff == 0):
@@ -109,7 +110,8 @@ class NWSessionLog:
                     cnotes=cCNotes,
                 ))
 
-        except Exception:
+        except Exception as exc:
+            SHARED.appendErrorMessage(exc)
             logger.error("Failed to write to session stats file")
             logException()
             return False
@@ -119,15 +121,14 @@ class NWSessionLog:
     def iterRecords(self) -> Iterable[dict]:
         """Iterate through all records in the log."""
         sessFile = self._project.storage.getMetaFile(nwFiles.SESS_FILE)
-        if isinstance(sessFile, Path) and sessFile.is_file():
-            try:
+        try:
+            if isinstance(sessFile, Path) and sessFile.is_file():
                 with open(sessFile, mode="r", encoding="utf-8") as fObj:
                     for line in fObj:
                         yield json.loads(line)
-            except Exception:
-                logger.error("Failed to process session stats file")
-                logException()
-        return
+        except Exception:
+            logger.error("Failed to process session stats file")
+            logException()
 
     def createInitial(self, total: int) -> str:
         """Low level function to create the initial log file record."""

@@ -34,12 +34,15 @@ from typing import TYPE_CHECKING, TypeVar
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, QUrl, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QDesktopServices, QFont, QScreen
-from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
+from PyQt6.QtWidgets import (
+    QApplication, QFileDialog, QGridLayout, QMessageBox, QSpacerItem, QWidget
+)
 
 from novelwriter.common import appendIfSet, formatFileFilter, joinLines
 from novelwriter.constants import nwFiles
 from novelwriter.core.spellcheck import NWSpellEnchant
 from novelwriter.enum import nwChange, nwItemClass, nwStandardButton
+from novelwriter.types import QtSizeExpanding, QtSizeMinimum
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -48,6 +51,7 @@ if TYPE_CHECKING:
     from novelwriter.core.status import T_StatusKind
     from novelwriter.gui.theme import GuiTheme
     from novelwriter.guimain import GuiMain
+    from novelwriter.types import T_MsgSeverity
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +82,7 @@ class SharedData(QObject):
     novelStructureChanged = pyqtSignal(str)
     projectItemChanged = pyqtSignal(str, Enum)
     projectStatusChanged = pyqtSignal(bool)
-    projectStatusMessage = pyqtSignal(str)
+    projectStatusMessage = pyqtSignal(str, str)
     rootFolderChanged = pyqtSignal(str, Enum)
     spellLanguageChanged = pyqtSignal(str, str)
     statusLabelsChanged = pyqtSignal(str)
@@ -98,6 +102,7 @@ class SharedData(QObject):
         self._idleTime = 0.0
         self._idleRefTime = time()
         self._focusMode = False
+        self._cachedErrors = []
 
         self._clock = QTimer(self)
         self._clock.setInterval(1000)
@@ -291,9 +296,9 @@ class SharedData(QObject):
         if gui := self._gui:
             QTimer.singleShot(int(delay*1000), gui.mainProgress.reset)
 
-    def newStatusMessage(self, message: str) -> None:
+    def newStatusMessage(self, message: str | Exception, severity: T_MsgSeverity = "info") -> None:
         """Request a new status message."""
-        self.projectStatusMessage.emit(message)
+        self.projectStatusMessage.emit(str(message), severity)
 
     def setGlobalProjectState(self, state: bool) -> None:
         """Change the global project status."""
@@ -310,8 +315,10 @@ class SharedData(QObject):
         allowZip: bool = False
     ) -> Path | None:
         """Open the file dialog and select a novelWriter project file."""
-        label = (self.tr("novelWriter Project File or Zip File")
-                 if allowZip else self.tr("novelWriter Project File"))
+        label = (
+            self.tr("novelWriter Project File or Zip File")
+            if allowZip else self.tr("novelWriter Project File")
+        )
         ext = f"{nwFiles.PROJ_FILE} *.zip" if allowZip else nwFiles.PROJ_FILE
         fFilter = formatFileFilter([(label, ext), "*"])
         selected, _ = QFileDialog.getOpenFileName(
@@ -391,6 +398,26 @@ class SharedData(QObject):
             self.rootFolderChanged.emit(handle, change)
 
     ##
+    #  Error Cache
+    ##
+
+    def clearErrorCache(self) -> None:
+        """Clear all cached errors."""
+        self._cachedErrors = []
+
+    def appendErrorMessage(self, message: str | Exception) -> None:
+        """Append an error message to the error cache."""
+        if isinstance(message, Exception):
+            message = f"{type(message).__name__}: {message!s}"
+        self._cachedErrors.append(message)
+
+    def errorCache(self) -> list[str]:
+        """Return all cached errors and clear cache."""
+        errors = self._cachedErrors
+        self._cachedErrors = []
+        return errors
+
+    ##
     #  Alert Boxes
     ##
 
@@ -402,7 +429,7 @@ class SharedData(QObject):
         self._lastAlert = alert.logMessage
         if log:
             self._logMessage(self._lastAlert, logger.info)
-        alert.exec()
+        alert.pop()
 
     def warn(self, text: T_Msg, info: str = "", details: str = "", log: bool = True) -> None:
         """Open a warning alert box."""
@@ -412,7 +439,7 @@ class SharedData(QObject):
         self._lastAlert = alert.logMessage
         if log:
             self._logMessage(self._lastAlert, logger.warning)
-        alert.exec()
+        alert.pop()
 
     def error(self, text: T_Msg, info: str = "", details: str = "", log: bool = True,
               exc: Exception | None = None) -> None:
@@ -425,7 +452,7 @@ class SharedData(QObject):
         self._lastAlert = alert.logMessage
         if log:
             self._logMessage(self._lastAlert, logger.error)
-        alert.exec()
+        alert.pop()
 
     def question(self, text: T_Msg, info: str = "", details: str = "", warn: bool = False) -> bool:
         """Open a question box."""
@@ -433,7 +460,7 @@ class SharedData(QObject):
         alert.setMessage(text, info, details)
         alert.setAlertType(_GuiAlert.WARN if warn else _GuiAlert.ASK, True)
         self._lastAlert = alert.logMessage
-        alert.exec()
+        alert.pop()
         return alert.finalState
 
     ##
@@ -494,6 +521,14 @@ class _GuiAlert(QMessageBox):
     @property
     def finalState(self) -> bool:
         return self._state
+
+    def pop(self) -> int:
+        """Make sure the message box isn't too small."""
+        # See https://stackoverflow.com/a/50549396
+        self._spacer = QSpacerItem(20*self._theme.fontPixelSize, 0, QtSizeMinimum, QtSizeExpanding)
+        if isinstance(layout := self.layout(), QGridLayout):
+            layout.addItem(self._spacer, layout.rowCount(), 0, 1, layout.columnCount())
+        return self.exec()
 
     def setMessage(self, text: T_Msg, info: str, details: str) -> None:
         """Set the alert box message."""

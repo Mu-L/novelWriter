@@ -39,15 +39,18 @@ from PyQt6.QtGui import (
 from PyQt6.QtWidgets import QApplication, QWidget
 
 from novelwriter import CONFIG
-from novelwriter.common import checkInt, minmax
+from novelwriter.common import checkInt, minmax, safeIsFile
 from novelwriter.config import DEF_GUI_DARK, DEF_GUI_LIGHT, DEF_ICONS, DEF_TREECOL
 from novelwriter.constants import nwLabels
-from novelwriter.enum import nwItemClass, nwItemLayout, nwItemType, nwStandardButton, nwTheme
+from novelwriter.enum import (
+    nwItemClass, nwItemLayout, nwItemType, nwStandardButton, nwTheme,
+    nwToolButton
+)
 from novelwriter.error import logException
-from novelwriter.extensions.modified import NPushButton
+from novelwriter.extensions.modified import NIconToolButton, NPushButton
 from novelwriter.types import (
-    QtBlack, QtColActive, QtColDisabled, QtColInactive, QtHexArgb,
-    QtPaintAntiAlias, QtTransparent
+    QtBlack, QtColActive, QtColDisabled, QtColInactive, QtFontSemiBold,
+    QtHexArgb, QtPaintAntiAlias, QtTransparent
 )
 
 if TYPE_CHECKING:
@@ -77,6 +80,18 @@ STANDARD_BUTTONS = {
     nwStandardButton.BUILD:   (QT_TRANSLATE_NOOP("Button", "Build"), "btn_build", "action"),
     nwStandardButton.PRINT:   (QT_TRANSLATE_NOOP("Button", "Print"), "btn_print", "action"),
     nwStandardButton.PREVIEW: (QT_TRANSLATE_NOOP("Button", "Preview"), "btn_preview", "action"),
+}
+
+TOOL_BUTTONS = {
+    nwToolButton.ADD:       (QT_TRANSLATE_NOOP("Button", "Add"), "add", "add"),
+    nwToolButton.REMOVE:    (QT_TRANSLATE_NOOP("Button", "Remove"), "remove", "remove"),
+    nwToolButton.MOVE_UP:   (QT_TRANSLATE_NOOP("Button", "Move Up"), "chevron_up", "action"),
+    nwToolButton.MOVE_DOWN: (QT_TRANSLATE_NOOP("Button", "Move Down"), "chevron_down", "action"),
+    nwToolButton.IMPORT:    (QT_TRANSLATE_NOOP("Button", "Import"), "import", "apply"),
+    nwToolButton.EXPORT:    (QT_TRANSLATE_NOOP("Button", "Export"), "export", "action"),
+    nwToolButton.BROWSE:    (QT_TRANSLATE_NOOP("Button", "Browse"), "browse", "systemio"),
+    nwToolButton.EDIT:      (QT_TRANSLATE_NOOP("Button", "Edit"), "edit", "change"),
+    nwToolButton.REVERT:    (QT_TRANSLATE_NOOP("Button", "Revert"), "revert", "reset"),
 }
 
 
@@ -144,9 +159,10 @@ class GuiTheme:
         "_allThemes", "_currentTheme", "_darkThemes", "_guiPalette", "_lightThemes", "_meta",
         "_qColors", "_styleSheets", "_svgColors", "_syntaxList", "accentCol", "baseButtonHeight",
         "baseIconHeight", "baseIconSize", "errorText", "fadedText", "fontPixelSize",
-        "fontPointSize", "getDecoration", "getHeaderDecoration", "getHeaderDecorationNarrow",
-        "getIcon", "getItemIcon", "getPixmap", "getStandardButton", "getToggleIcon", "guiFont",
-        "guiFontB", "guiFontBU", "guiFontFixed", "guiFontSmall", "helpText", "iconCache",
+        "fontPixelSizeLarge", "fontPointSize", "getDecoration", "getHeaderDecoration",
+        "getHeaderDecorationNarrow", "getIcon", "getItemIcon", "getPixmap", "getStandardButton",
+        "getToggleIcon", "getToolButton", "guiFont", "guiFontB", "guiFontBU", "guiFontFixed",
+        "guiFontLarge", "guiFontLargeB", "guiFontSmall", "guiFontSmallB", "helpText", "iconCache",
         "isDarkTheme", "pushButtonIconSize", "sidebarIconSize", "syntaxTheme", "textNHeight",
         "textNWidth", "toolButtonIconSize",
     )
@@ -179,24 +195,36 @@ class GuiTheme:
         self.getItemIcon = self.iconCache.getItemIcon
         self.getToggleIcon = self.iconCache.getToggleIcon
         self.getDecoration = self.iconCache.getDecoration
+        self.getToolButton = self.iconCache.getToolButton
         self.getStandardButton = self.iconCache.getStandardButton
         self.getHeaderDecoration = self.iconCache.getHeaderDecoration
         self.getHeaderDecorationNarrow = self.iconCache.getHeaderDecorationNarrow
 
         # Fonts
         sSmaller = 10.0/11.0
-        sLarger = 12.0/11.0
+        sMedium = 12.0/11.0
+        sLarger = 13.0/11.0
         sLarge = 15.0/11.0
         sXLarge = 19.0/11.0
 
         self.guiFont = QApplication.font()
         self.guiFontB = QApplication.font()
-        self.guiFontB.setBold(True)
+        self.guiFontB.setWeight(QtFontSemiBold)
         self.guiFontBU = QApplication.font()
-        self.guiFontBU.setBold(True)
+        self.guiFontBU.setWeight(QtFontSemiBold)
         self.guiFontBU.setUnderline(True)
+
         self.guiFontSmall = QApplication.font()
         self.guiFontSmall.setPointSizeF(sSmaller*self.guiFont.pointSizeF())
+        self.guiFontSmallB = QApplication.font()
+        self.guiFontSmallB.setWeight(QtFontSemiBold)
+        self.guiFontSmallB.setPointSizeF(sSmaller*self.guiFont.pointSizeF())
+
+        self.guiFontLarge = QApplication.font()
+        self.guiFontLarge.setPointSizeF(sLarger*self.guiFont.pointSizeF())
+        self.guiFontLargeB = QApplication.font()
+        self.guiFontLargeB.setWeight(QtFontSemiBold)
+        self.guiFontLargeB.setPointSizeF(sLarger*self.guiFont.pointSizeF())
 
         qMetric = QFontMetrics(self.guiFont)
         fHeight = qMetric.height()
@@ -204,13 +232,14 @@ class GuiTheme:
 
         self.fontPointSize = self.guiFont.pointSizeF()
         self.fontPixelSize = fHeight
+        self.fontPixelSizeLarge = round(sLarger*fHeight)
         self.baseIconHeight = fAscent
         self.baseButtonHeight = round(sLarge*fAscent)
 
         self.baseIconSize = QSize(fAscent, fAscent)
         self.sidebarIconSize = QSize(round(sXLarge*fAscent), round(sXLarge*fAscent))
         self.toolButtonIconSize = QSize(round(sSmaller*fAscent), round(sSmaller*fAscent))
-        self.pushButtonIconSize = QSize(round(sLarger*fAscent), round(sLarger*fAscent))
+        self.pushButtonIconSize = QSize(round(sMedium*fAscent), round(sMedium*fAscent))
 
         self.textNHeight = qMetric.boundingRect("N").height()
         self.textNWidth = qMetric.boundingRect("N").width()
@@ -284,7 +313,7 @@ class GuiTheme:
 
     def isDesktopDarkMode(self) -> bool:
         """Check if the desktop is in dark mode."""
-        if CONFIG.verQtValue >= 0x060500 and (hint := QGuiApplication.styleHints()):
+        if CONFIG.checkMinQtVersion(0x060500) and (hint := QGuiApplication.styleHints()):
             return hint.colorScheme() == Qt.ColorScheme.Dark
 
         palette = QPalette()
@@ -497,7 +526,7 @@ class GuiTheme:
         self._guiPalette.setBrush(QtColInactive, QPalette.ColorRole.Highlight, highlight)
         self._guiPalette.setBrush(QtColDisabled, QPalette.ColorRole.Highlight, grey)
 
-        if CONFIG.verQtValue >= 0x060600:
+        if CONFIG.checkMinQtVersion(0x060600):
             self._guiPalette.setBrush(QtColActive, QPalette.ColorRole.Accent, self.accentCol)
             self._guiPalette.setBrush(QtColInactive, QPalette.ColorRole.Accent, self.accentCol)
             self._guiPalette.setBrush(QtColDisabled, QPalette.ColorRole.Accent, grey)
@@ -903,6 +932,15 @@ class GuiIcons:
             self._theme.pushButtonIconSize, icon, color
         )
 
+    def getToolButton(self, button: nwToolButton, parent: QWidget) -> NIconToolButton:
+        """Return a tool button with icon."""
+        toolTip, icon, color = TOOL_BUTTONS.get(button, ("", "", ""))
+        toolButton = NIconToolButton(
+            parent, self._theme.baseIconSize, icon, color
+        )
+        toolButton.setToolTip(QCoreApplication.translate("Button", toolTip))
+        return toolButton
+
     def getDecoration(self, name: str, w: int | None = None, h: int | None = None) -> QPixmap:
         """Load graphical decoration element based on the decoration
         map or the icon map. This function always returns a QPixmap.
@@ -914,7 +952,7 @@ class GuiIcons:
             logger.error("Decoration with name '%s' does not exist", name)
             return QPixmap()
 
-        if not imgPath.is_file():
+        if not safeIsFile(imgPath):
             logger.error("Asset not found: %s", imgPath)
             return QPixmap()
 
@@ -1031,5 +1069,8 @@ class GuiIcons:
 
 def _listContent(data: list[Path], path: Path, extension: str) -> None:
     """List files of a specific type and extend the list."""
-    if path.is_dir():
-        data.extend(n for n in path.iterdir() if n.is_file() and n.suffix == extension)
+    try:
+        if path.is_dir():
+            data.extend(n for n in path.iterdir() if n.is_file() and n.suffix == extension)
+    except Exception:
+        logException()

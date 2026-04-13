@@ -27,12 +27,13 @@ import logging
 
 from datetime import datetime
 from pathlib import Path
+from typing import NamedTuple
 
 from PyQt6.QtCore import (
     QAbstractListModel, QModelIndex, QObject, QPoint, QSize, Qt, pyqtSignal,
     pyqtSlot
 )
-from PyQt6.QtGui import QAction, QCloseEvent, QFont, QPainter, QPaintEvent, QPen, QShortcut
+from PyQt6.QtGui import QAction, QCloseEvent, QKeyEvent, QPainter, QPaintEvent, QPen, QShortcut
 from PyQt6.QtWidgets import (
     QApplication, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListView,
     QMenu, QScrollArea, QStackedWidget, QStyledItemDelegate,
@@ -40,15 +41,18 @@ from PyQt6.QtWidgets import (
 )
 
 from novelwriter import CONFIG, SHARED
-from novelwriter.common import formatInt, makeFileNameSafe, qtAddAction
+from novelwriter.common import formatInt, makeFileNameSafe, qtAddAction, safeIsFile
 from novelwriter.constants import nwFiles
 from novelwriter.core.coretools import ProjectBuilder
 from novelwriter.enum import nwItemClass, nwStandardButton
-from novelwriter.extensions.configlayout import NWrappedWidgetBox
+from novelwriter.extensions.configlayout import NColorLabel, NWrappedWidgetBox
 from novelwriter.extensions.modified import NDialog, NIconToolButton, NSpinBox
 from novelwriter.extensions.switch import NSwitch
 from novelwriter.extensions.versioninfo import VersionInfoWidget
-from novelwriter.types import QtAlignLeft, QtAlignRightTop, QtHexArgb, QtScrollAsNeeded, QtSelected
+from novelwriter.types import (
+    QtAccessibleTextRole, QtAlignLeft, QtAlignRightTop, QtDisplayRole,
+    QtHexArgb, QtScrollAsNeeded, QtSelected
+)
 
 logger = logging.getLogger(__name__)
 
@@ -254,9 +258,12 @@ class _OpenProjectPage(QWidget):
         self.listWidget.setItemDelegate(self.itemDelegate)
         self.listWidget.setModel(self.listModel)
         self.listWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.listWidget.clicked.connect(self._projectClicked)
+        self.listWidget.clicked.connect(self._projectSelected)
         self.listWidget.doubleClicked.connect(self._projectDoubleClicked)
         self.listWidget.customContextMenuRequested.connect(self._openContextMenu)
+
+        if selectionModel := self.listWidget.selectionModel():
+            selectionModel.currentChanged.connect(self._selectionChange)
 
         # Info / Tool
         self.aMissing = QAction(self)
@@ -267,6 +274,11 @@ class _OpenProjectPage(QWidget):
         self.selectedPath.setReadOnly(True)
         self.selectedPath.addAction(self.aMissing, QLineEdit.ActionPosition.TrailingPosition)
         self._trPath = self.tr("Path")
+
+        self.keyEnter = QShortcut(self.listWidget)
+        self.keyEnter.setKeys([Qt.Key.Key_Enter, Qt.Key.Key_Return])
+        self.keyEnter.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.keyEnter.activated.connect(self.openSelectedItem)
 
         self.keyDelete = QShortcut(self)
         self.keyDelete.setKey("Del")
@@ -291,46 +303,63 @@ class _OpenProjectPage(QWidget):
         )
 
     ##
+    #  Events
+    ##
+
+    def keyPressEvent(self, event: QKeyEvent | None) -> None:
+        """Capture key press events."""
+        if event and event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
+            self.listWidget.setFocus()
+            self.listWidget.keyPressEvent(event)
+        else:
+            super().keyPressEvent(event)
+
+    ##
     #  Public Slots
     ##
 
     @pyqtSlot()
     def openSelectedItem(self) -> None:
         """Open the currently selected project item."""
-        if (selection := self.listWidget.selectedIndexes()) and (index := selection[0]).isValid():
-            self._processOpenProjectRequest(str(index.data()[1]))
+        if (sel := self.listWidget.selectedIndexes()) and (entry := self.listModel.entry(sel[0])):
+            self._processOpenProjectRequest(entry.path)
 
     ##
     #  Private Slots
     ##
 
+    @pyqtSlot(QModelIndex, QModelIndex)
+    def _selectionChange(self, current: QModelIndex, previous: QModelIndex) -> None:
+        """Process user changing which item is selected."""
+        self._projectSelected(current)
+
     @pyqtSlot(QModelIndex)
-    def _projectClicked(self, index: QModelIndex) -> None:
+    def _projectSelected(self, index: QModelIndex) -> None:
         """Process single click on project item."""
-        value = index.data()[1] if index.isValid() else ""
+        value = entry.path if (entry := self.listModel.entry(index)) else ""
         value = "" if value == SAMPLE_KEY else value
         text = f"{self._trPath}: {value}"
         self.selectedPath.setText(text)
         self.selectedPath.setToolTip(text)
         self.selectedPath.setCursorPosition(0)
-        self.aMissing.setVisible(value != "" and not (Path(value) / nwFiles.PROJ_FILE).is_file())
+        self.aMissing.setVisible(value != "" and not safeIsFile(Path(value) / nwFiles.PROJ_FILE))
 
     @pyqtSlot(QModelIndex)
     def _projectDoubleClicked(self, index: QModelIndex) -> None:
         """Process double click on project item."""
-        if index.isValid():
-            self._processOpenProjectRequest(str(index.data()[1]))
+        if entry := self.listModel.entry(index):
+            self._processOpenProjectRequest(entry.path)
 
     @pyqtSlot()
     def _deleteSelectedItem(self) -> None:
         """Delete the currently selected project item."""
-        if (selection := self.listWidget.selectedIndexes()) and (index := selection[0]).isValid():
+        if (sel := self.listWidget.selectedIndexes()) and (entry := self.listModel.entry(sel[0])):
             text = self.tr(
                 "Remove '{0}' from the recent projects list? "
                 "The project files will not be deleted."
-            ).format(index.data()[0])
+            ).format(entry.title)
             if SHARED.question(text):
-                self.listModel.removeEntry(index)
+                self.listModel.removeEntry(sel[0])
             self._selectFirstItem()
 
     @pyqtSlot("QPoint")
@@ -372,7 +401,7 @@ class _OpenProjectPage(QWidget):
         """Select the first item, if any are available."""
         index = self.listModel.index(0)
         self.listWidget.setCurrentIndex(index)
-        self._projectClicked(index)
+        self._projectSelected(index)
 
 
 class _ProjectListItem(QStyledItemDelegate):
@@ -383,85 +412,107 @@ class _ProjectListItem(QStyledItemDelegate):
         super().__init__(parent=parent)
 
         fPx = SHARED.theme.fontPixelSize
-        fPt = SHARED.theme.fontPointSize
-        tPx = round(1.2 * fPx)
+        tPx = SHARED.theme.fontPixelSizeLarge
         iPx = tPx + fPx
 
         self._pPx = (iPx + 4, tPx + 4)  # Painter coordinates
         self._hPx = 8 + tPx + fPx  # Fixed height
 
-        self._tFont = QApplication.font()
-        self._tFont.setPointSizeF(1.2*fPt)
-        self._tFont.setWeight(QFont.Weight.Bold)
-
-        self._dFont = QApplication.font()
-        self._dFont.setPointSizeF(fPt)
+        self._tFont = SHARED.theme.guiFontLargeB
+        self._dFont = SHARED.theme.guiFont
         self._dPen = QPen(SHARED.theme.helpText)
 
         self._icon = SHARED.theme.getPixmap("proj_nwx", (iPx, iPx))
 
     def paint(self, painter: QPainter, opt: QStyleOptionViewItem, index: QModelIndex) -> None:
         """Paint a project entry on the canvas."""
-        rect = opt.rect
-        title, _, details = index.data()
-        tFlag = Qt.TextFlag.TextSingleLine
-        x, y = self._pPx
+        if isinstance(entry := index.data(QtDisplayRole), _ProjectListEntry):
+            rect = opt.rect
+            tFlag = Qt.TextFlag.TextSingleLine
+            x, y = self._pPx
 
-        painter.save()
-        if opt.state & QtSelected == QtSelected:
-            painter.setOpacity(0.25)
-            painter.fillRect(rect, QApplication.palette().text())
-            painter.setOpacity(1.0)
+            painter.save()
+            if opt.state & QtSelected == QtSelected:
+                painter.setOpacity(0.25)
+                painter.fillRect(rect, QApplication.palette().text())
+                painter.setOpacity(1.0)
 
-        painter.drawPixmap(2, rect.top() + 6, self._icon)
-        painter.setFont(self._tFont)
-        painter.drawText(rect.adjusted(x, 4, 0, 0), tFlag, title)
-        painter.setFont(self._dFont)
-        painter.setPen(self._dPen)
-        painter.drawText(rect.adjusted(x, y, 0, 0), tFlag, details)
-        painter.restore()
+            painter.drawPixmap(2, rect.top() + 6, self._icon)
+            painter.setFont(self._tFont)
+            painter.drawText(rect.adjusted(x, 4, 0, 0), tFlag, entry.title)
+            painter.setFont(self._dFont)
+            painter.setPen(self._dPen)
+            painter.drawText(rect.adjusted(x, y, 0, 0), tFlag, entry.details)
+            painter.restore()
 
     def sizeHint(self, opt: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         """Set the size hint to fixed height."""
         return QSize(opt.rect.width(), self._hPx)
 
 
+class _ProjectListEntry(NamedTuple):
+    title: str
+    path: str
+    details: str
+    accessible: str
+
+
 class _ProjectListModel(QAbstractListModel):
+
+    __slots__ = ("_data",)
 
     def __init__(self, parent: QObject) -> None:
         super().__init__(parent=parent)
-        data = []
+
+        self._data: list[_ProjectListEntry] = []
+
         words = self.tr("Word Count")
         opened = self.tr("Last Opened")
         records = sorted(CONFIG.recentProjects.listEntries(), key=lambda x: x[3], reverse=True)
         for path, title, count, time in records:
             when = CONFIG.localDate(datetime.fromtimestamp(time))
-            data.append((title, path, f"{opened}: {when}, {words}: {formatInt(count)}"))
-        if not data:
-            data.append((SAMPLE_NAME, SAMPLE_KEY, self.tr("Select to create an example project")))
-        self._data = data
+            self._data.append(_ProjectListEntry(
+                title=title,
+                path=path,
+                details=f"{opened}: {when}, {words}: {formatInt(count)}",
+                accessible=f"{title}, {opened} {when}, {words} {formatInt(count)}",
+            ))
+
+        if not self._data:
+            details = self.tr("Select to create an example project")
+            self._data.append(_ProjectListEntry(
+                title=SAMPLE_NAME,
+                path=SAMPLE_KEY,
+                details=details,
+                accessible=details
+            ))
 
     def rowCount(self, parent: QModelIndex | None = None) -> int:
         """Return the size of the model."""
         return len(self._data)
 
-    def data(self, index: QModelIndex, role: int = 0) -> tuple[str, str, str]:
+    def entry(self, index: QModelIndex) -> _ProjectListEntry | None:
+        """Return an entry in the model."""
+        if index.isValid() and 0 <= (idx := index.row()) < len(self._data):
+            return self._data[idx]
+        return None
+
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> _ProjectListEntry | str | None:
         """Return data for an individual item."""
-        try:
-            return self._data[index.row()] if index.isValid() else ("", "", "")
-        except IndexError:
-            return "", "", ""
+        if entry := self.entry(index):
+            if role == QtDisplayRole:
+                return entry
+            elif role == QtAccessibleTextRole:
+                return entry.accessible
+        return None
 
     def removeEntry(self, index: QModelIndex) -> bool:
         """Remove an entry in the model."""
-        if index.isValid() and (path := index.data()[1]):
-            try:
-                self.beginRemoveRows(index.parent(), index.row(), index.row())
-                self._data.pop(index.row())
-                self.endRemoveRows()
-            except IndexError:
-                return False
-            CONFIG.recentProjects.remove(path)
+        if entry := self.entry(index):
+            self.beginRemoveRows(index.parent(), index.row(), index.row())
+            self._data.pop(index.row())
+            self.endRemoveRows()
+            CONFIG.recentProjects.remove(entry.path)
             return True
         return False
 
@@ -548,28 +599,39 @@ class _NewProjectForm(QWidget):
         self.projName.setPlaceholderText(self.tr("Required"))
         self.projName.textChanged.connect(self._updateProjPath)
 
-        # Author(s)
+        self.projNameLabel = QLabel(self.tr("Project Name"), self)
+        self.projNameLabel.setBuddy(self.projName)
+
+        # Author
         self.projAuthor = QLineEdit(self)
         self.projAuthor.setMaxLength(200)
         self.projAuthor.setPlaceholderText(self.tr("Optional"))
         self.projAuthor.setText(CONFIG.lastAuthor)
+
+        self.projAuthorLabel = QLabel(self.tr("Author"), self)
+        self.projAuthorLabel.setBuddy(self.projAuthor)
 
         # Project Path
         self.projPath = QLineEdit(self)
         self.projPath.setReadOnly(True)
 
         self.browsePath = NIconToolButton(self, iSz, "browse", "systemio")
+        self.browsePath.setToolTip(self.tr("Browse for new project path"))
         self.browsePath.clicked.connect(self._doBrowse)
 
         self.pathBox = QHBoxLayout()
         self.pathBox.addWidget(self.projPath)
         self.pathBox.addWidget(self.browsePath)
 
+        self.projPathLabel = QLabel(self.tr("Project Path"), self)
+        self.projPathLabel.setBuddy(self.projPath)
+
         # Fill Project
         self.projFill = QLineEdit(self)
         self.projFill.setReadOnly(True)
 
         self.browseFill = NIconToolButton(self, iSz, "document_add", "add")
+        self.browseFill.setToolTip(self.tr("Fill new project"))
 
         self.fillMenu = QMenu(self.browseFill)
 
@@ -591,19 +653,22 @@ class _NewProjectForm(QWidget):
         self.fillBox.addWidget(self.projFill)
         self.fillBox.addWidget(self.browseFill)
 
+        self.projFillLabel = QLabel(self.tr("Prefill Project"), self)
+        self.projFillLabel.setBuddy(self.projFill)
+
         # Project Form
         self.projectForm = QFormLayout()
         self.projectForm.setAlignment(QtAlignLeft)
-        self.projectForm.addRow(self.tr("Project Name"), self.projName)
-        self.projectForm.addRow(self.tr("Author"), self.projAuthor)
-        self.projectForm.addRow(self.tr("Project Path"), self.pathBox)
-        self.projectForm.addRow(self.tr("Prefill Project"), self.fillBox)
+        self.projectForm.addRow(self.projNameLabel, self.projName)
+        self.projectForm.addRow(self.projAuthorLabel, self.projAuthor)
+        self.projectForm.addRow(self.projPathLabel, self.pathBox)
+        self.projectForm.addRow(self.projFillLabel, self.fillBox)
 
         # Chapters and Scenes
         # ===================
 
-        self.numChapters = NSpinBox(self)
-        self.numChapters.setRange(0, 200)
+        self.numChapters = NSpinBox(self, minVal=0, maxVal=200)
+        self.numChapters.setFixedNumbersWidth(3)
         self.numChapters.setValue(0)
         self.numChapters.setToolTip(self.tr("Set to 0 to only add scenes"))
 
@@ -612,8 +677,8 @@ class _NewProjectForm(QWidget):
         )
         self.chapterBox.addStretch(1)
 
-        self.numScenes = NSpinBox(self)
-        self.numScenes.setRange(0, 200)
+        self.numScenes = NSpinBox(self, minVal=0, maxVal=200)
+        self.numScenes.setFixedNumbersWidth(3)
         self.numScenes.setValue(0)
 
         self.sceneBox = NWrappedWidgetBox(
@@ -653,11 +718,15 @@ class _NewProjectForm(QWidget):
         # Assemble
         # ========
 
+        self.lblChSc = NColorLabel(self.tr("Chapters and Scenes"), self, scale=1.15, bold=True)
+        self.lblNotes = NColorLabel(self.tr("Project Notes"), self, scale=1.15, bold=True)
+        self.lblNew = NColorLabel(self.tr("Create New Project"), self, scale=1.15, bold=True)
+
         self.extraBox = QVBoxLayout()
-        self.extraBox.addWidget(QLabel("<b>{0}</b>".format(self.tr("Chapters and Scenes")), self))
+        self.extraBox.addWidget(self.lblChSc)
         self.extraBox.addLayout(self.novelForm)
         self.extraBox.addSpacing(16)
-        self.extraBox.addWidget(QLabel("<b>{0}</b>".format(self.tr("Project Notes")), self))
+        self.extraBox.addWidget(self.lblNotes)
         self.extraBox.addLayout(self.notesForm)
         self.extraBox.setContentsMargins(0, 0, 0, 0)
 
@@ -666,7 +735,7 @@ class _NewProjectForm(QWidget):
         self.extraWidget.setContentsMargins(0, 0, 0, 0)
 
         self.formBox = QVBoxLayout()
-        self.formBox.addWidget(QLabel("<b>{0}</b>".format(self.tr("Create New Project")), self))
+        self.formBox.addWidget(self.lblNew)
         self.formBox.addLayout(self.projectForm)
         self.formBox.addSpacing(16)
         self.formBox.addWidget(self.extraWidget)

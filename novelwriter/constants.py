@@ -73,11 +73,12 @@ class nwConst:
 class nwRegEx:
     """Common RegExes."""
 
-    URL    = r"\bhttps?://(?:www\.|(?!www))[\w/()@:%_\+-.~#?&=]+\b"
+    URL    = r"\bhttps?://(?:www\.|(?!www))[\w/()@:%_\+-.~#!?&=]+\b"
     WORDS  = r"\b[^\s\-\+\/–—\[\]:]+\b"
     BREAK  = r"(?i)(?<!\\)(\[br\]\n?)"
-    FMT_EI = r"(?<![\w\\])(_)(?![\s_])(.+?)(?<![\s\\])(\1)(?!\w)"
-    FMT_EB = r"(?<![\w\\])(\*{2})(?![\s\*])(.+?)(?<![\s\\])(\1)(?!\w)"
+    FMT_IT = r"(?<![\w\\])(_)(?![\s_])(.+?)(?<![\s\\])(\1)(?!\w)"
+    FMT_B1 = r"(?<![\w\\])(\*{1,2})(?![\s\*])(.+?)(?<![\s\\])(\1)(?!\w)"
+    FMT_B2 = r"(?<![\w\\])(\*{2})(?![\s\*])(.+?)(?<![\s\\])(\1)(?!\w)"
     FMT_ST = r"(?<![\w\\])(~{2})(?![\s~])(.+?)(?<![\s\\])(\1)(?!\w)"
     FMT_HL = r"(?<![\w\\])(={2})(?![\s=])(.+?)(?<![\s\\])(\1)(?!\w)"
     FMT_SC = r"(?i)(?<!\\)(\[(?:b|/b|i|/i|s|/s|u|/u|m|/m|sup|/sup|sub|/sub|br)\])"
@@ -356,16 +357,16 @@ class nwLabels:
     }
     STATS_NAME: Final[dict[str, str]] = {
         nwStats.CHARS:        QT_TRANSLATE_NOOP("Stats", "Characters"),
-        nwStats.CHARS_TEXT:   QT_TRANSLATE_NOOP("Stats", "Characters in Text"),
-        nwStats.CHARS_TITLE:  QT_TRANSLATE_NOOP("Stats", "Characters in Headings"),
+        nwStats.CHARS_TEXT:   QT_TRANSLATE_NOOP("Stats", "Characters in text"),
+        nwStats.CHARS_TITLE:  QT_TRANSLATE_NOOP("Stats", "Characters in headings"),
         nwStats.PARAGRAPHS:   QT_TRANSLATE_NOOP("Stats", "Paragraphs"),
         nwStats.TITLES:       QT_TRANSLATE_NOOP("Stats", "Headings"),
-        nwStats.WCHARS_ALL:   QT_TRANSLATE_NOOP("Stats", "Characters, No Spaces"),
-        nwStats.WCHARS_TEXT:  QT_TRANSLATE_NOOP("Stats", "Characters in Text, No Spaces"),
-        nwStats.WCHARS_TITLE: QT_TRANSLATE_NOOP("Stats", "Characters in Headings, No Spaces"),
+        nwStats.WCHARS_ALL:   QT_TRANSLATE_NOOP("Stats", "Characters, no spaces"),
+        nwStats.WCHARS_TEXT:  QT_TRANSLATE_NOOP("Stats", "Characters in text, no spaces"),
+        nwStats.WCHARS_TITLE: QT_TRANSLATE_NOOP("Stats", "Characters in headings, no spaces"),
         nwStats.WORDS:        QT_TRANSLATE_NOOP("Stats", "Words"),
-        nwStats.WORDS_TEXT:   QT_TRANSLATE_NOOP("Stats", "Words in Text"),
-        nwStats.WORDS_TITLE:  QT_TRANSLATE_NOOP("Stats", "Words in Headings"),
+        nwStats.WORDS_TEXT:   QT_TRANSLATE_NOOP("Stats", "Words in text"),
+        nwStats.WORDS_TITLE:  QT_TRANSLATE_NOOP("Stats", "Words in headings"),
     }
     STATS_DISPLAY: Final[dict[str, str]] = {
         nwStats.CHARS: QT_TRANSLATE_NOOP("Stats", "Characters: {0} ({1})"),

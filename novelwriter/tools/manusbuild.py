@@ -37,11 +37,12 @@ from PyQt6.QtWidgets import (
 )
 
 from novelwriter import SHARED
-from novelwriter.common import makeFileNameSafe, openExternalPath
+from novelwriter.common import makeFileNameSafe, openExternalPath, safeExists, safeIsDir
 from novelwriter.constants import nwLabels
 from novelwriter.core.docbuild import NWBuildDocument
 from novelwriter.core.item import NWItem
-from novelwriter.enum import nwBuildFmt, nwStandardButton
+from novelwriter.enum import nwBuildFmt, nwStandardButton, nwToolButton
+from novelwriter.extensions.configlayout import NColorLabel
 from novelwriter.extensions.modified import NDialog, NIconToolButton, NPushButton
 from novelwriter.extensions.progressbars import NProgressSimple
 from novelwriter.types import QtAlignCenter, QtRoleAction, QtRoleDestruct, QtUserRole
@@ -132,19 +133,15 @@ class GuiManuscriptBuild(NDialog):
         # Dialog Controls
         # ===============
 
-        font = self.font()
-        font.setBold(True)
-        font.setUnderline(True)
-        font.setPointSizeF(1.5*font.pointSizeF())
-
-        self.lblMain = QLabel(self._build.name, self)
-        self.lblMain.setWordWrap(True)
-        self.lblMain.setFont(font)
+        self.lblMain = NColorLabel(
+            self.tr("Build: {0}").format(self._build.name), self,
+            color=SHARED.theme.helpText, scale=NColorLabel.HEADER_SCALE,
+        )
 
         # Build Path
         self.lblPath = QLabel(self.tr("Path"), self)
         self.buildPath = QLineEdit(self)
-        self.btnBrowse = NIconToolButton(self, iSz, "browse", "systemio")
+        self.btnBrowse = SHARED.theme.getToolButton(nwToolButton.BROWSE, self)
 
         self.pathBox = QHBoxLayout()
         self.pathBox.addWidget(self.buildPath)
@@ -272,7 +269,7 @@ class GuiManuscriptBuild(NDialog):
     def _doSelectPath(self) -> None:
         """Select a folder for output."""
         bPath = Path(self.buildPath.text())
-        bPath = bPath if bPath.is_dir() else self._build.lastBuildPath
+        bPath = bPath if safeIsDir(bPath) else self._build.lastBuildPath
         savePath = QFileDialog.getExistingDirectory(
             self, self.tr("Select Folder"), str(bPath)
         )
@@ -308,14 +305,14 @@ class GuiManuscriptBuild(NDialog):
 
         self.buildProgress.setValue(0)
         bPath = Path(self.buildPath.text())
-        if not bPath.is_dir():
+        if not safeIsDir(bPath):
             SHARED.error(self.tr("Output folder does not exist."))
             return False
 
         bExt = nwLabels.BUILD_EXT[bFormat]
         buildPath = (bPath / makeFileNameSafe(bName)).with_suffix(bExt)
 
-        if buildPath.exists():
+        if safeExists(buildPath):
             if not SHARED.question(
                 self.tr("The file already exists. Do you want to overwrite it?")
             ):

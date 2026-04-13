@@ -69,6 +69,7 @@ constraints. These themes include a subset of icons from:
 
 * **Font Awesome** by Fonticons Inc (CC BY 4.0)
 * **Remix** by RemixIcon (Apache 2.0 w/non-free clause)
+* **Lucide** by Cole Bemis and Lucide Contributors (ISC License)
 
 ## Colour Themes
 
@@ -112,6 +113,7 @@ Other themes were created for novelWriter:
 * **Selenium** themes by Myian
 * **Sepia** themes by Myian
 * **Sultana** themes by Myian
+* **Today** themes by Veronica Berglyd Olsen
 * **Vivid** themes by Myian
 * **Warpgate** theme by Myian
 * **Waterlily** themes by Myian

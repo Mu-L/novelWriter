@@ -92,9 +92,13 @@ def testGuiTheme_ParseColor():
 def testGuiTheme_ScanThemes(monkeypatch):
     """Test the themes scanning."""
     theme = GuiTheme()
+    files = []
+
+    # Invalid path should be handled silently
+    _listContent(files, None, ".conf")  # type: ignore
+    assert len(files) == 0
 
     # Load built-in themes
-    files = []
     _listContent(files, CONFIG.assetPath("themes"), ".conf")
     assert len(files) > 0
 
@@ -144,19 +148,20 @@ def testGuiTheme_LoadThemes(monkeypatch):
     assert theme._currentTheme == DEF_GUI_DARK
 
     # Let auto switch back to light, then dark
-    with monkeypatch.context() as mp:
-        mp.setattr(CONFIG, "verQtValue", 0x060500)
-        mp.setattr(QStyleHints, "colorScheme", lambda *a: Qt.ColorScheme.Light)
-        CONFIG.themeMode = nwTheme.AUTO
-        theme.loadTheme()
-        assert theme._currentTheme == DEF_GUI_LIGHT
+    if CONFIG.checkMinQtVersion(0x060500):  # Don't run for old Qt
+        with monkeypatch.context() as mp:
+            mp.setattr(CONFIG, "verQtValue", 0x060500)
+            mp.setattr(QStyleHints, "colorScheme", lambda *a: Qt.ColorScheme.Light)
+            CONFIG.themeMode = nwTheme.AUTO
+            theme.loadTheme()
+            assert theme._currentTheme == DEF_GUI_LIGHT
 
-    with monkeypatch.context() as mp:
-        mp.setattr(CONFIG, "verQtValue", 0x060500)
-        mp.setattr(QStyleHints, "colorScheme", lambda *a: Qt.ColorScheme.Dark)
-        CONFIG.themeMode = nwTheme.AUTO
-        theme.loadTheme()
-        assert theme._currentTheme == DEF_GUI_DARK
+        with monkeypatch.context() as mp:
+            mp.setattr(CONFIG, "verQtValue", 0x060500)
+            mp.setattr(QStyleHints, "colorScheme", lambda *a: Qt.ColorScheme.Dark)
+            CONFIG.themeMode = nwTheme.AUTO
+            theme.loadTheme()
+            assert theme._currentTheme == DEF_GUI_DARK
 
     # Error Cases
     # ===========
@@ -317,14 +322,15 @@ def testGuiTheme_Methods(monkeypatch):
     assert theme.getTextWidth("MMMMM", font) < theme.getTextWidth("MMMMM")
 
     # Detect desktop mode Qt 6.5+
-    with monkeypatch.context() as mp:
-        mp.setattr(CONFIG, "verQtValue", 0x060500)
+    if CONFIG.checkMinQtVersion(0x060500):  # Don't run for old Qt
+        with monkeypatch.context() as mp:
+            mp.setattr(CONFIG, "verQtValue", 0x060500)
 
-        mp.setattr(QStyleHints, "colorScheme", lambda *a: Qt.ColorScheme.Light)
-        assert theme.isDesktopDarkMode() is False
+            mp.setattr(QStyleHints, "colorScheme", lambda *a: Qt.ColorScheme.Light)
+            assert theme.isDesktopDarkMode() is False
 
-        mp.setattr(QStyleHints, "colorScheme", lambda *a: Qt.ColorScheme.Dark)
-        assert theme.isDesktopDarkMode() is True
+            mp.setattr(QStyleHints, "colorScheme", lambda *a: Qt.ColorScheme.Dark)
+            assert theme.isDesktopDarkMode() is True
 
     # Detect desktop mode Qt 6.4
     mockWhite = Mock()
