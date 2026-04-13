@@ -3305,12 +3305,12 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="559" />
         <source>Prefer single asterisk bold</source>
-        <translation type="unfinished" />
+        <translation>Prefer single asterisk bold</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="560" />
         <source>This does not turn off double asterisks for bold.</source>
-        <translation type="unfinished" />
+        <translation>This does not turn off double asterisks for bold.</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="567" />

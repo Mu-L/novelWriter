@@ -3305,12 +3305,12 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="559" />
         <source>Prefer single asterisk bold</source>
-        <translation type="unfinished" />
+        <translation>Foretrekk én stjerne for uthev</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="560" />
         <source>This does not turn off double asterisks for bold.</source>
-        <translation type="unfinished" />
+        <translation>Dette slår ikke av dobbel stjerne for uthevet skrift.</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="567" />
