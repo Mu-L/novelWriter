@@ -40,7 +40,6 @@ Note: There are no longer any Mac releases produced for novelWriter. See #2618.
 * GUI font emphasis is now handled by the theme class, and bold text on the GUI has been reduced in
   weight to semibold. Issue #2709. PR #2710.
 
-
 ----
 
 ## Version 26.1 Beta 2 [2026-04-04]
