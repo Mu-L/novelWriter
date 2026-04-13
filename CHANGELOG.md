@@ -1,5 +1,48 @@
 # novelWriter Changelog
 
+## Version 26.1 RC 1 [2026-04-13]
+
+### Release Notes
+
+This is a release candidate of the next release version, and is intended for testing purposes.
+Please be careful when using this version on live writing projects, and make sure you take frequent
+backups.
+
+Note: There are no longer any Mac releases produced for novelWriter. See #2618.
+
+### Detailed Changelog
+
+**Bugfixes**
+
+* Fixed an issue where the editor and viewer header no longer changed colour when losing or gaining
+  focus. Issue #2716. PR #2717.
+* Fixed the project list tooltip on the Welcome dialog. Issue #2714. PR #2715.
+* Fixed the size of spin boxes on config forms. Issue #2703. PR #2711.
+
+**Features**
+
+* A new setting in Preferences allows for the usage of single asterisks for bold formatting.
+  Enabling this setting does not disable double asterisk bold. Issue #2718. PR #2719.
+
+**User Interface**
+
+* Adjusted some colours of icons in several themes to bring them visually in line with the rest of
+  the theme. Contributed by @HeyMyian. PR #2712.
+
+**Internationalisation**
+
+* Updated translation strings. PRs #2721 and #2722.
+* Updated Dutch translation by @risingphoenix73. PRs #2721 and #2722.
+* Updated US English and Norwegian translation by @vkbo. PRs #2721 and #2722.
+
+**Other Changes**
+
+* GUI font emphasis is now handled by the theme class, and bold text on the GUI has been reduced in
+  weight to semibold. Issue #2709. PR #2710.
+
+
+----
+
 ## Version 26.1 Beta 2 [2026-04-04]
 
 ### Release Notes
