@@ -120,8 +120,8 @@
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="161" />
-        <source>Add titles for notes</source>
-        <translation>为笔记添加标题</translation>
+        <source>Add titles for note root folders</source>
+        <translation type="unfinished" />
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="163" />
