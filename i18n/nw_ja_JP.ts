@@ -121,7 +121,7 @@
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="161" />
         <source>Add titles for note root folders</source>
-        <translation type="unfinished" />
+        <translation>ノートのルートフォルダーにタイトルを追加</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="163" />
@@ -276,7 +276,7 @@
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="198" />
         <source>Page header</source>
-        <translation>ページの見出し</translation>
+        <translation>ページヘッダー</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="199" />
@@ -2717,7 +2717,7 @@
     <message>
         <location filename="../novelwriter/tools/manusbuild.py" line="309" />
         <source>Output folder does not exist.</source>
-        <translation>出力フォルダが存在しません。</translation>
+        <translation>出力フォルダーが存在しません。</translation>
     </message>
     <message>
         <location filename="../novelwriter/tools/manusbuild.py" line="317" />
@@ -3019,7 +3019,7 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="283" />
         <source>Add the parent folder names to the header.</source>
-        <translation>親フォルダ名をヘッダーに追加します。</translation>
+        <translation>親フォルダー名をヘッダーに追加します。</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="290" />
@@ -3054,7 +3054,7 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="319" />
         <source>Only override icon colours for folders.</source>
-        <translation>フォルダのアイコン色のみを上書きします。</translation>
+        <translation>フォルダーのアイコン色のみを上書きします。</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="326" />
@@ -3305,12 +3305,12 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="559" />
         <source>Prefer single asterisk bold</source>
-        <translation type="unfinished" />
+        <translation>シングルアスタリスクを優先</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="560" />
         <source>This does not turn off double asterisks for bold.</source>
-        <translation type="unfinished" />
+        <translation>これは太字用のダブルアスタリスクを無効にしません。</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="567" />
@@ -3395,7 +3395,7 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="634" />
         <source>Applies to the selected quote styles.</source>
-        <translation>選択したクォートスタイルに適用されます。</translation>
+        <translation>選択したクォートの形式に適用されます。</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="641" />
@@ -3567,7 +3567,7 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="832" />
         <source>Single quote open style</source>
-        <translation>シングルクォートオープンスタイル</translation>
+        <translation>シングルクォートの開始形式</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="833" />
@@ -3577,7 +3577,7 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="847" />
         <source>Single quote close style</source>
-        <translation>シングルクォートクローズスタイル</translation>
+        <translation>シングルクォートの終了形式</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="848" />
@@ -3587,7 +3587,7 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="863" />
         <source>Double quote open style</source>
-        <translation>ダブルクォートオープンスタイル</translation>
+        <translation>ダブルクォートの開始形式</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="864" />
@@ -3597,7 +3597,7 @@
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="878" />
         <source>Double quote close style</source>
-        <translation>シングルクォートクローズスタイル</translation>
+        <translation>ダブルクォートの終了形式</translation>
     </message>
     <message>
         <location filename="../novelwriter/dialogs/preferences.py" line="879" />
@@ -3741,12 +3741,12 @@
     <message>
         <location filename="../novelwriter/gui/projtree.py" line="605" />
         <source>Did not find anywhere to add the file or folder!</source>
-        <translation>ファイルまたはフォルダを追加する場所が見つかりませんでした！</translation>
+        <translation>ファイルまたはフォルダーを追加する場所が見つかりませんでした！</translation>
     </message>
     <message>
         <location filename="../novelwriter/gui/projtree.py" line="609" />
         <source>Cannot add new files or folders to the Trash folder.</source>
-        <translation>ごみ箱フォルダには新規ファイルやフォルダを追加できません。</translation>
+        <translation>ごみ箱フォルダーには新規ファイルやフォルダーを追加できません。</translation>
     </message>
     <message>
         <location filename="../novelwriter/gui/projtree.py" line="621" />
@@ -4249,7 +4249,7 @@
     <message>
         <location filename="../novelwriter/core/coretools.py" line="404" />
         <source>The target folder is not empty. Please choose another folder.</source>
-        <translation>ターゲットフォルダが空ではありません。別のフォルダを選択してください。</translation>
+        <translation>ターゲットフォルダーが空ではありません。別のフォルダーを選択してください。</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/coretools.py" line="410" />
@@ -4331,7 +4331,7 @@
         <location filename="../novelwriter/core/coretools.py" line="572" />
         <location filename="../novelwriter/core/coretools.py" line="532" />
         <source>The target folder already exists. Please choose another folder.</source>
-        <translation>ターゲットフォルダは既に存在します。別のフォルダを選択してください。</translation>
+        <translation>ターゲットフォルダーは既に存在します。別のフォルダーを選択してください。</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/coretools.py" line="559" />
@@ -5257,7 +5257,7 @@
     <message>
         <location filename="../novelwriter/gui/projtree.py" line="1270" />
         <source>Merge Documents in Folder</source>
-        <translation>フォルダ内のドキュメントを結合</translation>
+        <translation>フォルダー内のドキュメントを結合</translation>
     </message>
     <message>
         <location filename="../novelwriter/gui/projtree.py" line="1274" />

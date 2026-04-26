@@ -1,5 +1,36 @@
 # novelWriter Changelog
 
+## Version 26.1 [2026-04-26]
+
+### Release Notes
+
+The 2026.1 release is based on the features added in 2026.1 Beta 1, Beta 2, RC 1.
+
+See the website for complete [Release Notes](https://novelwriter.io/releases/release_26_1.html).
+
+### Detailed Changelog
+
+**Improvements**
+
+* When exporting manuscripts to DocX (Word), the document will no longer expand hard line breaks by
+  when default when justified margins are enabled. Issue #2690. PR #2732.
+* The "Add titles for notes" label in **Manuscript Build** settings has been updated and should now
+  be clearer. Issue #2727. PR #2729.
+
+**Internationalisation**
+
+* A missing translation string for projects was added. Issue #2730. PR #2731.
+* Norwegian and US English translations updated by @vkbo. PR #2738.
+* Japanese translation updated bu @hebekeg. PR #2738.
+* Dutch translation updated by @risingphoenix73. PR #2738.
+* German translation updated by @HeyMyian. PR #2738.
+* Polish translation updated by @Nauthizz. PR #2738.
+* Latin American Spanish translation updated by @tmarplatt. PR #2738.
+* Czech translation updated by Tomáš Zmek. PR #2738.
+* Italian translation updated by Lou Cyper. PR #2738.
+
+----
+
 ## Version 26.1 RC 1 [2026-04-13]
 
 ### Release Notes
@@ -1173,7 +1204,7 @@ See the website for complete [Release Notes](https://novelwriter.io/releases/rel
 * Portuguese translation updated by Oli Maia. PR #1955.
 * Japanese translation updated by @hebekeg. PR #1955.
 * French translation updated by Albert Aribaud (@aaribaud). PR #1955.
-* Polish translation added by Anna Maria Polak (@Nauthiz). PR #1955.
+* Polish translation added by Anna Maria Polak (@Nauthizz). PR #1955.
 
 **Packaging**
 
