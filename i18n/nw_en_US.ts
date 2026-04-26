@@ -121,7 +121,7 @@
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="161" />
         <source>Add titles for note root folders</source>
-        <translation type="unfinished" />
+        <translation>Add titles for note root folders</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="163" />
