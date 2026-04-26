@@ -31,52 +31,52 @@
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="142" />
         <source>Partition format</source>
-        <translation type="unfinished" />
+        <translation>Formát oddílů</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="143" />
         <source>Chapter format</source>
-        <translation type="unfinished" />
+        <translation>Formát kapitol</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="144" />
         <source>Unnumbered format</source>
-        <translation type="unfinished" />
+        <translation>Nečíslovaný formát</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="145" />
         <source>Scene format</source>
-        <translation type="unfinished" />
+        <translation>Formát scény</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="146" />
         <source>Alt. Scene format</source>
-        <translation type="unfinished" />
+        <translation>Alt. formát scény</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="147" />
         <source>Section format</source>
-        <translation type="unfinished" />
+        <translation>Formát sekce</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="148" />
         <source>Title styling</source>
-        <translation type="unfinished" />
+        <translation>Stylování názvu</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="149" />
         <source>Partition styling</source>
-        <translation type="unfinished" />
+        <translation>Stylování oddílů</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="150" />
         <source>Chapter styling</source>
-        <translation type="unfinished" />
+        <translation>Stylování kapitoly</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="151" />
         <source>Scene styling</source>
-        <translation type="unfinished" />
+        <translation>Stylování scén</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="153" />
@@ -86,37 +86,37 @@
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="154" />
         <source>Include body text</source>
-        <translation type="unfinished" />
+        <translation>Zahrnout text těla</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="155" />
         <source>Include synopsis</source>
-        <translation type="unfinished" />
+        <translation>Zahrnout synopsi</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="156" />
         <source>Include comments</source>
-        <translation type="unfinished" />
+        <translation>Zahrnout komentáře</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="157" />
         <source>Include story structure</source>
-        <translation type="unfinished" />
+        <translation>Zahrnout strukturu příběhu</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="158" />
         <source>Include manuscript notes</source>
-        <translation type="unfinished" />
+        <translation>Zahrnout poznámky Manuscriptu</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="159" />
         <source>Include keywords</source>
-        <translation type="unfinished" />
+        <translation>Zahrnout klíčová slova</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="160" />
         <source>Ignore these keywords</source>
-        <translation type="unfinished" />
+        <translation>Ignorovat tato klíčová slova</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="161" />
@@ -131,52 +131,52 @@
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="164" />
         <source>Text font</source>
-        <translation type="unfinished" />
+        <translation>Písmo</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="165" />
         <source>Line height</source>
-        <translation type="unfinished" />
+        <translation>Výška řádku</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="166" />
         <source>Justify text margins</source>
-        <translation type="unfinished" />
+        <translation>Zarovnat textové okraje</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="167" />
         <source>Replace Unicode characters</source>
-        <translation type="unfinished" />
+        <translation>Nahradit znaky Unicode</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="168" />
         <source>Replace tabs with spaces</source>
-        <translation type="unfinished" />
+        <translation>Nahradit tabulátor mezerami</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="169" />
         <source>Preserve hard line breaks</source>
-        <translation type="unfinished" />
+        <translation>Zachovat zalomení řádku</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="170" />
         <source>Apply dialogue highlighting</source>
-        <translation type="unfinished" />
+        <translation>Použít zvýraznění dialogu</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="172" />
         <source>Heading Format</source>
-        <translation type="unfinished" />
+        <translation>Formát nadpisu</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="173" />
         <source>Add colours to headings</source>
-        <translation type="unfinished" />
+        <translation>Přidat barvy k nadpisům</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="174" />
         <source>Bold headings</source>
-        <translation type="unfinished" />
+        <translation>Tučné nadpisy</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="175" />
@@ -191,12 +191,12 @@
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="178" />
         <source>Enable indent</source>
-        <translation type="unfinished" />
+        <translation>Povolit odsazení</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="179" />
         <source>Indent width</source>
-        <translation type="unfinished" />
+        <translation>Šířka odsazení</translation>
     </message>
     <message>
         <location filename="../novelwriter/core/buildsettings.py" line="180" />

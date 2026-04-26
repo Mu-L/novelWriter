@@ -1,5 +1,28 @@
 # novelWriter Changelog
 
+## Version 26.1 [2026-04-26]
+
+### Release Notes
+
+The 26.1 release is based on the features added in 26.1 Beta 1, Beta 2, RC 1.
+
+See the website for complete [Release Notes](https://novelwriter.io/releases/release_26_1.html).
+
+### Detailed Changelog
+
+**Internationalisation**
+
+* Norwegian and US English translations updated by @vkbo. PR #2738.
+* Japanese translation updated bu @hebekeg. PR #2738.
+* Dutch translation updated by @risingphoenix73. PR #2738.
+* German translation updated by @HeyMyian. PR #2738.
+* Polish translation updated by @Nauthiz. PR #2738.
+* Latin American Spanish translation updated by @tmarplatt. PR #2738.
+* Czech translation updated by Tomáš Zmek. PR #2738.
+* Italian translation updated by Lou Cyper. PR #2738.
+
+----
+
 ## Version 26.1 RC 1 [2026-04-13]
 
 ### Release Notes
