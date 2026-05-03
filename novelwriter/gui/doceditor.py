@@ -2564,7 +2564,7 @@ class CommandCompleter(QMenu):
         self.triggered.connect(self._emitComplete)
 
     def updateMetaText(self, text: str, pos: int) -> bool:
-        """Update the menu options based on the line of text."""
+        """Update the menu options based on the line of meta text."""
         self.clear()
         kw, sep, _ = text.partition(":")
         if pos <= len(kw):
@@ -2598,7 +2598,7 @@ class CommandCompleter(QMenu):
         return True
 
     def updateCommentText(self, text: str, pos: int) -> bool:
-        """Update the menu options based on the line of text."""
+        """Update the menu options based on the line of comment text."""
         self.clear()
         cmd, sep, _ = text.partition(":")
         if pos <= len(cmd):
