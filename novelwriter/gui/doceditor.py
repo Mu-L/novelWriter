@@ -2637,14 +2637,22 @@ class CommandCompleter(QMenu):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Capture keypresses and forward most of them to the editor."""
-        if event.key() in (
-            Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Return,
-            Qt.Key.Key_Enter, Qt.Key.Key_Escape
-        ):
-            super().keyPressEvent(event)
-        else:
-            self.close()  # Close to release the event lock before forwarding the key press (#2510)
-            self._parent.keyPressEvent(event)
+        match event.key():
+            case Qt.Key.Key_Up | Qt.Key.Key_Down:
+                super().keyPressEvent(event)
+            case Qt.Key.Key_Right | Qt.Key.Key_Return | Qt.Key.Key_Enter | Qt.Key.Key_Tab:
+                if action := self.activeAction():
+                    action.trigger()
+                else:
+                    self.clear()
+                    self.close()
+            case Qt.Key.Key_Left | Qt.Key.Key_Escape:
+                self.clear()
+                self.close()
+            case _:
+                self.clear()
+                self.close()  # Close to release the event lock before forwarding key press (#2510)
+                self._parent.keyPressEvent(event)
 
     ##
     #  Internal Functions
