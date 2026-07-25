@@ -83,19 +83,14 @@ uv run run_tests.py --help
 
 ## Picking the Correct Branch for a Pull Request
 
-* `main` is used for continuous development and new features.
-* `staging` is used for beta releases and release candidates and is dormant between cycles.
-* `release` is used for the current active release, and fixes for that release.
-
-Specifically:
-
-Pre-releases are made from the `staging` branch, and full releases are made from the `release`
-branch. If you are submitting a fix to a current release you must do so from the `release` branch.
-If you make such a fix on the `main` branch, **it cannot be included in a patch release**. This
-also applies to the documentation for the latest release published on the main website.
+Pre-releases are made from the `main` branch, and full releases are made from the `release` branch.
+If you are submitting a fix to a current release you must do so from the `release` branch. If you
+make such a fix on the `main` branch, **it cannot be included in a patch release**. This also
+applies to the documentation for the latest release published on the main website.
 
 New features are only added in full releases, so a feature pull request must be made to the `main`
-branch. Fixes to a pre-release must be made to the `staging` branch.
+branch. However, if the `main` branch is very close to a new full release, pull requests may not be
+merged until the release is completed.
 
 This project uses GitHub milestones to plan releases, and only pull requests included in the
 current release cycle will be merged to `main`. Milestone tickets are not set in stone and are
@@ -108,7 +103,7 @@ Make sure the pull request follows these rules:
 
 * The `main` branch is the default branch. For general changes, please make a new branch in your
   own fork from the current `main` branch. Do not make pull requests from your copy of the `main`
-  branch. The same applies to the `staging` and `release` branches.
+  branch. The same applies to the `release` branch.
 * Please provide a description of the changes in the pull request under the summary section of the
   pull request template, and reference any related issues by providing the issue number. Do not
   post links to issue numbers as that breaks the integration. Stating the issue number is enough.
