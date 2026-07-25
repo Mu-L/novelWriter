@@ -17,7 +17,7 @@ General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
-"""  # ruff: ignore[multi-line-summary-first-line, missing-trailing-period, missing-terminal-punctuation]
+"""  # noqa
 
 from __future__ import annotations
 

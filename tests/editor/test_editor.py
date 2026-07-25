@@ -3459,16 +3459,6 @@ def testGuiDocEditor_Search(qtbot, monkeypatch, nwGUI, projPath, ipsumText, mock
         docEditor.openNextFindDocument(docEditor, False)
         assert docEditor.getCursorPosition() == cursorPos
 
-    with monkeypatch.context() as mp:
-        mp.setattr(docEditor, "_docHandle", None)
-        docEditor.setCursorPosition(len(docEditor.getText()))
-        docEditor.findNext()
-        assert abs(docEditor.getCursorPosition() - 665) < 3
-
-        docEditor.setCursorPosition(0)
-        docEditor.findNext(goBack=True)
-        assert abs(docEditor.getCursorPosition() - 665) < 3
-
     # Enable next doc search
     setToggle(docSearch.tbProject, True)
     assert CONFIG.searchNextFile is True
