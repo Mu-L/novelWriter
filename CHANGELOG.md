@@ -1,5 +1,30 @@
 # novelWriter Changelog
 
+## Version 26.1.2 [2026-07-25]
+
+### Release Notes
+
+This is a patch release that fixes a race condition when searching across multiple documents,
+restores the application's taskbar icon on Windows, and fixes a font setting that failed to load
+on older versions of Qt. Japanese and Russian translations have also been updated.
+
+### Detailed Changelog
+
+**Bugfixes**
+
+* Fixed a race condition when searching through multiple documents that could cause a crash if
+  the next match button was pressed too quickly. Issue #2809. PR #2811.
+* Fixed the application icon not showing on the Windows taskbar. Issue #2728. PR #2824.
+* Fixed loading of a font setting saved with Qt 6.11 when running on older versions of Qt.
+  PR #2849.
+
+**Internationalisation**
+
+* Japanese translation updated bu @hebekeg. PR #2897.
+* Russian translation updated by Kuro Ryuu (kuroryuu) and Konstantin Tan (@k1kimosha). PR #2897.
+
+----
+
 ## Version 26.1.1 [2026-06-28]
 
 ### Release Notes
