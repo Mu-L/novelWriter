@@ -63,9 +63,9 @@ code, please also read the full
 
 Project credits are available in [CREDITS.md](https://github.com/vkbo/novelWriter/blob/main/CREDITS.md).
 
-**Note:** New features and pre-releases are made on the `main` branch. Full releases are made from
-the `release` branch. So if you're submitting a fix to a current release, **including changes to
-documentation**, they must be made to the `release` branch.
+**Note:** New features are added on the `main` branch and pre-releases are made on the `staging`
+branch. Full releases are made from the `release` branch. So if you're submitting a fix to a
+current release, **including changes to documentation**, they must be made to the `release` branch.
 
 
 ### Translations
