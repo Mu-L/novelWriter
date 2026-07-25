@@ -20,7 +20,7 @@ General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
-"""  # noqa
+"""  # ruff: ignore[multi-line-summary-first-line, missing-trailing-period, missing-terminal-punctuation, ambiguous-unicode-character-docstring]
 
 from __future__ import annotations
 
@@ -50,9 +50,9 @@ __license__ = "GPLv3"
 __author__ = "Veronica Berglyd Olsen"
 __maintainer__ = "Veronica Berglyd Olsen"
 __email__ = "code@vkbo.net"
-__version__ = "26.1.1"
-__hexversion__ = "0x260101f0"
-__date__ = "2026-06-28"
+__version__ = "26.1.2"
+__hexversion__ = "0x260102f0"
+__date__ = "2026-07-25"
 __status__ = "Stable"
 __domain__ = "novelwriter.io"
 
