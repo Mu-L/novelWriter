@@ -35,6 +35,7 @@ from utils.common import (
     checkAssetsExist,
     copyPackageFiles,
     copySourceCode,
+    copyTestCode,
     extractVersion,
     makeCheckSum,
     systemCall,
@@ -139,6 +140,7 @@ def makeDebianPackage(
     print("")
 
     copySourceCode(outDir)
+    copyTestCode(outDir)
 
     print("")
     print("Copying or generating additional files ...")
