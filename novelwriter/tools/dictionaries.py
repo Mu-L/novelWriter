@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Dictionary Downloader
+novelWriter - GUI Dictionary Downloader
 =======================================
 
 This file is a part of novelWriter
@@ -96,7 +96,7 @@ class GuiDictionaries(NNonBlockingDialog):
         self.huBrowse = SHARED.theme.getToolButton(nwToolButton.BROWSE, self)
         self.huBrowse.clicked.connect(self._doBrowseHunspell)
         self.huImport = QPushButton(self.tr("Add Dictionary"), self)
-        self.huImport.setIcon(SHARED.theme.getIcon("add", "add"))
+        self.huImport.setIcon(SHARED.theme.getIcon("add:add"))
         self.huImport.clicked.connect(self._doImportHunspell)
 
         self.huPathBox = QHBoxLayout()
@@ -148,6 +148,7 @@ class GuiDictionaries(NNonBlockingDialog):
         logger.debug("Ready: GuiDictionaries")
 
     def __del__(self) -> None:  # pragma: no cover
+        """Class destructor."""
         logger.debug("Delete: GuiDictionaries")
 
     def initDialog(self) -> bool:
@@ -163,11 +164,11 @@ class GuiDictionaries(NNonBlockingDialog):
             return False
 
         try:
-            if path.is_dir():
+            if path.is_dir():  # pragma: no branch
                 self.inPath.setText(str(path))
                 hunspell = path / "hunspell"
                 if hunspell.is_dir():
-                    self._currDicts = set(i.stem for i in hunspell.iterdir() if i.is_file() and i.suffix == ".aff")
+                    self._currDicts = {i.stem for i in hunspell.iterdir() if i.is_file() and i.suffix == ".aff"}
                 self._appendLog(self.tr("Additional dictionaries found: {0}").format(len(self._currDicts)))
         except Exception as exc:
             SHARED.newStatusMessage(exc, "error")

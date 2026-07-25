@@ -1,9 +1,6 @@
 """
-novelWriter – Project Document
+novelWriter - Project Document
 ==============================
-
-File History:
-Created: 2018-09-29 [0.0.1]
 
 This file is a part of novelWriter
 Copyright (C) 2018 Veronica Berglyd Olsen and novelWriter contributors
@@ -36,14 +33,14 @@ from novelwriter.enum import nwItemClass, nwItemLayout
 from novelwriter.error import formatException, logException
 
 if TYPE_CHECKING:
-    from novelwriter.core.item import NWItem
+    from novelwriter.core.item import ProjectItem
     from novelwriter.core.project import NWProject
 
 logger = logging.getLogger(__name__)
 
 
-class NWDocument:
-    """Core: Document Class.
+class ProjectDocument:
+    """Core: Project Document Class.
 
     A Class wrapping a single novelWriter document file. It represents
     a project item of nwItemType FILE. The file is not guaranteed to
@@ -70,9 +67,11 @@ class NWDocument:
             self._item = self._project.tree[tHandle]
 
     def __repr__(self) -> str:
-        return f"<NWDocument handle={self._handle}>"
+        """Return a string representation of the document."""
+        return f"<ProjectDocument handle={self._handle}>"
 
     def __bool__(self) -> bool:
+        """Return True if the document has a valid handle and item."""
         return self._handle is not None and self._item is not None
 
     ##
@@ -100,8 +99,8 @@ class NWDocument:
         return self._docMeta.get("updated", "Unknown")
 
     @property
-    def nwItem(self) -> NWItem | None:
-        """Return a pointer to the currently open NWItem."""
+    def nwItem(self) -> ProjectItem | None:
+        """Return a pointer to the currently open ProjectItem."""
         return self._item
 
     ##

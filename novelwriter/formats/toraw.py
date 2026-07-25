@@ -1,5 +1,5 @@
 """
-novelWriter – Raw NW Text Format
+novelWriter - Raw NW Text Format
 ================================
 
 This file is a part of novelWriter
@@ -44,6 +44,8 @@ class ToRaw(Tokenizer):
     A class that will collect the minimally altered original source text
     and write it to either a text or JSON file.
     """
+
+    __slots__ = ("_keepRaw", "_noTokens")
 
     def __init__(self, project: NWProject) -> None:
         super().__init__(project)

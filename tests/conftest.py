@@ -1,5 +1,5 @@
 """
-novelWriter – Test Suite Configuration
+novelWriter - Test Suite Configuration
 ======================================
 
 This file is a part of novelWriter
@@ -24,13 +24,14 @@ from __future__ import annotations
 import logging
 import shutil
 import sys
+import warnings
 
 from pathlib import Path
 
 import pytest
 
-from PyQt6.QtCore import QLocale
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtCore import QAbstractAnimation, QLocale, QThreadPool
+from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget
 
 sys.path.insert(1, str(Path(__file__).parent.parent.absolute()))
 
@@ -39,11 +40,10 @@ from novelwriter.config import DEF_GUI_DARK, DEF_GUI_LIGHT
 from novelwriter.enum import nwTheme
 
 from tests.mocked import MockGuiMain
-from tests.tools import cleanProject
 
 _TST_ROOT = Path(__file__).parent
 _SRC_ROOT = _TST_ROOT.parent
-_TMP_ROOT = _TST_ROOT / "temp"
+_TMP_ROOT = _TST_ROOT / "_temp"
 _TMP_CONF = _TMP_ROOT / "conf"
 
 
@@ -91,7 +91,7 @@ def sessionFixture():
     (_SRC_ROOT / "novelwriter" / "assets" / "manual_fr.pdf").touch()
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(autouse=True)
 def functionFixture(qtbot):
     """A default function fixture that:
     * Ensures that the main Qt thread is always available
@@ -121,8 +121,8 @@ def tstPaths():
 
     class _Store:
         testDir = _TST_ROOT
-        filesDir = _TST_ROOT / "files"
-        refDir = _TST_ROOT / "reference"
+        filesDir = _TST_ROOT / "_files"
+        refDir = _TST_ROOT / "_reference"
         outDir = _TMP_ROOT / "results"
         tmpDir = _TMP_ROOT
         cnfDir = _TMP_CONF
@@ -133,7 +133,7 @@ def tstPaths():
     return store
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def fncPath():
     """A temporary folder for a single test function."""
     fncPath = _TMP_ROOT / "function"
@@ -143,7 +143,7 @@ def fncPath():
     return fncPath
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def projPath(fncPath):
     """A temp folder for a single test function + project folder."""
     prjDir = fncPath / "project"
@@ -158,7 +158,7 @@ def projPath(fncPath):
 ##
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def mockGUI(qtbot, monkeypatch):
     """Create a mock instance of novelWriter's main GUI class."""
     from novelwriter.gui.theme import GuiTheme
@@ -172,10 +172,12 @@ def mockGUI(qtbot, monkeypatch):
     monkeypatch.setattr(SHARED, "_gui", gui)
     monkeypatch.setattr(SHARED, "_theme", theme)
 
+    qtbot.addWidget(gui)
+
     return gui
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def mockGUIwithTheme(mockGUI):
     """Create a mock instance of novelWriter's main GUI class with the
     theme instance initialised.
@@ -184,7 +186,7 @@ def mockGUIwithTheme(mockGUI):
     return mockGUI
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def nwGUI(qtbot, monkeypatch, functionFixture):
     """Create an instance of the novelWriter GUI."""
     from novelwriter.gui.theme import GuiTheme
@@ -198,14 +200,23 @@ def nwGUI(qtbot, monkeypatch, functionFixture):
     CONFIG.loadConfig()
     SHARED.initTheme(GuiTheme())
     nwGUI = GuiMain()
-    qtbot.addWidget(nwGUI)
+    qtbot.addWidget(nwGUI, before_close_func=_checkNoLeftoverState)
     resetConfigVars()
     nwGUI.docEditor.initEditor()
 
     nwGUI.show()
     qtbot.wait(20)
 
-    return nwGUI
+    yield nwGUI
+
+    # Let any in-flight background jobs (word counter, text checker)
+    # finish and deliver their queued signals before the widget tree
+    # below them is closed and scheduled for deletion
+    if globalPool := QThreadPool.globalInstance():
+        globalPool.waitForDone(7000)
+        globalPool.clear()
+
+    nwGUI.close()
 
 
 ##
@@ -213,7 +224,7 @@ def nwGUI(qtbot, monkeypatch, functionFixture):
 ##
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def mockRnd(monkeypatch):
     """Create a mock random number generator that just counts upwards
     from 0. This one will generate status/importance flags and handles
@@ -239,23 +250,28 @@ def mockRnd(monkeypatch):
 ##
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def prjLipsum():
     """A medium sized novelWriter example project with a lot of Lorem
     Ipsum text.
     """
-    srcDir = _TST_ROOT / "lipsum"
-    dstDir = _TMP_ROOT / "lipsum"
-    if dstDir.exists():
-        shutil.rmtree(dstDir)
+    src = _TST_ROOT / "_lipsum"
+    dst = _TMP_ROOT / "lipsum"
+    if dst.exists():
+        shutil.rmtree(dst)
 
-    shutil.copytree(srcDir, dstDir)
-    cleanProject(dstDir)
+    shutil.copytree(src, dst)
 
-    yield dstDir
+    # Delete all generated files
+    (dst / "nwProject.bak").unlink(missing_ok=True)
+    (dst / "ToC.txt").unlink(missing_ok=True)
+    if (meta := dst / "meta").is_dir():
+        shutil.rmtree(meta)
 
-    if dstDir.exists():
-        shutil.rmtree(dstDir)
+    yield dst
+
+    if dst.exists():
+        shutil.rmtree(dst)
 
 
 @pytest.fixture(scope="session")
@@ -315,3 +331,21 @@ def ipsumText():
             "im."
         ),
     ]
+
+
+##
+#  Checker Functions
+##
+
+
+def _checkNoLeftoverState(widget: QWidget) -> None:
+    """Warn if the test left an animation still running or an extra
+    top-level widget open.
+    """
+    running = [a for a in widget.findChildren(QAbstractAnimation) if a.state() == QAbstractAnimation.State.Running]
+    if running:
+        warnings.warn(f"Test left {len(running)} animation(s) still running: {running}", stacklevel=2)
+
+    extra = [w for w in QApplication.topLevelWidgets() if w is not widget and w.isVisible()]
+    if extra:
+        warnings.warn(f"Test left extra top-level widget(s) open: {extra}", stacklevel=2)

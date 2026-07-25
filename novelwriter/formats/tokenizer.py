@@ -1,5 +1,5 @@
 """
-novelWriter – Text Tokenizer
+novelWriter - Text Tokenizer
 ============================
 
 This file is a part of novelWriter
@@ -97,6 +97,86 @@ class Tokenizer(ABC):
     subclasses.
     """
 
+    __slots__ = (
+        "_blockIndent",
+        "_blocks",
+        "_boldHeads",
+        "_breakNext",
+        "_chapterStyle",
+        "_classes",
+        "_colorHeads",
+        "_counts",
+        "_dLocale",
+        "_defaultAlign",
+        "_dialogParser",
+        "_doBodyText",
+        "_doComments",
+        "_doJustify",
+        "_doKeywords",
+        "_errData",
+        "_firstIndent",
+        "_firstWidth",
+        "_fmtChapter",
+        "_fmtHScene",
+        "_fmtPart",
+        "_fmtScene",
+        "_fmtSection",
+        "_fmtUnNum",
+        "_footnotes",
+        "_hFormatter",
+        "_handle",
+        "_hideChapter",
+        "_hideHScene",
+        "_hidePart",
+        "_hideScene",
+        "_hideSection",
+        "_hideUnNum",
+        "_hlightDialog",
+        "_indentFirst",
+        "_isFirst",
+        "_isNovel",
+        "_justifyOnBreak",
+        "_keepBreaks",
+        "_keepRaw",
+        "_lineHeight",
+        "_lineMargins",
+        "_linkHeadings",
+        "_localLookup",
+        "_marginFoot",
+        "_marginHead1",
+        "_marginHead2",
+        "_marginHead3",
+        "_marginHead4",
+        "_marginMeta",
+        "_marginSep",
+        "_marginText",
+        "_marginTitle",
+        "_noIndent",
+        "_noSep",
+        "_noTokens",
+        "_outline",
+        "_pages",
+        "_partStyle",
+        "_project",
+        "_raw",
+        "_rxAltDialog",
+        "_rxMarkdown",
+        "_sceneStyle",
+        "_shortCodeFmt",
+        "_shortCodeVals",
+        "_sizeHead1",
+        "_sizeHead2",
+        "_sizeHead3",
+        "_sizeHead4",
+        "_sizeTitle",
+        "_skipKeywords",
+        "_text",
+        "_textFont",
+        "_theme",
+        "_titleStyle",
+        "_useAnchors",
+    )
+
     def __init__(self, project: NWProject) -> None:
 
         self._project = project
@@ -128,11 +208,13 @@ class Tokenizer(ABC):
         self._firstWidth = 1.40  # First line indent in units of em
         self._indentFirst = False  # Indent first paragraph
         self._doJustify = False  # Justify text
+        self._justifyOnBreak = True  # Justify text on manual line breaks
         self._doBodyText = True  # Include body text
         self._doComments = set()  # Comment styles to allow
         self._doKeywords = False  # Also process keywords like tags and references
         self._keepBreaks = True  # Keep line breaks in paragraphs
         self._defaultAlign = "left"  # The default text alignment
+        self._useAnchors = True  # Enable anchors for headings
 
         self._skipKeywords: set[str] = set()  # Keywords to ignore
 
@@ -342,9 +424,10 @@ class Tokenizer(ABC):
         self._firstWidth = indent
         self._indentFirst = first
 
-    def setJustify(self, state: bool) -> None:
+    def setJustify(self, enabled: bool, onBreak: bool) -> None:
         """Enable or disable text justification."""
-        self._doJustify = state
+        self._doJustify = enabled
+        self._justifyOnBreak = onBreak
 
     def setDialogHighlight(self, state: bool) -> None:
         """Enable or disable dialogue highlighting."""
@@ -421,11 +504,15 @@ class Tokenizer(ABC):
 
     def setIgnoredKeywords(self, keywords: str) -> None:
         """Comma separated string of keywords to ignore."""
-        self._skipKeywords = set(x.lower().strip() for x in keywords.split(","))
+        self._skipKeywords = {x.lower().strip() for x in keywords.split(",")}
 
     def setKeepLineBreaks(self, state: bool) -> None:
         """Keep line breaks in paragraphs."""
         self._keepBreaks = state
+
+    def setAnchorsEnabled(self, state: bool) -> None:
+        """Enable or disable anchors."""
+        self._useAnchors = state
 
     ##
     #  Class Methods
@@ -464,6 +551,7 @@ class Tokenizer(ABC):
         self._handle = None
 
         if (item := self._project.tree[tHandle]) and item.isRootType():
+            self._isNovel = item.isNovelLike()
             self._handle = tHandle
             style = BlockFmt.CENTRE
             if self._isFirst:
@@ -472,7 +560,7 @@ class Tokenizer(ABC):
                 style |= BlockFmt.PBB
 
             title = item.itemName
-            if not item.isNovelLike():
+            if not self._isNovel:
                 notes = self._localLookup("Notes")
                 title = f"{notes}: {title}"
 
@@ -533,20 +621,16 @@ class Tokenizer(ABC):
         text = REGEX_PATTERNS.lineBreak.sub(nwUnicode.U_NAC2, self._text)
 
         # Translation Maps
-        transMapA = str.maketrans(
-            {
-                nwUnicode.U_NAC2: "",  # Used when [br] is ignored
-                nwUnicode.U_MAPOS: nwUnicode.U_RSQUO,
-                nwUnicode.U_HBAR: nwUnicode.U_EMDASH,
-            }
-        )
-        transMapB = str.maketrans(
-            {
-                nwUnicode.U_NAC2: "\n",  # Used when [br] is not ignored
-                nwUnicode.U_MAPOS: nwUnicode.U_RSQUO,
-                nwUnicode.U_HBAR: nwUnicode.U_EMDASH,
-            }
-        )
+        transMapA = str.maketrans({
+            nwUnicode.U_NAC2: "",  # Used when [br] is ignored
+            nwUnicode.U_MAPOS: nwUnicode.U_RSQUO,
+            nwUnicode.U_HBAR: nwUnicode.U_EMDASH,
+        })
+        transMapB = str.maketrans({
+            nwUnicode.U_NAC2: "\n",  # Used when [br] is not ignored
+            nwUnicode.U_MAPOS: nwUnicode.U_RSQUO,
+            nwUnicode.U_HBAR: nwUnicode.U_EMDASH,
+        })
 
         nHead = 0
         tHandle = self._handle or ""
@@ -622,6 +706,9 @@ class Tokenizer(ABC):
                 elif cStyle == nwComment.FOOTNOTE:
                     tLine, tFmt = self._extractFormats(cText, skip=TextFmt.FNOTE)
                     self._footnotes[f"{tHandle}:{cKey}"] = (tLine, tFmt)
+
+                else:  # pragma: no cover
+                    pass
 
             elif aLine.startswith("@"):
                 # Keywords
@@ -727,10 +814,15 @@ class Tokenizer(ABC):
                         tStyle |= self._sceneStyle
                         if tText == "":  # Empty Format
                             tType = BlockTyp.EMPTY if self._noSep else BlockTyp.SKIP
-                        elif tText == tFormat:  # Static Format
+                        elif tFormat == nwHeadFmt.HRULE:  # Horizontal Rule Format
+                            tText = ""
+                            tType = BlockTyp.EMPTY if self._noSep else BlockTyp.HRULE
+                            tStyle = BlockFmt.NONE
+                        elif tText == tFormat:  # Separator Format
                             tText = "" if self._noSep else tText
                             tType = BlockTyp.EMPTY if self._noSep else BlockTyp.SEP
                             tStyle |= BlockFmt.NONE if self._noSep else BlockFmt.CENTRE
+
                     self._noSep = False
 
                 tBlocks.append((tType, f"{tHandle}:T{nHead:04d}", tText, [], tStyle))
@@ -746,16 +838,21 @@ class Tokenizer(ABC):
                 nHead += 1
                 tText = aLine[5:].strip()
                 tType = BlockTyp.HEAD4
+                tFormat = self._fmtSection
                 if isNovel:
                     tType = BlockTyp.HEAD3  # Promote
                     if self._hideSection:
                         tText = ""
                         tType = BlockTyp.EMPTY
                     else:
-                        tText = self._hFormatter.apply(self._fmtSection, tText, nHead)
+                        tText = self._hFormatter.apply(tFormat, tText, nHead)
                         if tText == "":  # Empty Format
                             tType = BlockTyp.SKIP
-                        elif tText == self._fmtSection:  # Static Format
+                        elif tFormat == nwHeadFmt.HRULE:  # Horizontal Rule Format
+                            tText = ""
+                            tType = BlockTyp.HRULE
+                            tStyle = BlockFmt.NONE
+                        elif tText == tFormat:  # Separator Format
                             tType = BlockTyp.SEP
                             tStyle |= BlockFmt.CENTRE
 
@@ -887,7 +984,10 @@ class Tokenizer(ABC):
 
                         pTxt = tTxt[:-1].translate(transMapB)
 
-                    if nLines:
+                    else:  # pragma: no cover
+                        pass
+
+                    if nLines:  # pragma: no branch
                         isAligned = cStyle & BlockFmt.ALIGNED
                         if firstIndent and not (self._noIndent or isAligned):
                             # If paragraph indentation is enabled, not temporarily
@@ -955,12 +1055,15 @@ class Tokenizer(ABC):
         allChars = self._counts.get(nwStats.CHARS, 0)
         textChars = self._counts.get(nwStats.CHARS_TEXT, 0)
         titleChars = self._counts.get(nwStats.CHARS_TITLE, 0)
+        dialogChars = self._counts.get(nwStats.CHARS_DIALOG, 0)
 
         allWordChars = self._counts.get(nwStats.WCHARS_ALL, 0)
         textWordChars = self._counts.get(nwStats.WCHARS_TEXT, 0)
         titleWordChars = self._counts.get(nwStats.WCHARS_TITLE, 0)
 
-        for tType, _, tText, _, _ in self._blocks:
+        countDialog = self._hlightDialog
+
+        for tType, _, tText, tFmt, _ in self._blocks:
             tText = tText.replace(nwUnicode.U_ENDASH, " ")
             tText = tText.replace(nwUnicode.U_EMDASH, " ")
 
@@ -975,11 +1078,37 @@ class Tokenizer(ABC):
                 nPChars = len(tText)
                 nPWChars = len("".join(tPWords))
 
+                dCount = 0
+                if countDialog and tFmt:
+                    intervals = []
+                    dStart = None
+                    aStart = None
+                    for pos, _, meta in tFmt:
+                        if meta == "dialog" and dStart is None:
+                            dStart = pos
+                        elif meta == "enddialog" and dStart is not None:
+                            intervals.append((dStart, pos))
+                            dStart = None
+                        elif meta == "altdialog" and aStart is None:
+                            aStart = pos
+                        elif meta == "endaltdialog" and aStart is not None:
+                            intervals.append((aStart, pos))
+                            aStart = None
+
+                    # Dialogue and alt-dialogue markers may overlap, so the
+                    # intervals are merged to avoid double-counting
+                    prevEnd = -1
+                    for iStart, iEnd in sorted(intervals):
+                        if iEnd > prevEnd:
+                            dCount += iEnd - max(iStart, prevEnd)
+                            prevEnd = iEnd
+
                 paragraphCount += 1
                 allWords += nPWords
                 textWords += nPWords
                 allChars += nPChars
                 textChars += nPChars
+                dialogChars += dCount
                 allWordChars += nPWChars
                 textWordChars += nPWChars
 
@@ -1013,6 +1142,7 @@ class Tokenizer(ABC):
         self._counts[nwStats.CHARS] = allChars
         self._counts[nwStats.CHARS_TEXT] = textChars
         self._counts[nwStats.CHARS_TITLE] = titleChars
+        self._counts[nwStats.CHARS_DIALOG] = dialogChars
 
         self._counts[nwStats.WCHARS_ALL] = allWordChars
         self._counts[nwStats.WCHARS_TEXT] = textWordChars
@@ -1033,11 +1163,11 @@ class Tokenizer(ABC):
         tFmt.insert(0, (0, TextFmt.COL_B, style.textClass))
         tFmt.append((len(tTxt), TextFmt.COL_E, ""))
         term = f" ({key.title()})" if key else ""
-        if label := f"{self._localLookup(style.label)}{term}".strip():
+        if label := f"{self._localLookup(style.label)}{term}".strip():  # pragma: no branch
             shift = len(label) + 2
             tTxt = f"{label}: {tTxt}"
             rFmt = [(0, TextFmt.B_B, ""), (shift - 1, TextFmt.B_E, "")]
-            if style.labelClass:
+            if style.labelClass:  # pragma: no branch
                 rFmt.insert(1, (0, TextFmt.COL_B, style.labelClass))
                 rFmt.insert(2, (shift - 1, TextFmt.COL_E, ""))
             rFmt.extend((p + shift, f, d) for p, f, d in tFmt)
@@ -1068,8 +1198,9 @@ class Tokenizer(ABC):
                     one, two = self._project.index.parseValue(bits[1])
                     end = pos + len(one)
                     fmt.append((pos, TextFmt.COL_B, "tag"))
-                    fmt.append((pos, TextFmt.ANM_B, f"tag_{one}".lower()))
-                    fmt.append((end, TextFmt.ANM_E, ""))
+                    if self._useAnchors:
+                        fmt.append((pos, TextFmt.ANM_B, f"tag_{one}".lower()))
+                        fmt.append((end, TextFmt.ANM_E, ""))
                     fmt.append((end, TextFmt.COL_E, ""))
                     txt.append(one)
                     pos = end
@@ -1085,8 +1216,9 @@ class Tokenizer(ABC):
                     for n, bit in enumerate(bits[1:], 2):
                         end = pos + len(bit)
                         fmt.append((pos, TextFmt.COL_B, "tag"))
-                        fmt.append((pos, TextFmt.ARF_B, f"#tag_{bit}".lower()))
-                        fmt.append((end, TextFmt.ARF_E, ""))
+                        if self._useAnchors:
+                            fmt.append((pos, TextFmt.ARF_B, f"#tag_{bit}".lower()))
+                            fmt.append((end, TextFmt.ARF_E, ""))
                         fmt.append((end, TextFmt.COL_E, ""))
                         txt.append(bit)
                         pos = end
@@ -1123,31 +1255,29 @@ class Tokenizer(ABC):
         tHandle = self._handle or ""
         for res in REGEX_PATTERNS.shortcodeValue.finditer(text):
             kind = self._shortCodeVals.get(res.group(1).lower(), 0)
-            temp.append(
-                (
-                    res.start(0),
-                    res.end(0),
-                    TextFmt.STRIP if kind == skip else kind,
-                    f"{tHandle}:{res.group(2)}",
-                )
-            )
+            temp.append((
+                res.start(0),
+                res.end(0),
+                TextFmt.STRIP if kind == skip else kind,
+                f"{tHandle}:{res.group(2)}",
+            ))
 
         # Match Dialogue
         if self._hlightDialog and hDialog:
             if self._dialogParser.enabled:
                 for pos, end in self._dialogParser(text):
                     temp.append((pos, 0, TextFmt.COL_B, "dialog"))
-                    temp.append((end, 0, TextFmt.COL_E, ""))
+                    temp.append((end, 0, TextFmt.COL_E, "enddialog"))
             if self._rxAltDialog:
                 for res in self._rxAltDialog.finditer(text):
                     temp.append((res.start(0), 0, TextFmt.COL_B, "altdialog"))
-                    temp.append((res.end(0), 0, TextFmt.COL_E, ""))
+                    temp.append((res.end(0), 0, TextFmt.COL_E, "endaltdialog"))
 
         # Post-process text and format
         result = text
         formats = []
-        for pos, end, fmt, meta in reversed(sorted(temp, key=lambda x: x[0])):
-            if fmt > 0:
+        for pos, end, fmt, meta in sorted(temp, key=lambda x: x[0], reverse=True):
+            if fmt > 0:  # pragma: no branch
                 if end > pos:
                     result = result[:pos] + result[end:]
                     formats = [(p + pos - end if p > pos else p, f, m) for p, f, m in formats]

@@ -1,5 +1,5 @@
 """
-novelWriter – Custom Widget: Switch
+novelWriter - Custom Widget: Switch
 ===================================
 
 This file is a part of novelWriter
@@ -26,7 +26,7 @@ from PyQt6.QtGui import QEnterEvent, QPainter, QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import QAbstractButton, QWidget
 
 from novelwriter import SHARED
-from novelwriter.types import QtNoPen, QtPaintAntiAlias, QtSizeFixed
+from novelwriter.types import QAnimDeleteWhenStopped, QtNoPen, QtPaintAntiAlias, QtSizeFixed
 
 
 class NSwitch(QAbstractButton):
@@ -117,4 +117,4 @@ class NSwitch(QAbstractButton):
         anim.setDuration(120)
         anim.setStartValue(self._offset)
         anim.setEndValue((self._xW - self._xR) if checked else self._xR)
-        anim.start()
+        anim.start(QAnimDeleteWhenStopped)

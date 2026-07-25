@@ -1,9 +1,6 @@
 """
-novelWriter – Project Storage Class
-===================================
-
-File History:
-Created: 2022-11-01 [2.0rc2] NWStorage
+novelWriter - Project Storage
+=============================
 
 This file is a part of novelWriter
 Copyright (C) 2022 Veronica Berglyd Olsen and novelWriter contributors
@@ -36,7 +33,7 @@ from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile
 from novelwriter import CONFIG
 from novelwriter.common import isHandle, minmax, safeExists, safeIsDir, safeIsFile, safeIterDir
 from novelwriter.constants import nwFiles
-from novelwriter.core.document import NWDocument
+from novelwriter.core.document import ProjectDocument
 from novelwriter.core.projectxml import ProjectXMLReader, ProjectXMLWriter
 from novelwriter.core.spellcheck import UserDictionary
 from novelwriter.error import logException
@@ -47,7 +44,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class NWStorageOpen(Enum):
+class ProjectStorageOpen(Enum):
     """The status of a storage location."""
 
     UNKOWN = 0
@@ -57,7 +54,7 @@ class NWStorageOpen(Enum):
     READY = 4
 
 
-class NWStorageCreate(Enum):
+class ProjectStorageCreate(Enum):
     """The status of a new storage location."""
 
     NOT_EMPTY = 0
@@ -65,7 +62,7 @@ class NWStorageCreate(Enum):
     READY = 2
 
 
-class NWStorage:
+class ProjectStorage:
     """Core: Project Storage Class.
 
     The class that handles all paths related to the project storage.
@@ -112,9 +109,8 @@ class NWStorage:
         """Return the path used for project content. The folder must
         already exist, otherwise this property is None.
         """
-        if isinstance(self._runtimePath, Path):
-            if safeIsDir(contentPath := self._runtimePath / "content", alert=True):
-                return contentPath
+        if isinstance(self._runtimePath, Path) and safeIsDir(contentPath := self._runtimePath / "content", alert=True):
+            return contentPath
         logger.error("Content path cannot be resolved")
         return None
 
@@ -138,12 +134,12 @@ class NWStorage:
         """Check if the storage location is open."""
         return self._ready and self._runtimePath is not None
 
-    def createNewProject(self, path: str | Path) -> NWStorageCreate:
+    def createNewProject(self, path: str | Path) -> ProjectStorageCreate:
         """Create a new project at the given location."""
         inPath = Path(path).resolve()
         if safeIsDir(inPath) and len(list(safeIterDir(inPath))) > 0:
             logger.error("Folder is not empty: %s", inPath)
-            return NWStorageCreate.NOT_EMPTY
+            return ProjectStorageCreate.NOT_EMPTY
 
         self._storagePath = inPath
         self._runtimePath = inPath
@@ -161,13 +157,13 @@ class NWStorage:
             self._exception = exc
             logger.error("Failed to create project folders", exc_info=exc)
             self.clear()
-            return NWStorageCreate.OS_ERROR
+            return ProjectStorageCreate.OS_ERROR
 
         self._ready = True
 
-        return NWStorageCreate.READY
+        return ProjectStorageCreate.READY
 
-    def initProjectStorage(self, path: str | Path, clearLock: bool = False) -> NWStorageOpen:
+    def initProjectStorage(self, path: str | Path, clearLock: bool = False) -> ProjectStorageOpen:
         """Initialise a novelWriter project location."""
         inPath = Path(path).resolve()
 
@@ -184,15 +180,15 @@ class NWStorage:
                 nwxFile = inPath
             else:
                 logger.error("Not a novelWriter project")
-                return NWStorageOpen.UNKOWN
+                return ProjectStorageOpen.UNKOWN
         else:
             logger.error("Not found: %s", inPath)
-            return NWStorageOpen.NOT_FOUND
+            return ProjectStorageOpen.NOT_FOUND
 
         if not safeExists(nwxFile, alert=True):
             # The .nwx file must exist to continue
             logger.error("Not found: %s", nwxFile)
-            return NWStorageOpen.NOT_FOUND
+            return ProjectStorageOpen.NOT_FOUND
 
         nwxPath = nwxFile.parent
 
@@ -210,7 +206,7 @@ class NWStorage:
         self._readLockFile()
         if self._lockedBy:
             logger.error("Project is locked, so not opening")
-            return NWStorageOpen.LOCKED
+            return ProjectStorageOpen.LOCKED
         else:
             logger.debug("Project is not locked")
 
@@ -226,7 +222,7 @@ class NWStorage:
         except Exception as exc:
             logger.error("Failed to create project folders", exc_info=exc)
             self.clear()
-            return NWStorageOpen.FAILED
+            return ProjectStorageOpen.FAILED
 
         # Check for legacy data folders
         try:
@@ -238,11 +234,11 @@ class NWStorage:
         except Exception as exc:
             logger.error("Failed to scan project folder content", exc_info=exc)
             self.clear()
-            return NWStorageOpen.FAILED
+            return ProjectStorageOpen.FAILED
 
         self._ready = True
 
-        return NWStorageOpen.READY
+        return ProjectStorageOpen.READY
 
     def runPostSaveTasks(self, autoSave: bool = False) -> bool:  # pragma: no cover
         """Run tasks after the project has been saved.
@@ -279,11 +275,11 @@ class NWStorage:
             return ProjectXMLWriter(self._runtimePath / nwFiles.PROJ_FILE)
         return None
 
-    def getDocument(self, tHandle: str | None) -> NWDocument:
+    def getDocument(self, tHandle: str | None) -> ProjectDocument:
         """Return a document wrapper object."""
         if isinstance(self._runtimePath, Path) and self._ready:
-            return NWDocument(self._project, tHandle)
-        return NWDocument(self._project, None)
+            return ProjectDocument(self._project, tHandle)
+        return ProjectDocument(self._project, None)
 
     def getMetaFile(self, fileName: str) -> Path | None:
         """Return the path to a file in the project meta folder."""
@@ -294,7 +290,7 @@ class NWStorage:
     def getDocumentText(self, tHandle: str) -> str:
         """Return the text of a document in a fast and efficient way."""
         if isinstance(self._runtimePath, Path):
-            return NWDocument.quickReadText(self._runtimePath / "content", tHandle)
+            return ProjectDocument.quickReadText(self._runtimePath / "content", tHandle)
         return ""
 
     def scanContent(self) -> list[str]:
@@ -373,7 +369,8 @@ class NWStorage:
             return False
         try:
             self._lockFilePath.write_text(
-                f"{CONFIG.hostName};{CONFIG.osType};{CONFIG.kernelVer};{int(time())}", encoding="utf-8"
+                f"{CONFIG.hostName};{CONFIG.osType};{CONFIG.kernelVer};{int(time())}",
+                encoding="utf-8",
             )
         except Exception:
             logger.error("Failed to write project lockfile")
@@ -498,8 +495,7 @@ class _LegacyStorage:
             logger.info("Converting: %s", wordList)
             with open(wordList, mode="r", encoding="utf-8") as fObj:
                 for line in fObj:
-                    word = line.strip()
-                    if word:
+                    if word := line.strip():
                         userDict.add(word)
 
             # Save dictionary and clean up old file

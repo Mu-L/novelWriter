@@ -1,10 +1,6 @@
 """
-novelWriter – Project Options Cache
+novelWriter - Project Options Cache
 ===================================
-
-File History:
-Created:   2019-10-21 [0.3.1] OptionState
-Rewritten: 2020-02-19 [0.4.5] OptionState
 
 This file is a part of novelWriter
 Copyright (C) 2019 Veronica Berglyd Olsen and novelWriter contributors
@@ -42,7 +38,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-NWEnum = TypeVar("NWEnum", bound=Enum)
+_T_Enum = TypeVar("_T_Enum", bound=Enum)
 
 VALID_MAP: dict[str, set[str]] = {
     "GuiWritingStats": {
@@ -62,8 +58,14 @@ VALID_MAP: dict[str, set[str]] = {
         "showIdleTime",
         "histMax",
     },
-    "GuiDocSplit": {"spLevel", "intoFolder", "docHierarchy"},
-    "GuiOutline": {"columnState"},
+    "GuiDocSplit": {
+        "spLevel",
+        "intoFolder",
+        "docHierarchy",
+    },
+    "GuiOutline": {
+        "columnState",
+    },
     "GuiProjectSettings": {
         "winWidth",
         "winHeight",
@@ -71,8 +73,14 @@ VALID_MAP: dict[str, set[str]] = {
         "statusColW",
         "importColW",
     },
-    "GuiWordList": {"winWidth", "winHeight"},
-    "GuiNovelView": {"lastCol", "lastColSize"},
+    "GuiWordList": {
+        "winWidth",
+        "winHeight",
+    },
+    "GuiNovelView": {
+        "lastCol",
+        "lastColSize",
+    },
     "GuiBuildSettings": {
         "winWidth",
         "winHeight",
@@ -89,6 +97,7 @@ VALID_MAP: dict[str, set[str]] = {
         "detailsHeight",
         "detailsWidth",
         "detailsExpanded",
+        "statsExpanded",
         "showNewPage",
     },
     "GuiManuscriptBuild": {
@@ -117,6 +126,9 @@ VALID_MAP: dict[str, set[str]] = {
     "GuiOutlineDetails": {
         "detailsWidth",
         "tagsWidth",
+    },
+    "GuiProjectSearch": {
+        "searchFilters",
     },
 }
 
@@ -220,6 +232,22 @@ class OptionState:
             return self._state[group].get(name, default)
         return default
 
+    def getList(self, group: str, name: str, default: list[Any]) -> list[Any]:
+        """Return the value as a list, if it exists. Otherwise, return
+        the default value.
+        """
+        if group in self._state and isinstance(value := self._state[group].get(name, default), list):
+            return value
+        return default
+
+    def getDict(self, group: str, name: str, default: dict[str, Any]) -> dict[str, Any]:
+        """Return the value as a dict, if it exists. Otherwise, return
+        the default value.
+        """
+        if group in self._state and isinstance(value := self._state[group].get(name, default), dict):
+            return value
+        return default
+
     def getString(self, group: str, name: str, default: str) -> str:
         """Return the value as a string, if it exists. Otherwise, return
         the default value.
@@ -252,14 +280,12 @@ class OptionState:
             return checkBool(self._state[group].get(name, default), default)
         return default
 
-    def getEnum(self, group: str, name: str, lookup: type, default: NWEnum) -> NWEnum:
+    def getEnum(self, group: str, name: str, lookup: type, default: _T_Enum) -> _T_Enum:
         """Return the value mapped to an enum. Otherwise return the
         default value.
         """
-        if issubclass(lookup, type(default)):
-            if group in self._state:
-                if name in self._state[group]:
-                    value = self._state[group][name]
-                    if value in lookup.__members__:
-                        return lookup[value]
+        if issubclass(lookup, type(default)) and group in self._state and name in self._state[group]:
+            value = self._state[group][name]
+            if value in lookup.__members__:
+                return lookup[value]
         return default

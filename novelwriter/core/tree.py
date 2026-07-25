@@ -1,6 +1,6 @@
 """
-novelWriter – Project Tree Class
-================================
+novelWriter - Project Tree
+==========================
 
 This file is a part of novelWriter
 Copyright (C) 2020 Veronica Berglyd Olsen and novelWriter contributors
@@ -32,10 +32,10 @@ from PyQt6.QtCore import QModelIndex
 from novelwriter import SHARED
 from novelwriter.common import safeIsFile
 from novelwriter.constants import nwFiles, nwLabels, nwStyles, trConst
-from novelwriter.core.item import NWItem
-from novelwriter.core.itemmodel import ProjectModel, ProjectNode
+from novelwriter.core.item import ProjectItem
 from novelwriter.enum import nwChange, nwItemClass, nwItemLayout, nwItemType
 from novelwriter.error import logException
+from novelwriter.models.itemmodel import ProjectModel, ProjectNode
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -47,12 +47,12 @@ logger = logging.getLogger(__name__)
 MAX_DEPTH = 999  # Cap of tree traversing for loops (recursion limit)
 
 
-class NWTree:
+class ProjectTree:
     """Core: Project Tree Data Class.
 
     Only one instance of this class should exist in the project class.
     This class holds all the project items of the project as instances
-    of NWItem.
+    of ProjectItem.
 
     Each item has a handle, which is a random hex string of length 13.
     The handle is the name of the item everywhere in novelWriter, and is
@@ -64,15 +64,16 @@ class NWTree:
     def __init__(self, project: NWProject) -> None:
         self._project = project
         self._model = ProjectModel(self)
-        self._items: dict[str, NWItem] = {}
+        self._items: dict[str, ProjectItem] = {}
         self._nodes: dict[str, ProjectNode] = {}
         self._docs: list[str] = []
         self._trash = None
         self._ready = False
-        logger.debug("Ready: NWTree")
+        logger.debug("Ready: ProjectTree")
 
     def __del__(self) -> None:  # pragma: no cover
-        logger.debug("Delete: NWTree")
+        """Class destructor."""
+        logger.debug("Delete: ProjectTree")
 
     def __len__(self) -> int:
         """Return the number of items in the project."""
@@ -82,7 +83,7 @@ class NWTree:
         """Return True if there are any items in the project."""
         return bool(self._items)
 
-    def __getitem__(self, tHandle: str | None) -> NWItem | None:
+    def __getitem__(self, tHandle: str | None) -> ProjectItem | None:
         """Return a project item based on its handle. Returns None if
         the handle doesn't exist in the project.
         """
@@ -95,7 +96,7 @@ class NWTree:
         """Check if a handle exists in the tree."""
         return tHandle in self._items
 
-    def __iter__(self) -> Iterator[NWItem]:
+    def __iter__(self) -> Iterator[ProjectItem]:
         """Iterate through project items."""
         for node in self._model.root.allChildren():
             yield node.item
@@ -114,15 +115,19 @@ class NWTree:
     def trash(self) -> ProjectNode | None:
         """Return trash node, if it exists."""
         if self._trash:
-            return self._trash
+            if self._nodes.get(self._trash.item.itemHandle) is self._trash:
+                return self._trash
+            self._trash = None
         return self._getTrashNode()
 
     @property
     def model(self) -> ProjectModel:
+        """Return the project model."""
         return self._model
 
     @property
     def nodes(self) -> dict[str, ProjectNode]:
+        """Return the project nodes."""
         return self._nodes
 
     ##
@@ -136,28 +141,37 @@ class NWTree:
         self._model = ProjectModel(self)
         self._items.clear()
         self._nodes.clear()
+        self._ready = False
         self._trash = None
-        oldModel.deleteLater()
+        oldModel.setParent(None)
         del oldModel
 
-    def add(self, item: NWItem, pos: int = -1) -> bool:
+    def add(self, item: ProjectItem, pos: int = -1) -> bool:
         """Add a project item into the project tree."""
+        if item.itemHandle in self._nodes or item.itemHandle in self._items:
+            logger.error("Item handle '%s' already exists in project tree", item.itemHandle)
+            return False
+
+        if item.isRootType() and item.itemParent is not None:
+            logger.warning("Root item '%s' cannot have a parent ('%s')", item.itemHandle, item.itemParent)
+            item.setParent(None)
+
         if pHandle := item.itemParent:
             if parent := self._nodes.get(pHandle):
                 node = ProjectNode(item)
-                index = self._model.indexFromNode(parent)
-                self._model.insertChild(node, index, pos)
                 self._nodes[item.itemHandle] = node
                 self._items[item.itemHandle] = item
+                index = self._model.indexFromNode(parent)
+                self._model.insertChild(node, index, pos)
                 self._itemChange(item, nwChange.CREATE)
             else:
                 logger.error("Could not locate parent of '%s'", item.itemHandle)
                 return False
         elif item.isRootType():
             node = ProjectNode(item)
-            self._model.insertChild(node, QModelIndex(), pos)
             self._nodes[item.itemHandle] = node
             self._items[item.itemHandle] = item
+            self._model.insertChild(node, QModelIndex(), pos)
             self._itemChange(item, nwChange.CREATE)
         else:
             logger.error("Invalid project item '%s'", item.itemHandle)
@@ -167,17 +181,28 @@ class NWTree:
     def remove(self, tHandle: str) -> bool:
         """Remove an item from the project tree."""
         if (node := self._nodes.get(tHandle)) and tHandle in self._items:
+            handles = [tHandle]
+            if node.childCount() > 0:
+                handles.extend(child.item.itemHandle for child in node.allChildren())
             index = self._model.indexFromNode(node)
             if index.isValid() and self._model.removeChild(index.parent(), index.row()):
                 self._itemChange(node.item, nwChange.DELETE)
-                del self._nodes[tHandle]
-                del self._items[tHandle]
+                if self._trash and self._trash.item.itemHandle in handles:
+                    self._trash = None
+                for handle in handles:
+                    self._nodes.pop(handle, None)
+                    self._items.pop(handle, None)
                 return True
         return False
 
     @overload  # pragma: no cover
     def create(
-        self, label: str, parent: None, itemType: Literal[nwItemType.ROOT], itemClass: nwItemClass, pos: int = -1
+        self,
+        label: str,
+        parent: None,
+        itemType: Literal[nwItemType.ROOT],
+        itemClass: nwItemClass,
+        pos: int = -1,
     ) -> str:
         pass
 
@@ -207,7 +232,7 @@ class NWTree:
         parent = None if itemType == nwItemType.ROOT else parent
         if parent is None or parent in self._nodes:
             tHandle = self._makeHandle()
-            nwItem = NWItem(self._project, tHandle)
+            nwItem = ProjectItem(self._project, tHandle)
             nwItem.setName(label)
             nwItem.setParent(parent)
             nwItem.setType(itemType)
@@ -216,10 +241,10 @@ class NWTree:
                 return tHandle
         return None
 
-    def duplicate(self, sHandle: str, pHandle: str | None, putAfter: bool) -> NWItem | None:
+    def duplicate(self, sHandle: str, pHandle: str | None, putAfter: bool) -> ProjectItem | None:
         """Duplicate an item and set a new handle."""
         if sNode := self._nodes.get(sHandle):
-            nItem = NWItem.duplicate(sNode.item, self._makeHandle())
+            nItem = ProjectItem.duplicate(sNode.item, self._makeHandle())
             nItem.setParent(pHandle)
             if self.add(nItem, (sNode.row() + 1) if putAfter else -1):
                 logger.info("Duplicated item '%s' -> '%s'", sHandle, nItem.itemHandle)
@@ -240,25 +265,24 @@ class NWTree:
         project tree.
         """
         self.clear()
-        items: dict[str, NWItem] = self._items.copy()
+        items: dict[str, ProjectItem] = self._items.copy()
         for item in data:
-            nwItem = NWItem(self._project, "")
+            nwItem = ProjectItem(self._project, "")
             if nwItem.unpack(item):
                 items[nwItem.itemHandle] = nwItem
 
         later = items
-        self._model.beginInsertRows(self._model.index(0, 0), 0, 0)
+        self._model.beginResetModel()
         for _ in range(MAX_DEPTH):
             later = self._addItems(later)
             if len(later) == 0:
                 break
         else:
             logger.error("Not all items could be added to project tree")
+        self._model.endResetModel()
 
         self._trash = self._getTrashNode()
         self._ready = True
-        self._model.endInsertRows()
-        self._model.layoutChanged.emit()
 
     def subTreePos(self, tHandle: str) -> int:
         """Return the position of an item under its parent."""
@@ -296,9 +320,7 @@ class NWTree:
         return sNode.item.itemParent, sNode.row() + 1
 
     def refreshItems(self, items: list[str]) -> None:
-        """Refresh these items on the GUI. If they are an ordered range,
-        also set the isRange flag to True.
-        """
+        """Refresh item nodes in the model and emit update notifications."""
         for tHandle in items:
             if node := self._nodes.get(tHandle):
                 node.refresh()
@@ -313,7 +335,6 @@ class NWTree:
         for node in reversed(self._model.root.allChildren()):
             node.refresh()
             node.updateCount(propagate=False)
-        self._model.root.refresh()
         self._model.root.updateCount(propagate=False)
         self._model.layoutChanged.emit()
 
@@ -361,7 +382,7 @@ class NWTree:
             assert oParent is not None  # Otherwise there's an issue with self.create()
 
             # Create a new item
-            newItem = NWItem(self._project, cHandle)
+            newItem = ProjectItem(self._project, cHandle)
             newItem.setName(f"[{prefix}] {oName}")
             newItem.setParent(oParent)
             newItem.setType(nwItemType.FILE)
@@ -417,12 +438,14 @@ class NWTree:
 
         return True
 
-    def sumCounts(self) -> tuple[int, int, int, int]:
+    def sumCounts(self) -> tuple[int, int, int, int, int, int]:
         """Loop over all entries and add up the word and char counts."""
         novelWords = 0
         notesWords = 0
         novelChars = 0
         notesChars = 0
+        sessionWords = 0
+        targetWords = 0
         for item in self._items.values():
             if item.itemLayout == nwItemLayout.NOTE:
                 notesWords += item.wordCount
@@ -430,7 +453,12 @@ class NWTree:
             elif item.itemLayout == nwItemLayout.DOCUMENT:
                 novelWords += item.wordCount
                 novelChars += item.charCount
-        return novelWords, notesWords, novelChars, notesChars
+
+            wTarget, wSession = item.dailyProgress()
+            sessionWords += wSession
+            targetWords += wTarget
+
+        return novelWords, notesWords, novelChars, notesChars, sessionWords, targetWords
 
     ##
     #  Tree Item Methods
@@ -482,12 +510,11 @@ class NWTree:
             rootClasses.add(node.item.itemClass)
         return rootClasses
 
-    def iterRoots(self, itemClass: nwItemClass | None) -> Iterable[tuple[str, NWItem]]:
+    def iterRoots(self, itemClass: nwItemClass | None) -> Iterable[tuple[str, ProjectItem]]:
         """Iterate over all root items of a given class in order."""
         for node in self._model.root.children:
-            if node.item.isRootType():
-                if itemClass is None or node.item.itemClass == itemClass:
-                    yield node.item.itemHandle, node.item
+            if node.item.isRootType() and (itemClass is None or node.item.itemClass == itemClass):
+                yield node.item.itemHandle, node.item
         return
 
     def findRoot(self, itemClass: nwItemClass | None) -> str | None:
@@ -501,7 +528,7 @@ class NWTree:
     #  Internal Functions
     ##
 
-    def _itemChange(self, item: NWItem, change: nwChange) -> None:
+    def _itemChange(self, item: ProjectItem, change: nwChange) -> None:
         """Signal item change and notify project."""
         tHandle = item.itemHandle
         logger.debug("Item change: %s -> %s", tHandle, change.name)
@@ -520,12 +547,18 @@ class NWTree:
             return self._nodes.get(handle)
         return None
 
-    def _addItems(self, items: dict[str, NWItem]) -> dict[str, NWItem]:
+    def _addItems(self, items: dict[str, ProjectItem]) -> dict[str, ProjectItem]:
         """Add a dictionary of items to the project tree. Returns a new
         dictionary of items that could not be added yet, but can be.
         """
-        remains: dict[str, NWItem] = {}
+        remains: dict[str, ProjectItem] = {}
         for handle, item in items.items():
+            if handle in self._nodes or handle in self._items:
+                logger.warning("Skipping duplicate item handle '%s' while unpacking project tree", handle)
+                continue
+            if item.isRootType() and item.itemParent is not None:
+                logger.warning("Root item '%s' cannot have a parent ('%s')", handle, item.itemParent)
+                item.setParent(None)
             if pHandle := item.itemParent:
                 if parent := self._nodes.get(pHandle):
                     node = ProjectNode(item)

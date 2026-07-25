@@ -1,9 +1,6 @@
 """
-novelWriter – Common Functions
+novelWriter - Common Functions
 ==============================
-
-File History:
-Created: 2019-05-12 [0.1.0]
 
 This file is a part of novelWriter
 Copyright (C) 2019 Veronica Berglyd Olsen and novelWriter contributors
@@ -28,18 +25,17 @@ import json
 import logging
 import unicodedata
 import uuid
+import weakref
 import xml.etree.ElementTree as ET
 
-from configparser import ConfigParser
-from datetime import datetime
-from enum import Enum
+from datetime import date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeGuard, TypeVar
 from urllib.parse import urljoin
 from urllib.request import pathname2url
 
 from PyQt6.QtCore import QCoreApplication, QLocale, QMimeData, QUrl
-from PyQt6.QtGui import QAction, QDesktopServices, QFont, QFontDatabase, QFontInfo
+from PyQt6.QtGui import QAction, QDesktopServices, QFont, QFontDatabase, QFontInfo, QIcon
 from PyQt6.QtWidgets import QMenu, QMenuBar, QWidget
 
 from novelwriter.constants import nwConst, nwLabels, nwQuotes, nwUnicode, trConst
@@ -48,6 +44,7 @@ from novelwriter.error import logException
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+    from types import MethodType
 
 logger = logging.getLogger(__name__)
 
@@ -125,9 +122,20 @@ def checkPath(value: Any, default: Path) -> Path:
     """Check if a value is a valid path."""
     if isinstance(value, Path):
         return value
-    elif isinstance(value, str):
-        if value.strip():
-            return Path(value)
+    elif isinstance(value, str) and value.strip():
+        return Path(value)
+    return default
+
+
+def checkDateNone(value: Any, default: date | None) -> date | None:
+    """Check if a value is a valid date."""
+    if isinstance(value, date):
+        return value
+    elif isinstance(value, str) and value.strip():
+        try:
+            return date.fromisoformat(value)
+        except Exception:
+            return default
     return default
 
 
@@ -144,10 +152,7 @@ def isHandle(value: Any) -> TypeGuard[str]:
         return False
     if len(value) != 13:
         return False
-    for c in value:
-        if c not in "0123456789abcdef":
-            return False
-    return True
+    return all(c in "0123456789abcdef" for c in value)
 
 
 def isTitleTag(value: Any) -> TypeGuard[str]:
@@ -158,10 +163,7 @@ def isTitleTag(value: Any) -> TypeGuard[str]:
         return False
     if not value.startswith("T"):
         return False
-    for c in value[1:]:
-        if c not in "0123456789":
-            return False
-    return True
+    return all(c in "0123456789" for c in value[1:])
 
 
 def isItemClass(value: Any) -> TypeGuard[str]:
@@ -203,9 +205,8 @@ def checkIntTuple(value: int, valid: tuple | list | set, default: int) -> int:
     """Check that an int is an element of a tuple. If it isn't, return
     the default value.
     """
-    if isinstance(value, int):
-        if value in valid:
-            return value
+    if isinstance(value, int) and value in valid:
+        return value
     return default
 
 
@@ -242,14 +243,25 @@ def formatInt(value: int) -> str:
     return str(value)
 
 
-def formatTimeStamp(value: float, fileSafe: bool = False) -> str:
+def formatPercent(value: float | int, *, divisor: float | int | None = None, prec: int = 1) -> str:
+    """Format a number and optionally a divisor as a percentage."""
+    if not isinstance(value, (float, int)):
+        return "ERR"
+    if isinstance(divisor, (float, int)) and divisor != 0:
+        value = value / divisor
+    fmt = f"{{0:.{prec}f}}\u202f%"
+    return fmt.format(value * 100.0)
+
+
+def formatTimeStamp(value: float, fileSafe: bool = False, fmt: str | None = None) -> str:
     """Take a number (on the format returned by time.time()) and convert
     it to a timestamp string.
     """
-    if fileSafe:
-        return datetime.fromtimestamp(value).strftime(nwConst.FMT_FSTAMP)
-    else:
-        return datetime.fromtimestamp(value).strftime(nwConst.FMT_TSTAMP)
+    try:
+        result = datetime.fromtimestamp(value).strftime(nwConst.FMT_TSTAMP if fmt is None else fmt)
+        return result.replace(":", ".") if fileSafe else result
+    except Exception:
+        return "ERROR"
 
 
 def formatTime(t: int) -> str:
@@ -448,6 +460,8 @@ def numberToRoman(value: int, toLower: bool = False) -> str:
         value -= n * divisor
         if value <= 0:
             break
+    else:  # pragma: no cover
+        pass
 
     return roman.lower() if toLower else roman
 
@@ -556,15 +570,35 @@ def qtLambda(func: Callable, *args: Any, **kwargs: Any) -> Callable:
     return wrapper
 
 
-def qtAddAction(parent: QWidget, label: str) -> QAction:
-    """Helper to add action to widget and always return the action."""  # noqa: D401
+def qtWeakLambda(method: MethodType, *args: Any, **kwargs: Any) -> Callable:
+    """A qtLambda that only holds a weak reference to the bound method.
+    Use this instead of qtLambda when the slot is a method of the object
+    that also owns the signal, as the strong reference in qtLambda would
+    otherwise keep the object alive until the cyclic garbage collector
+    runs.
+    """  # noqa: D401
+    ref = weakref.WeakMethod(method)
+
+    def wrapper(*a_: Any) -> None:
+        if func := ref():
+            func(*args, **kwargs)
+
+    return wrapper
+
+
+def qtAddAction(parent: QWidget, label: str, *, icon: QIcon | None = None, data: Any | None = None) -> QAction:
+    """Add action to a widget and always return the action."""
     action = QAction(label, parent)
+    if icon is not None:
+        action.setIcon(icon)
+    if data is not None:
+        action.setData(data)
     parent.addAction(action)
     return action
 
 
 def qtAddMenu(parent: QMenuBar | QMenu, label: str) -> QMenu:
-    """Helper to add menu to menu and always return the menu."""  # noqa: D401
+    """Add a menu to a menu and always return the menu."""
     menu = QMenu(label, parent)
     parent.addMenu(menu)
     return menu
@@ -586,7 +620,7 @@ def utf16CharMap(text: str) -> list[int]:
     ASCII, UCS-2 or UCS-4. QStrings are in UTF-16, so wide characters
     use 2 indices, and thus create an offset.
     """
-    utf16Map = list(range(0, len(text) + 1))
+    utf16Map = list(range(len(text) + 1))
     offset = 0
     for i, c in enumerate(text, 1):
         if ord(c) > 0xFFFF:
@@ -778,79 +812,3 @@ def openExternalPath(path: Path) -> bool:
         QDesktopServices.openUrl(QUrl(urljoin("file:", pathname2url(str(path)))))
         return True
     return False
-
-
-##
-#  Classes
-##
-
-_T_Enum = TypeVar("_T_Enum", bound=Enum)
-
-
-class NWConfigParser(ConfigParser):
-    """Common: Adapted Config Parser.
-
-    This is a subclass of the standard config parser that adds type safe
-    helper functions, and support for lists. It also turns off
-    interpolation, which would require % symbols to be escaped (#2455).
-    """
-
-    def __init__(self) -> None:
-        super().__init__(interpolation=None)
-
-    def rdStr(self, section: str, option: str, default: str) -> str:
-        """Read string value."""
-        return self.get(section, option, fallback=default)
-
-    def rdInt(self, section: str, option: str, default: int) -> int:
-        """Read integer value."""
-        try:
-            return self.getint(section, option, fallback=default)
-        except ValueError:
-            logger.error("Could not read '%s':'%s' from config", section, option)
-        return default
-
-    def rdFlt(self, section: str, option: str, default: float) -> float:
-        """Read float value."""
-        try:
-            return self.getfloat(section, option, fallback=default)
-        except ValueError:
-            logger.error("Could not read '%s':'%s' from config", section, option)
-        return default
-
-    def rdBool(self, section: str, option: str, default: bool) -> bool:
-        """Read boolean value."""
-        try:
-            return self.getboolean(section, option, fallback=default)
-        except ValueError:
-            logger.error("Could not read '%s':'%s' from config", section, option)
-        return default
-
-    def rdPath(self, section: str, option: str, default: Path) -> Path:
-        """Read a Path value."""
-        return checkPath(self.get(section, option, fallback=default), default)
-
-    def rdStrList(self, section: str, option: str, default: list[str]) -> list[str]:
-        """Read string list."""
-        result = default.copy() if isinstance(default, list) else []
-        if self.has_option(section, option):
-            data = self.get(section, option, fallback="").split(",")
-            for i in range(min(len(data), len(result))):
-                result[i] = data[i].strip()
-        return result
-
-    def rdIntList(self, section: str, option: str, default: list[int]) -> list[int]:
-        """Read integer list."""
-        result = default.copy() if isinstance(default, list) else []
-        if self.has_option(section, option):
-            data = self.get(section, option, fallback="").split(",")
-            for i in range(min(len(data), len(result))):
-                result[i] = checkInt(data[i].strip(), result[i])
-        return result
-
-    def rdEnum(self, section: str, option: str, default: _T_Enum) -> _T_Enum:
-        """Read enum value."""
-        if self.has_option(section, option):
-            data = self.get(section, option, fallback="")
-            return type(default).__members__.get(data.upper(), default)
-        return default

@@ -1,5 +1,5 @@
 """
-novelWriter – Constants
+novelWriter - Constants
 =======================
 
 This file is a part of novelWriter
@@ -43,7 +43,6 @@ class nwConst:
 
     # Date and Time Formats
     FMT_TSTAMP = "%Y-%m-%d %H:%M:%S"  # Default format
-    FMT_FSTAMP = "%Y-%m-%d %H.%M.%S"  # FileName safe format
     FMT_DSTAMP = "%Y-%m-%d"  # Date only format
 
     # URLs
@@ -59,17 +58,20 @@ class nwConst:
 
     # Mime Types
     MIME_HANDLE = "text/vnd.novelwriter.handle"
+    MIME_MARKDOWN = "text/markdown"
 
     # Gui Settings
     STATUS_MSG_TIMEOUT = 15000  # milliseconds
     MAX_SEARCH_RESULT = 1000
+    CHECK_PASS_CHUNK = 100  # Chunk size for spell and format checking
+    BIG_DOC_LIMIT = 500000  # Doc size above which the initial cursor move is queued
 
 
 class nwRegEx:
     """Common RegExes."""
 
     URL = r"\bhttps?://(?:www\.|(?!www))[\w/()@:%_\+-.~#!?&=]+\b"
-    WORDS = r"\b[^\s\-\+\/–—\[\]:]+\b"
+    WORDS = r"\b[^\s\-\+\/–—\[\]:]+\b"  # noqa: RUF001
     BREAK = r"(?i)(?<!\\)(\[br\]\n?)"
     FMT_IT = r"(?<![\w\\])(_)(?![\s_])(.+?)(?<![\s\\])(\1)(?!\w)"
     FMT_B1 = r"(?<![\w\\])(\*{1,2})(?![\s\*])(.+?)(?<![\s\\])(\1)(?!\w)"
@@ -146,7 +148,8 @@ class nwFiles:
     """novelWriter Files."""
 
     # Config Files
-    CONF_FILE = "novelwriter.conf"
+    CONF_FILE = "novelwriter.toml"
+    CONF_FILE_OLD = "novelwriter.conf"
     RECENT_FILE = "recentProjects.json"
     RECENT_PATH = "recentPaths.json"
 
@@ -257,6 +260,7 @@ class nwStats:
     CHARS = "allChars"
     CHARS_TEXT = "textChars"
     CHARS_TITLE = "titleChars"
+    CHARS_DIALOG = "dialogChars"
     PARAGRAPHS = "paragraphCount"
     TITLES = "titleCount"
     WCHARS_ALL = "allWordChars"
@@ -265,6 +269,7 @@ class nwStats:
     WORDS = "allWords"
     WORDS_TEXT = "textWords"
     WORDS_TITLE = "titleWords"
+    DIALOG_RATIO = "dialogRatio"
 
     # Note: The order here affects the order of menu entries
     ALL_FIELDS: Final[list[str]] = [
@@ -300,18 +305,18 @@ class nwLabels:
         nwItemClass.TRASH: QT_TRANSLATE_NOOP("Constant", "Trash"),
     }
     CLASS_ICON: Final[dict[nwItemClass, str]] = {
-        nwItemClass.NO_CLASS: "cls_none",
-        nwItemClass.NOVEL: "cls_novel",
-        nwItemClass.PLOT: "cls_plot",
-        nwItemClass.CHARACTER: "cls_character",
-        nwItemClass.WORLD: "cls_world",
-        nwItemClass.TIMELINE: "cls_timeline",
-        nwItemClass.OBJECT: "cls_object",
-        nwItemClass.ENTITY: "cls_entity",
-        nwItemClass.CUSTOM: "cls_custom",
-        nwItemClass.ARCHIVE: "cls_archive",
-        nwItemClass.TEMPLATE: "cls_template",
-        nwItemClass.TRASH: "cls_trash",
+        nwItemClass.NO_CLASS: "cls_none:root",
+        nwItemClass.NOVEL: "cls_novel:root",
+        nwItemClass.PLOT: "cls_plot:root",
+        nwItemClass.CHARACTER: "cls_character:root",
+        nwItemClass.WORLD: "cls_world:root",
+        nwItemClass.TIMELINE: "cls_timeline:root",
+        nwItemClass.OBJECT: "cls_object:root",
+        nwItemClass.ENTITY: "cls_entity:root",
+        nwItemClass.CUSTOM: "cls_custom:root",
+        nwItemClass.ARCHIVE: "cls_archive:root",
+        nwItemClass.TEMPLATE: "cls_template:root",
+        nwItemClass.TRASH: "cls_trash:root",
     }
     LAYOUT_NAME: Final[dict[nwItemLayout, str]] = {
         nwItemLayout.NO_LAYOUT: QT_TRANSLATE_NOOP("Constant", "None"),
@@ -329,9 +334,9 @@ class nwLabels:
         "doc_h4": QT_TRANSLATE_NOOP("Constant", "Novel Section"),
         "note": QT_TRANSLATE_NOOP("Constant", "Project Note"),
     }
-    ACTIVE_NAME: Final[dict[str, str]] = {
-        "checked": QT_TRANSLATE_NOOP("Constant", "Active"),
-        "unchecked": QT_TRANSLATE_NOOP("Constant", "Inactive"),
+    ACTIVE_NAME: Final[dict[bool, str]] = {
+        True: QT_TRANSLATE_NOOP("Constant", "Active"),
+        False: QT_TRANSLATE_NOOP("Constant", "Inactive"),
     }
     KEY_NAME: Final[dict[str, str]] = {
         nwKeyWords.TAG_KEY: QT_TRANSLATE_NOOP("Constant", "Tag"),
@@ -387,6 +392,7 @@ class nwLabels:
         nwStats.CHARS: QT_TRANSLATE_NOOP("Stats", "Characters"),
         nwStats.CHARS_TEXT: QT_TRANSLATE_NOOP("Stats", "Characters in text"),
         nwStats.CHARS_TITLE: QT_TRANSLATE_NOOP("Stats", "Characters in headings"),
+        nwStats.CHARS_DIALOG: QT_TRANSLATE_NOOP("Stats", "Characters in dialogue"),
         nwStats.PARAGRAPHS: QT_TRANSLATE_NOOP("Stats", "Paragraphs"),
         nwStats.TITLES: QT_TRANSLATE_NOOP("Stats", "Headings"),
         nwStats.WCHARS_ALL: QT_TRANSLATE_NOOP("Stats", "Characters, no spaces"),
@@ -395,6 +401,7 @@ class nwLabels:
         nwStats.WORDS: QT_TRANSLATE_NOOP("Stats", "Words"),
         nwStats.WORDS_TEXT: QT_TRANSLATE_NOOP("Stats", "Words in text"),
         nwStats.WORDS_TITLE: QT_TRANSLATE_NOOP("Stats", "Words in headings"),
+        nwStats.DIALOG_RATIO: QT_TRANSLATE_NOOP("Stats", "Dialogue"),
     }
     STATS_DISPLAY: Final[dict[str, str]] = {
         nwStats.CHARS: QT_TRANSLATE_NOOP("Stats", "Characters: {0} ({1})"),
@@ -405,6 +412,7 @@ class nwLabels:
         nwBuildFmt.FODT: QT_TRANSLATE_NOOP("Constant", "Flat Open Document (.fodt)"),
         nwBuildFmt.DOCX: QT_TRANSLATE_NOOP("Constant", "Microsoft Word Document (.docx)"),
         nwBuildFmt.HTML: QT_TRANSLATE_NOOP("Constant", "HTML 5 (.html)"),
+        nwBuildFmt.EPUB: QT_TRANSLATE_NOOP("Constant", "Electronic Publication E-book (.epub)"),
         nwBuildFmt.NWD: QT_TRANSLATE_NOOP("Constant", "novelWriter Markup (.txt)"),
         nwBuildFmt.STD_MD: QT_TRANSLATE_NOOP("Constant", "Standard Markdown (.md)"),
         nwBuildFmt.EXT_MD: QT_TRANSLATE_NOOP("Constant", "Extended Markdown (.md)"),
@@ -417,6 +425,7 @@ class nwLabels:
         nwBuildFmt.FODT: ".fodt",
         nwBuildFmt.DOCX: ".docx",
         nwBuildFmt.HTML: ".html",
+        nwBuildFmt.EPUB: ".epub",
         nwBuildFmt.NWD: ".txt",
         nwBuildFmt.STD_MD: ".md",
         nwBuildFmt.EXT_MD: ".md",
@@ -498,14 +507,33 @@ class nwLabels:
         "purple": QT_TRANSLATE_NOOP("Constant", "Purple"),
     }
     THEME_MODE_ICON: Final[dict[nwTheme, str]] = {
-        nwTheme.AUTO: "theme_auto",
-        nwTheme.LIGHT: "theme_light",
-        nwTheme.DARK: "theme_dark",
+        nwTheme.AUTO: "theme_auto:sidebar",
+        nwTheme.LIGHT: "theme_light:sidebar",
+        nwTheme.DARK: "theme_dark:sidebar",
     }
     THEME_MODE_LABEL: Final[dict[nwTheme, str]] = {
         nwTheme.AUTO: QT_TRANSLATE_NOOP("Constant", "System Theme"),
         nwTheme.LIGHT: QT_TRANSLATE_NOOP("Constant", "Light Theme"),
         nwTheme.DARK: QT_TRANSLATE_NOOP("Constant", "Dark Theme"),
+    }
+    BACKUP_INTERVAL: Final[dict[str, str]] = {
+        "session": QT_TRANSLATE_NOOP("Constant", "Per Session"),
+        "day": QT_TRANSLATE_NOOP("Constant", "Per Day"),
+        "week": QT_TRANSLATE_NOOP("Constant", "Per Week"),
+        "month": QT_TRANSLATE_NOOP("Constant", "Per Month"),
+    }
+    FILTER_GROUPS: Final[dict[str, str]] = {
+        "documents": QT_TRANSLATE_NOOP("Constant", "Document Filters"),
+        "content": QT_TRANSLATE_NOOP("Constant", "Content Filters"),
+    }
+    FILTER_TYPES: Final[dict[str, str]] = {
+        "novel": QT_TRANSLATE_NOOP("Constant", "Novel documents"),
+        "notes": QT_TRANSLATE_NOOP("Constant", "Project notes"),
+        "inactive": QT_TRANSLATE_NOOP("Constant", "Inactive documents"),
+        "headings": QT_TRANSLATE_NOOP("Constant", "Headings"),
+        "text": QT_TRANSLATE_NOOP("Constant", "Body text paragraphs"),
+        "meta": QT_TRANSLATE_NOOP("Constant", "Tags and references"),
+        "comments": QT_TRANSLATE_NOOP("Constant", "Comments and footnotes"),
     }
 
 
@@ -522,8 +550,19 @@ class nwHeadFmt:
     SC_ABS = "{Scene:Abs}"
     CHAR_POV = "{Char:POV}"
     CHAR_FOCUS = "{Char:Focus}"
+    HRULE = "----"
 
-    PAGE_HEADERS: Final[list[str]] = [TITLE, CH_NUM, CH_WORD, CH_ROMU, CH_ROML, SC_NUM, SC_ABS, CHAR_POV, CHAR_FOCUS]
+    PAGE_HEADERS: Final[list[str]] = [
+        TITLE,
+        CH_NUM,
+        CH_WORD,
+        CH_ROMU,
+        CH_ROML,
+        SC_NUM,
+        SC_ABS,
+        CHAR_POV,
+        CHAR_FOCUS,
+    ]
 
     # Document Page Header
     DOC_PROJECT = "{Project}"

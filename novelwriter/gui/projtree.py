@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Project Tree
+novelWriter - GUI Project Tree
 ==============================
 
 This file is a part of novelWriter
@@ -23,12 +23,14 @@ from __future__ import annotations
 
 import logging
 
+from contextlib import suppress
 from enum import Enum
 
 from PyQt6.QtCore import QModelIndex, QPoint, Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QIcon, QMouseEvent, QPainter, QPalette, QShortcut
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -40,11 +42,10 @@ from PyQt6.QtWidgets import (
 )
 
 from novelwriter import CONFIG, SHARED
-from novelwriter.common import qtAddAction, qtAddMenu, qtLambda
+from novelwriter.common import elide, qtAddAction, qtAddMenu, qtLambda, qtWeakLambda
 from novelwriter.constants import nwLabels, nwStyles, nwUnicode, trConst
 from novelwriter.core.coretools import DocDuplicator, DocMerger, DocSplitter
-from novelwriter.core.item import NWItem
-from novelwriter.core.itemmodel import ProjectModel, ProjectNode
+from novelwriter.core.item import ProjectItem
 from novelwriter.dialogs.docmerge import GuiDocMerge
 from novelwriter.dialogs.docsplit import GuiDocSplit
 from novelwriter.dialogs.editlabel import GuiEditLabel
@@ -52,15 +53,18 @@ from novelwriter.dialogs.projectsettings import GuiProjectSettings
 from novelwriter.enum import nwChange, nwDocMode, nwItemClass, nwItemLayout, nwItemType
 from novelwriter.extensions.modified import NIconToolButton
 from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
+from novelwriter.models.itemmodel import ProjectModel, ProjectNode
 from novelwriter.types import (
     QtHeaderFixed,
     QtHeaderStretch,
     QtHeaderToContents,
+    QtModShift,
     QtMouseLeft,
     QtMouseMiddle,
     QtScrollAlwaysOff,
     QtScrollAsNeeded,
     QtSizeExpanding,
+    QtWidgetShortcut,
 )
 
 logger = logging.getLogger(__name__)
@@ -98,38 +102,43 @@ class GuiProjectView(QWidget):
         # Keyboard Shortcuts
         self.keyMoveUp = QShortcut(self.projTree)
         self.keyMoveUp.setKey("Ctrl+Up")
-        self.keyMoveUp.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.keyMoveUp.setContext(QtWidgetShortcut)
         self.keyMoveUp.activated.connect(self.projTree.moveItemUp)
 
         self.keyMoveDn = QShortcut(self.projTree)
         self.keyMoveDn.setKey("Ctrl+Down")
-        self.keyMoveDn.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.keyMoveDn.setContext(QtWidgetShortcut)
         self.keyMoveDn.activated.connect(self.projTree.moveItemDown)
 
         self.keyGoPrev = QShortcut(self.projTree)
         self.keyGoPrev.setKey("Alt+Up")
-        self.keyGoPrev.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.keyGoPrev.setContext(QtWidgetShortcut)
         self.keyGoPrev.activated.connect(self.projTree.goToSiblingUp)
 
         self.keyGoNext = QShortcut(self.projTree)
         self.keyGoNext.setKey("Alt+Down")
-        self.keyGoNext.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.keyGoNext.setContext(QtWidgetShortcut)
         self.keyGoNext.activated.connect(self.projTree.goToSiblingDown)
 
         self.keyGoUp = QShortcut(self.projTree)
         self.keyGoUp.setKey("Alt+Left")
-        self.keyGoUp.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.keyGoUp.setContext(QtWidgetShortcut)
         self.keyGoUp.activated.connect(self.projTree.goToParent)
 
         self.keyGoDown = QShortcut(self.projTree)
         self.keyGoDown.setKey("Alt+Right")
-        self.keyGoDown.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.keyGoDown.setContext(QtWidgetShortcut)
         self.keyGoDown.activated.connect(self.projTree.goToFirstChild)
 
         self.keyContext = QShortcut(self.projTree)
         self.keyContext.setKey("Ctrl+.")
-        self.keyContext.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.keyContext.setContext(QtWidgetShortcut)
         self.keyContext.activated.connect(self.projTree.openContextMenu)
+
+        self.keyOpenItem = QShortcut(self.projTree)
+        self.keyOpenItem.setKeys(["Return", "Enter", "Shift+Return", "Shift+Enter"])
+        self.keyOpenItem.setContext(QtWidgetShortcut)
+        self.keyOpenItem.activated.connect(self.projTree.openSelectedItem)
 
         # Signals
         self.selectedItemChanged.connect(self.projBar.treeSelectionChanged)
@@ -147,9 +156,9 @@ class GuiProjectView(QWidget):
         logger.debug("Theme Update: GuiProjectView")
         self.projBar.updateTheme()
 
-    def initSettings(self) -> None:
-        """Initialise GUI elements that depend on specific settings."""
-        self.projTree.initSettings()
+    def initViewport(self) -> None:
+        """Initialise viewport settings."""
+        self.projTree.initViewport()
 
     def closeProjectTasks(self) -> None:
         """Clear project-related GUI content."""
@@ -254,18 +263,19 @@ class GuiProjectToolBar(QWidget):
 
         # Quick Links
         self.mQuick = QMenu(self)
+        self.mQuick.triggered.connect(self._onQuickLinkSelected)
 
-        self.tbQuick = NIconToolButton(self, iSz)
+        self.tbQuick = NIconToolButton(self, iSz, "bookmarks:action")
         self.tbQuick.setToolTip("{0} [Ctrl+L]".format(self.tr("Quick Links")))
         self.tbQuick.setShortcut("Ctrl+L")
         self.tbQuick.setMenu(self.mQuick)
 
         # Move Buttons
-        self.tbMoveU = NIconToolButton(self, iSz)
+        self.tbMoveU = NIconToolButton(self, iSz, "chevron_up:action")
         self.tbMoveU.setToolTip("{0} [Ctrl+Up]".format(self.tr("Move Up")))
         self.tbMoveU.clicked.connect(self.projTree.moveItemUp)
 
-        self.tbMoveD = NIconToolButton(self, iSz)
+        self.tbMoveD = NIconToolButton(self, iSz, "chevron_down:action")
         self.tbMoveD.setToolTip("{0} [Ctrl+Down]".format(self.tr("Move Down")))
         self.tbMoveD.clicked.connect(self.projTree.moveItemDown)
 
@@ -292,13 +302,14 @@ class GuiProjectToolBar(QWidget):
 
         self.mTemplates = _UpdatableMenu(self.mAdd)
         self.mTemplates.setActionsVisible(False)
-        self.mTemplates.menuItemTriggered.connect(lambda h: self.newDocumentFromTemplate.emit(h))
+        self.mTemplates.menuItemTriggered.connect(self._forwardTemplateTriggered)
         self.mAdd.addMenu(self.mTemplates)
 
         self.mAddRoot = qtAddMenu(self.mAdd, trConst(nwLabels.ITEM_DESCRIPTION["root"]))
+        self.mAddRoot.triggered.connect(self._onAddRootSelected)
         self._buildRootMenu()
 
-        self.tbAdd = NIconToolButton(self, iSz)
+        self.tbAdd = NIconToolButton(self, iSz, "add:add")
         self.tbAdd.setToolTip("{0} [Ctrl+N]".format(self.tr("Add Item")))
         self.tbAdd.setShortcut("Ctrl+N")
         self.tbAdd.setMenu(self.mAdd)
@@ -315,7 +326,7 @@ class GuiProjectToolBar(QWidget):
         self.aEmptyTrash = qtAddAction(self.mMore, self.tr("Empty Trash"))
         self.aEmptyTrash.triggered.connect(self.projTree.emptyTrash)
 
-        self.tbMore = NIconToolButton(self, iSz)
+        self.tbMore = NIconToolButton(self, iSz, "more_vertical:default")
         self.tbMore.setToolTip(self.tr("More Options"))
         self.tbMore.setMenu(self.mMore)
 
@@ -331,7 +342,7 @@ class GuiProjectToolBar(QWidget):
         self.outerBox.setSpacing(0)
 
         self.setLayout(self.outerBox)
-        self.updateTheme()
+        self.updateTheme(init=True)
 
         logger.debug("Ready: GuiProjectToolBar")
 
@@ -339,7 +350,7 @@ class GuiProjectToolBar(QWidget):
     #  Methods
     ##
 
-    def updateTheme(self) -> None:
+    def updateTheme(self, *, init: bool = False) -> None:
         """Update theme elements."""
         logger.debug("Theme Update: GuiProjectToolBar")
 
@@ -350,18 +361,19 @@ class GuiProjectToolBar(QWidget):
         self.tbAdd.setStyleSheet(buttonStyle)
         self.tbMore.setStyleSheet(buttonStyle)
 
-        self.tbQuick.setThemeIcon("bookmarks", "action")
-        self.tbMoveU.setThemeIcon("chevron_up", "action")
-        self.tbMoveD.setThemeIcon("chevron_down", "action")
-        self.tbAdd.setThemeIcon("add", "add")
-        self.tbMore.setThemeIcon("more_vertical", "default")
+        if not init:
+            self.tbQuick.refreshTheme()
+            self.tbMoveU.refreshTheme()
+            self.tbMoveD.refreshTheme()
+            self.tbAdd.refreshTheme()
+            self.tbMore.refreshTheme()
 
-        self.aAddScene.setIcon(SHARED.theme.getIcon("prj_scene", "scene"))
-        self.aAddChap.setIcon(SHARED.theme.getIcon("prj_chapter", "chapter"))
-        self.aAddPart.setIcon(SHARED.theme.getIcon("prj_title", "title"))
-        self.aAddEmpty.setIcon(SHARED.theme.getIcon("prj_document", "file"))
-        self.aAddNote.setIcon(SHARED.theme.getIcon("prj_note", "note"))
-        self.aAddFolder.setIcon(SHARED.theme.getIcon("prj_folder", "folder"))
+        self.aAddScene.setIcon(SHARED.theme.getIcon("prj_scene:scene"))
+        self.aAddChap.setIcon(SHARED.theme.getIcon("prj_chapter:chapter"))
+        self.aAddPart.setIcon(SHARED.theme.getIcon("prj_title:title"))
+        self.aAddEmpty.setIcon(SHARED.theme.getIcon("prj_document:file"))
+        self.aAddNote.setIcon(SHARED.theme.getIcon("prj_note:note"))
+        self.aAddFolder.setIcon(SHARED.theme.getIcon("prj_folder:folder"))
 
         self.buildTemplatesMenu()
         self.buildQuickLinksMenu()
@@ -377,10 +389,12 @@ class GuiProjectToolBar(QWidget):
         logger.debug("Rebuilding quick links menu")
         self.mQuick.clear()
         for tHandle, nwItem in SHARED.project.tree.iterRoots(None):
-            action = qtAddAction(self.mQuick, nwItem.itemName)
-            action.setData(tHandle)
-            action.setIcon(SHARED.theme.getIcon(nwLabels.CLASS_ICON[nwItem.itemClass], "root"))
-            action.triggered.connect(qtLambda(self.projView.setSelectedHandle, tHandle, doScroll=True))
+            qtAddAction(
+                self.mQuick,
+                elide(nwItem.itemName, 50),
+                icon=SHARED.theme.getIcon(nwLabels.CLASS_ICON[nwItem.itemClass]),
+                data=tHandle,
+            )
 
     def buildTemplatesMenu(self) -> None:
         """Build the templates menu."""
@@ -407,11 +421,32 @@ class GuiProjectToolBar(QWidget):
         actually be added.
         """
         nwItem = SHARED.project.tree[tHandle]
-        allowDoc = isinstance(nwItem, NWItem) and nwItem.documentAllowed()
+        allowDoc = isinstance(nwItem, ProjectItem) and nwItem.documentAllowed()
         self.aAddScene.setVisible(allowDoc)
         self.aAddChap.setVisible(allowDoc)
         self.aAddPart.setVisible(allowDoc)
         self.aAddEmpty.setVisible(allowDoc)
+
+    ##
+    #  Private Slots
+    ##
+
+    @pyqtSlot(QAction)
+    def _onQuickLinkSelected(self, action: QAction) -> None:
+        """Select a quick link item."""
+        if isinstance(tHandle := action.data(), str):  # pragma: no branch
+            self.projView.setSelectedHandle(tHandle, doScroll=True)
+
+    @pyqtSlot(QAction)
+    def _onAddRootSelected(self, action: QAction) -> None:
+        """Add a new root item."""
+        if isinstance(itemClass := action.data(), nwItemClass):  # pragma: no branch
+            self.projTree.newTreeItem(nwItemType.ROOT, itemClass=itemClass)
+
+    @pyqtSlot(str)
+    def _forwardTemplateTriggered(self, tHandle: str) -> None:
+        """Forward the template menu's selected item handle."""
+        self.newDocumentFromTemplate.emit(tHandle)
 
     ##
     #  Internal Functions
@@ -421,10 +456,12 @@ class GuiProjectToolBar(QWidget):
         """Build the rood folder menu."""
 
         def addClass(itemClass: nwItemClass) -> None:
-            aNew = qtAddAction(self.mAddRoot, trConst(nwLabels.CLASS_NAME[itemClass]))
-            aNew.setIcon(SHARED.theme.getIcon(nwLabels.CLASS_ICON[itemClass], "root"))
-            aNew.triggered.connect(qtLambda(self.projTree.newTreeItem, nwItemType.ROOT, itemClass))
-            self.mAddRoot.addAction(aNew)
+            qtAddAction(
+                self.mAddRoot,
+                trConst(nwLabels.CLASS_NAME[itemClass]),
+                icon=SHARED.theme.getIcon(nwLabels.CLASS_ICON[itemClass]),
+                data=itemClass,
+            )
 
         self.mAddRoot.clear()
         addClass(nwItemClass.NOVEL)
@@ -455,8 +492,8 @@ class GuiProjectTree(QTreeView):
         self._actHandle = None
 
         # Cached Translations
-        self.trActive = trConst(nwLabels.ACTIVE_NAME["checked"])
-        self.trInactive = trConst(nwLabels.ACTIVE_NAME["unchecked"])
+        self.trActive = trConst(nwLabels.ACTIVE_NAME[True])
+        self.trInactive = trConst(nwLabels.ACTIVE_NAME[False])
 
         # Tree Settings
         iPx = SHARED.theme.baseIconHeight
@@ -488,12 +525,12 @@ class GuiProjectTree(QTreeView):
         self.expanded.connect(self._onNodeExpanded)
 
         # Set custom settings
-        self.initSettings()
+        self.initViewport()
 
         logger.debug("Ready: GuiProjectTree")
 
-    def initSettings(self) -> None:
-        """Set or update tree widget settings."""
+    def initViewport(self) -> None:
+        """Initialise viewport settings."""
         if CONFIG.hideVScroll:
             self.setVerticalScrollBarPolicy(QtScrollAlwaysOff)
         else:
@@ -528,14 +565,16 @@ class GuiProjectTree(QTreeView):
     def loadModel(self) -> None:
         """Load and prepare a new project model."""
         if selectModelOld := self.selectionModel():
-            selectModelOld.disconnect()
+            with suppress(TypeError):
+                selectModelOld.currentChanged.disconnect(self._onSelectionChange)
+            selectModelOld.setParent(None)
 
         self.setModel(SHARED.project.tree.model)
 
         # Lock the column sizes
         iPx = SHARED.theme.baseIconHeight
 
-        if header := self.header():
+        if header := self.header():  # pragma: no branch
             header.setStretchLastSection(False)
             header.setMinimumSectionSize(iPx + 6)
             header.setSectionResizeMode(ProjectNode.C_NAME, QtHeaderStretch)
@@ -545,7 +584,7 @@ class GuiProjectTree(QTreeView):
             header.resizeSection(ProjectNode.C_ACTIVE, iPx + 6)
             header.resizeSection(ProjectNode.C_STATUS, iPx + 6)
 
-        if selectModelNew := self.selectionModel():
+        if selectModelNew := self.selectionModel():  # pragma: no branch
             selectModelNew.currentChanged.connect(self._onSelectionChange)
 
         self.restoreExpandedState()
@@ -586,9 +625,12 @@ class GuiProjectTree(QTreeView):
         tHandle = None
         if itemType == nwItemType.ROOT and isinstance(itemClass, nwItemClass):
             sPos = -1
-            if (node := self._getNode(self.currentIndex())) and (itemRoot := node.item.itemRoot):
-                if root := SHARED.project.tree.nodes.get(itemRoot):
-                    sPos = root.row() + 1
+            if (
+                (node := self._getNode(self.currentIndex()))
+                and (itemRoot := node.item.itemRoot)
+                and (root := SHARED.project.tree.nodes.get(itemRoot))
+            ):
+                sPos = root.row() + 1
 
             tHandle = SHARED.project.newRoot(itemClass, sPos)
             self.restoreExpandedState()
@@ -751,7 +793,7 @@ class GuiProjectTree(QTreeView):
         """Duplicate the item hierarchy from a given item."""
         itemTree = [tHandle]
         itemTree.extend(SHARED.project.tree.subTree(tHandle))
-        if itemTree:
+        if itemTree:  # pragma: no branch
             if len(itemTree) == 1:
                 question = self.tr("Do you want to duplicate this document?")
             else:
@@ -778,9 +820,12 @@ class GuiProjectTree(QTreeView):
         if event.button() == QtMouseLeft:
             if not self.indexAt(event.pos()).isValid():
                 self._clearSelection()
-        elif event.button() == QtMouseMiddle:
-            if (node := self._getNode(self.indexAt(event.pos()))) and node.item.isFileType():
-                self.projView.openDocumentRequest.emit(node.item.itemHandle, nwDocMode.VIEW, "", False)
+        elif (
+            event.button() == QtMouseMiddle
+            and (node := self._getNode(self.indexAt(event.pos())))
+            and node.item.isFileType()
+        ):
+            self.projView.openDocumentRequest.emit(node.item.itemHandle, nwDocMode.VIEW, "", False)
 
     def drawRow(self, painter: QPainter, opt: QStyleOptionViewItem, index: QModelIndex) -> None:
         """Draw a box on the active row."""
@@ -791,6 +836,13 @@ class GuiProjectTree(QTreeView):
     ##
     #  Public Slots
     ##
+
+    @pyqtSlot()
+    def openSelectedItem(self) -> None:
+        """Open the currently selected file, or view it if Shift is held."""
+        if (node := self._getNode(self.currentIndex())) and node.item.isFileType():
+            mode = nwDocMode.VIEW if QApplication.keyboardModifiers() == QtModShift else nwDocMode.EDIT
+            self.projView.openDocumentRequest.emit(node.item.itemHandle, mode, "", False)
 
     @pyqtSlot()
     def moveItemUp(self) -> None:
@@ -807,21 +859,34 @@ class GuiProjectTree(QTreeView):
     @pyqtSlot()
     def goToSiblingUp(self) -> None:
         """Skip to the previous sibling."""
-        if (node := self._getNode(self.currentIndex())) and (parent := node.parent()):
-            if (move := parent.child(node.row() - 1)) and (model := self._getModel()):
-                self.setCurrentIndex(model.indexFromNode(move))
+        if (
+            (node := self._getNode(self.currentIndex()))
+            and (parent := node.parent())
+            and (move := parent.child(node.row() - 1))
+            and (model := self._getModel())
+        ):
+            self.setCurrentIndex(model.indexFromNode(move))
 
     @pyqtSlot()
     def goToSiblingDown(self) -> None:
         """Skip to the next sibling."""
-        if (node := self._getNode(self.currentIndex())) and (parent := node.parent()):
-            if (move := parent.child(node.row() + 1)) and (model := self._getModel()):
-                self.setCurrentIndex(model.indexFromNode(move))
+        if (
+            (node := self._getNode(self.currentIndex()))
+            and (parent := node.parent())
+            and (move := parent.child(node.row() + 1))
+            and (model := self._getModel())
+        ):
+            self.setCurrentIndex(model.indexFromNode(move))
 
     @pyqtSlot()
     def goToParent(self) -> None:
         """Move to parent item."""
-        if (model := self._getModel()) and (node := model.node(self.currentIndex())) and (parent := node.parent()):
+        if (
+            (model := self._getModel())
+            and (node := model.node(self.currentIndex()))
+            and (parent := node.parent())
+            and parent is not model.root
+        ):
             self.setCurrentIndex(model.indexFromNode(parent))
 
     @pyqtSlot()
@@ -866,9 +931,7 @@ class GuiProjectTree(QTreeView):
                 self.setEnabled(False)
                 for index in indices:
                     if node := model.node(index):
-                        for child in reversed(node.allChildren()):
-                            SHARED.project.removeItem(child.item.itemHandle)
-                        SHARED.project.removeItem(node.item.itemHandle)
+                        self._deleteSubTree(node)
                 self.setEnabled(True)
 
             elif trashNode := SHARED.project.tree.trash:
@@ -895,8 +958,8 @@ class GuiProjectTree(QTreeView):
             if not SHARED.question(self.tr("Permanently delete {0} file(s) from Trash?").format(len(nodes))):
                 logger.info("Action cancelled by user")
                 return
-            for node in reversed(nodes):
-                SHARED.project.removeItem(node.item.itemHandle)
+            for node in list(trash.children):
+                self._deleteSubTree(node)
         return
 
     @pyqtSlot()
@@ -906,7 +969,7 @@ class GuiProjectTree(QTreeView):
         if model := self._getModel():
             if point is None:
                 point = self.visualRect(self.currentIndex()).center()
-            if point is not None:
+            if point is not None:  # pragma: no branch
                 index = self.indexAt(point)
                 if (node := self._getNode(index)) and (indices := self._selectedRows()):
                     ctxMenu = _TreeContextMenu(self, model, node, indices)
@@ -916,7 +979,7 @@ class GuiProjectTree(QTreeView):
                         ctxMenu.buildMultiSelectMenu()
                     else:
                         ctxMenu.buildSingleSelectMenu()
-                    if viewport := self.viewport():
+                    if viewport := self.viewport():  # pragma: no branch
                         ctxMenu.exec(viewport.mapToGlobal(point))
                     ctxMenu.setParent(None)
 
@@ -963,6 +1026,12 @@ class GuiProjectTree(QTreeView):
         if model := self.selectionModel():
             # Selection model can be None (#2173)
             model.clearCurrentIndex()
+
+    def _deleteSubTree(self, node: ProjectNode) -> None:
+        """Permanently delete a node and its descendants."""
+        for child in reversed(node.allChildren()):
+            SHARED.project.removeItem(child.item.itemHandle)
+        SHARED.project.removeItem(node.item.itemHandle)
 
     def _selectedRows(self) -> list[QModelIndex]:
         """Return all column 0 indexes."""
@@ -1015,6 +1084,7 @@ class _UpdatableMenu(QMenu):
         """Remove a template item."""
         if action := self._map.pop(tHandle, None):
             self.removeAction(action)
+            action.setParent(None)
         if not self._map:
             self.setActionsVisible(False)
 
@@ -1025,7 +1095,7 @@ class _UpdatableMenu(QMenu):
 
     def setActionsVisible(self, value: bool) -> None:
         """Set the visibility of root action."""
-        if action := self.menuAction():
+        if action := self.menuAction():  # pragma: no branch
             action.setVisible(value)
 
     ##
@@ -1042,7 +1112,11 @@ class _TreeContextMenu(QMenu):
     __slots__ = ("_children", "_handle", "_indices", "_item", "_model", "_node", "_tree", "_view")
 
     def __init__(
-        self, projTree: GuiProjectTree, model: ProjectModel, node: ProjectNode, indices: list[QModelIndex]
+        self,
+        projTree: GuiProjectTree,
+        model: ProjectModel,
+        node: ProjectNode,
+        indices: list[QModelIndex],
     ) -> None:
         super().__init__(parent=projTree)
         self._tree = projTree
@@ -1142,15 +1216,19 @@ class _TreeContextMenu(QMenu):
         """Add Active/Inactive actions."""
         if len(self._indices) > 1:
             mSub = qtAddMenu(self, self.tr("Set Active to ..."))
-            aOne = qtAddAction(mSub, self._tree.trActive)
-            aOne.setIcon(SHARED.theme.getIcon("checked", "accept"))
-            aOne.triggered.connect(qtLambda(self._iterItemActive, True))
-            aTwo = qtAddAction(mSub, self._tree.trInactive)
-            aTwo.setIcon(SHARED.theme.getIcon("unchecked", "reject"))
-            aTwo.triggered.connect(qtLambda(self._iterItemActive, False))
+            aOne = qtAddAction(mSub, self._tree.trActive, icon=SHARED.theme.getIcon("checked:accept"))
+            aOne.triggered.connect(qtWeakLambda(self._iterItemActive, True))
+            aTwo = qtAddAction(mSub, self._tree.trInactive, icon=SHARED.theme.getIcon("unchecked:reject"))
+            aTwo.triggered.connect(qtWeakLambda(self._iterItemActive, False))
         else:
             action = qtAddAction(self, self.tr("Toggle Active"))
             action.triggered.connect(self._toggleItemActive)
+            if self._children > 0:
+                mSub = qtAddMenu(self, self.tr("Set Children to ..."))
+                aOne = qtAddAction(mSub, self._tree.trActive, icon=SHARED.theme.getIcon("checked:accept"))
+                aOne.triggered.connect(qtWeakLambda(self._recurseItemActive, True))
+                aTwo = qtAddAction(mSub, self._tree.trInactive, icon=SHARED.theme.getIcon("unchecked:reject"))
+                aTwo.triggered.connect(qtWeakLambda(self._recurseItemActive, False))
 
     def _itemStatusImport(self, multi: bool) -> None:
         """Add actions for changing status or importance."""
@@ -1161,12 +1239,11 @@ class _TreeContextMenu(QMenu):
                 name = entry.name
                 if not multi and current == key:
                     name += f" ({nwUnicode.U_CHECK})"
-                action = qtAddAction(menu, name)
-                action.setIcon(entry.icon)
+                action = qtAddAction(menu, name, icon=entry.icon)
                 if multi:
-                    action.triggered.connect(qtLambda(self._iterSetItemStatus, key))
+                    action.triggered.connect(qtWeakLambda(self._iterSetItemStatus, key))
                 else:
-                    action.triggered.connect(qtLambda(self._changeItemStatus, key))
+                    action.triggered.connect(qtWeakLambda(self._changeItemStatus, key))
             menu.addSeparator()
             action = qtAddAction(menu, self.tr("Manage Labels ..."))
             action.triggered.connect(qtLambda(self._view.projectSettingsRequest.emit, GuiProjectSettings.PAGE_STATUS))
@@ -1177,12 +1254,11 @@ class _TreeContextMenu(QMenu):
                 name = entry.name
                 if not multi and current == key:
                     name += f" ({nwUnicode.U_CHECK})"
-                action = qtAddAction(menu, name)
-                action.setIcon(entry.icon)
+                action = qtAddAction(menu, name, icon=entry.icon)
                 if multi:
-                    action.triggered.connect(qtLambda(self._iterSetItemImport, key))
+                    action.triggered.connect(qtWeakLambda(self._iterSetItemImport, key))
                 else:
-                    action.triggered.connect(qtLambda(self._changeItemImport, key))
+                    action.triggered.connect(qtWeakLambda(self._changeItemImport, key))
             menu.addSeparator()
             action = qtAddAction(menu, self.tr("Manage Labels ..."))
             action.triggered.connect(qtLambda(self._view.projectSettingsRequest.emit, GuiProjectSettings.PAGE_IMPORT))
@@ -1200,19 +1276,19 @@ class _TreeContextMenu(QMenu):
 
         if isNoteFile and self._item.documentAllowed():
             action = qtAddAction(menu, self.tr("Convert to {0}").format(trDoc))
-            action.triggered.connect(qtLambda(self._changeItemLayout, loDoc))
+            action.triggered.connect(qtWeakLambda(self._changeItemLayout, loDoc))
 
         if isDocFile:
             action = qtAddAction(menu, self.tr("Convert to {0}").format(trNote))
-            action.triggered.connect(qtLambda(self._changeItemLayout, loNote))
+            action.triggered.connect(qtWeakLambda(self._changeItemLayout, loNote))
 
         if isFolder and self._item.documentAllowed():
             action = qtAddAction(menu, self.tr("Convert to {0}").format(trDoc))
-            action.triggered.connect(qtLambda(self._convertFolderToFile, loDoc))
+            action.triggered.connect(qtWeakLambda(self._convertFolderToFile, loDoc))
 
         if isFolder:
             action = qtAddAction(menu, self.tr("Convert to {0}").format(trNote))
-            action.triggered.connect(qtLambda(self._convertFolderToFile, loNote))
+            action.triggered.connect(qtWeakLambda(self._convertFolderToFile, loNote))
 
         if self._children and isFile:
             action = qtAddAction(menu, self.tr("Merge Child Items into Self"))
@@ -1266,6 +1342,18 @@ class _TreeContextMenu(QMenu):
             if node.item.isFileType():
                 node.item.setActive(state)
                 refresh.append(node.item.itemHandle)
+        SHARED.project.tree.refreshItems(refresh)
+
+    def _recurseItemActive(self, state: bool) -> None:
+        """Set the active status of an item and all its children."""
+        refresh = []
+        if self._item.isFileType():
+            self._item.setActive(state)
+            refresh.append(self._item.itemHandle)
+        for child in self._node.allChildren():
+            if child.item.isFileType():
+                child.item.setActive(state)
+                refresh.append(child.item.itemHandle)
         SHARED.project.tree.refreshItems(refresh)
 
     def _changeItemStatus(self, key: str) -> None:

@@ -1,5 +1,5 @@
 """
-novelWriter – Markdown Text Converter
+novelWriter - Markdown Text Converter
 =====================================
 
 This file is a part of novelWriter
@@ -84,6 +84,8 @@ class ToMarkdown(Tokenizer):
     supports concatenating novelWriter markup files.
     """
 
+    __slots__ = ("_extended", "_usedFields", "_usedNotes")
+
     def __init__(self, project: NWProject, extended: bool) -> None:
         super().__init__(project)
         self._extended = extended
@@ -93,10 +95,6 @@ class ToMarkdown(Tokenizer):
     ##
     #  Class Methods
     ##
-
-    def getFullResultSize(self) -> int:
-        """Return the size of the full Markdown result."""
-        return sum(len(x) for x in self._pages)
 
     def doConvert(self) -> None:
         """Convert the list of text tokens into a Markdown document."""
@@ -137,6 +135,9 @@ class ToMarkdown(Tokenizer):
             elif tType == BlockTyp.SEP:
                 lines.append(f"{tText}\n\n")
 
+            elif tType == BlockTyp.HRULE:
+                lines.append("----\n\n")
+
             elif tType == BlockTyp.SKIP:
                 lines.append(f"{cSkip}\n\n")
 
@@ -146,6 +147,9 @@ class ToMarkdown(Tokenizer):
             elif tType == BlockTyp.KEYWORD:
                 end = "  \n" if tStyle & BlockFmt.Z_BTM else "\n\n"
                 lines.append(f"{self._formatText(tText, tFormat, mTags)}{end}")
+
+            else:  # pragma: no cover
+                pass
 
         self._pages.append("".join(lines))
 
@@ -166,7 +170,7 @@ class ToMarkdown(Tokenizer):
             lines = []
             lines.append(f"### {footnotes}\n\n")
             for key, index in self._usedNotes.items():
-                if content := self._footnotes.get(key):
+                if content := self._footnotes.get(key):  # pragma: no branch
                     marker = f"{index}. "
                     text = self._formatText(content[0], content[1], tags)
                     lines.append(f"{marker}{text}\n")
@@ -201,7 +205,7 @@ class ToMarkdown(Tokenizer):
                 else:
                     md = "[ERR]"
             elif fmt == TextFmt.FIELD:
-                if field := data.partition(":")[2]:
+                if field := data.partition(":")[2]:  # pragma: no branch
                     self._usedFields.append((len(self._pages), field))
                     md = f"{{{{{field}}}}}"
             else:

@@ -1,6 +1,6 @@
 """
-novelWriter – GUI Main Window SideBar
-=====================================
+novelWriter - GUI Main Window Side Bar
+======================================
 
 This file is a part of novelWriter
 Copyright (C) 2022 Veronica Berglyd Olsen and novelWriter contributors
@@ -29,7 +29,7 @@ from PyQt6.QtCore import QEvent, QPoint, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QMenu, QVBoxLayout, QWidget
 
 from novelwriter import CONFIG, SHARED
-from novelwriter.common import qtLambda
+from novelwriter.common import qtWeakLambda
 from novelwriter.constants import nwLabels, trConst
 from novelwriter.enum import nwTheme, nwView
 from novelwriter.extensions.eventfilters import StatusTipFilter
@@ -60,40 +60,40 @@ class GuiSideBar(QWidget):
         self.installEventFilter(StatusTipFilter(self.mainGui))
 
         # Buttons
-        self.tbProject = NIconToolButton(self, iSz)
+        self.tbProject = NIconToolButton(self, iSz, "sb_project:sidebar")
         self.tbProject.setToolTip("{0} [Ctrl+T]".format(self.tr("Project Tree View")))
-        self.tbProject.clicked.connect(qtLambda(self.requestViewChange.emit, nwView.PROJECT))
+        self.tbProject.clicked.connect(qtWeakLambda(self._emitViewChange, nwView.PROJECT))
 
-        self.tbNovel = NIconToolButton(self, iSz)
+        self.tbNovel = NIconToolButton(self, iSz, "sb_novel:sidebar")
         self.tbNovel.setToolTip("{0} [Ctrl+T]".format(self.tr("Novel Tree View")))
-        self.tbNovel.clicked.connect(qtLambda(self.requestViewChange.emit, nwView.NOVEL))
+        self.tbNovel.clicked.connect(qtWeakLambda(self._emitViewChange, nwView.NOVEL))
 
-        self.tbSearch = NIconToolButton(self, iSz)
+        self.tbSearch = NIconToolButton(self, iSz, "sb_search:sidebar")
         self.tbSearch.setToolTip("{0} [Ctrl+Shift+F]".format(self.tr("Project Search")))
-        self.tbSearch.clicked.connect(qtLambda(self.requestViewChange.emit, nwView.SEARCH))
+        self.tbSearch.clicked.connect(qtWeakLambda(self._emitViewChange, nwView.SEARCH))
 
-        self.tbOutline = NIconToolButton(self, iSz)
+        self.tbOutline = NIconToolButton(self, iSz, "sb_outline:sidebar")
         self.tbOutline.setToolTip("{0} [Ctrl+Shift+T]".format(self.tr("Novel Outline View")))
-        self.tbOutline.clicked.connect(qtLambda(self.requestViewChange.emit, nwView.OUTLINE))
+        self.tbOutline.clicked.connect(qtWeakLambda(self._emitViewChange, nwView.OUTLINE))
 
         self.tbTheme = NIconToolButton(self, iSz)
         self.tbTheme.setToolTip(self.tr("Switch Colour Theme"))
-        self.tbTheme.clicked.connect(self._cycleColurTheme)
+        self.tbTheme.clicked.connect(self._cycleColorTheme)
 
-        self.tbDetails = NIconToolButton(self, iSz)
+        self.tbDetails = NIconToolButton(self, iSz, "sb_details:sidebar")
         self.tbDetails.setToolTip("{0} [Shift+F6]".format(self.tr("Novel Details")))
         self.tbDetails.clicked.connect(self.mainGui.showNovelDetailsDialog)
 
-        self.tbStats = NIconToolButton(self, iSz)
+        self.tbStats = NIconToolButton(self, iSz, "sb_stats:sidebar")
         self.tbStats.setToolTip("{0} [F6]".format(self.tr("Writing Statistics")))
         self.tbStats.clicked.connect(self.mainGui.showWritingStatsDialog)
 
-        self.tbBuild = NIconToolButton(self, iSz)
+        self.tbBuild = NIconToolButton(self, iSz, "sb_build:sidebar")
         self.tbBuild.setToolTip("{0} [F5]".format(self.tr("Manuscript Build")))
         self.tbBuild.clicked.connect(self.mainGui.showBuildManuscriptDialog)
 
         # Settings Menu
-        self.tbSettings = NIconToolButton(self, iSz)
+        self.tbSettings = NIconToolButton(self, iSz, "settings:sidebar")
         self.tbSettings.setToolTip(self.tr("Settings"))
 
         self.mSettings = _PopRightMenu(self.tbSettings)
@@ -120,11 +120,11 @@ class GuiSideBar(QWidget):
         self.outerBox.setSpacing(6)
 
         self.setLayout(self.outerBox)
-        self.updateTheme()
+        self.updateTheme(init=True)
 
         logger.debug("Ready: GuiSideBar")
 
-    def updateTheme(self) -> None:
+    def updateTheme(self, *, init: bool = False) -> None:
         """Initialise GUI elements that depend on specific settings."""
         logger.debug("Theme Update: GuiSideBar")
 
@@ -139,14 +139,16 @@ class GuiSideBar(QWidget):
         self.tbTheme.setStyleSheet(buttonStyle)
         self.tbSettings.setStyleSheet(buttonStyle)
 
-        self.tbProject.setThemeIcon("sb_project", "sidebar")
-        self.tbNovel.setThemeIcon("sb_novel", "sidebar")
-        self.tbSearch.setThemeIcon("sb_search", "sidebar")
-        self.tbOutline.setThemeIcon("sb_outline", "sidebar")
-        self.tbBuild.setThemeIcon("sb_build", "sidebar")
-        self.tbDetails.setThemeIcon("sb_details", "sidebar")
-        self.tbStats.setThemeIcon("sb_stats", "sidebar")
-        self.tbSettings.setThemeIcon("settings", "sidebar")
+        if not init:
+            self.tbProject.refreshTheme()
+            self.tbNovel.refreshTheme()
+            self.tbSearch.refreshTheme()
+            self.tbOutline.refreshTheme()
+            self.tbBuild.refreshTheme()
+            self.tbDetails.refreshTheme()
+            self.tbStats.refreshTheme()
+            self.tbTheme.refreshTheme()
+            self.tbSettings.refreshTheme()
 
         self._setThemeModeIcon()
 
@@ -155,8 +157,8 @@ class GuiSideBar(QWidget):
     ##
 
     @pyqtSlot()
-    def _cycleColurTheme(self) -> None:
-        """Go to nex colour theme."""
+    def _cycleColorTheme(self) -> None:
+        """Go to next colour theme."""
         match CONFIG.themeMode:
             case nwTheme.AUTO:
                 CONFIG.themeMode = nwTheme.LIGHT
@@ -164,8 +166,15 @@ class GuiSideBar(QWidget):
                 CONFIG.themeMode = nwTheme.DARK
             case nwTheme.DARK:
                 CONFIG.themeMode = nwTheme.AUTO
+            case _:  # pragma: no cover
+                pass
         self.mainGui.checkThemeUpdate()
         self._setThemeModeIcon()
+
+    @pyqtSlot(nwView)
+    def _emitViewChange(self, view: nwView) -> None:
+        """Forward a view change request."""
+        self.requestViewChange.emit(view)
 
     ##
     #  Internal Functions
@@ -173,15 +182,14 @@ class GuiSideBar(QWidget):
 
     def _setThemeModeIcon(self) -> None:
         """Set the theme button icon."""
-        self.tbTheme.setThemeIcon(nwLabels.THEME_MODE_ICON[CONFIG.themeMode], "sidebar")
+        self.tbTheme.setThemeIcon(nwLabels.THEME_MODE_ICON[CONFIG.themeMode])
         self.tbTheme.setToolTip(trConst(nwLabels.THEME_MODE_LABEL[CONFIG.themeMode]))
 
 
 class _PopRightMenu(QMenu):
     def event(self, event: QEvent) -> bool:
         """Overload the show event and move the menu popup location."""
-        if event.type() == QEvent.Type.Show:
-            if isinstance(parent := self.parent(), QWidget):
-                offset = QPoint(parent.width(), parent.height() - self.height())
-                self.move(parent.mapToGlobal(offset))
+        if event.type() == QEvent.Type.Show and isinstance(parent := self.parent(), QWidget):
+            offset = QPoint(parent.width(), parent.height() - self.height())
+            self.move(parent.mapToGlobal(offset))
         return super().event(event)

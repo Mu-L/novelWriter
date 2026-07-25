@@ -1,9 +1,6 @@
 """
-novelWriter – Enums
+novelWriter - Enums
 ===================
-
-File History:
-Created: 2018-11-02 [0.0.1]
 
 This file is a part of novelWriter
 Copyright (C) 2018 Veronica Berglyd Olsen and novelWriter contributors
@@ -130,6 +127,9 @@ class nwDocAction(Enum):
     SC_SUP = 37
     SC_SUB = 38
     MOVE_TEXT = 39
+    ZOOM_IN = 40
+    ZOOM_OUT = 41
+    ZOOM_RESET = 42
 
 
 class nwDocInsert(Enum):
@@ -218,11 +218,12 @@ class nwBuildFmt(Enum):
     DOCX = 2
     PDF = 3
     HTML = 4
-    STD_MD = 5
-    EXT_MD = 6
-    NWD = 7
-    J_HTML = 8
-    J_NWD = 9
+    EPUB = 5
+    STD_MD = 6
+    EXT_MD = 7
+    NWD = 8
+    J_HTML = 9
+    J_NWD = 10
 
 
 class nwStatusShape(Enum):

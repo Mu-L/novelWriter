@@ -2,53 +2,45 @@
 
 ## AI Policy
 
-- This repository does not allow large AI-generated contributions. Such PRs will be rejected.
-- Code can be written with AI assistance, but must be concise, performant, and of a comparable
-  quality to existing code.
+- This repository does not allow large AI-generated contributions, and such PRs will be rejected
+- Code can be written with AI assistance, but it must stay concise, performant, and match the existing code quality
 
 ## Scope
 
-- This repository is `novelWriter`, a Python application using PyQt6.
-- Prefer small, targeted changes that match existing patterns in `novelwriter/`.
-- The root import path for all application code is `novelwriter`.
+- This repository is `novelWriter`, a Python application using PyQt6 (Qt6)
+- The root import path for application code is `novelwriter`
+- This code base uses British English as the main language for documents, docstrings, and comments
+- This repository uses `uv` for running python code, tests. and tools
 
 ## Working Rules
 
-- Follow the existing code style in nearby files; avoid broad refactors.
-- Preserve current behavior unless the task explicitly asks for a change.
-- When editing code, keep diffs minimal and update only the relevant files.
-- Prefer project-local helpers and conventions over introducing new abstractions.
-- The code base should use camelCase style to match the Qt library style.
-- The `i18n/*.ts` files are auto-generated and must never be edited manually.
-- Do not edit files under `sample/` unless explicitly requested.
-- Do not edit files under `tests/lipsum/` unless explicitly requested.
-- Any folder containing `nwProject.nwx` is a novelWriter project storage folder and must not be
-  edited unless explicitly requested.
+- Use camelCase naming to match Qt-style conventions
+- Single-sentence inline comments should not end with punctuation
+- Code comments and docstrings should be concise and avoid overly long explanations and context
+- For Qt enums and related Qt constants, prefer aliases from `novelwriter/types.py` when available
+- When connecting Qt signals and passing parameters, prefer `qtLambda` or `gqtWakLambda` from `novelwriter/common.py` over inline lambdas where it fits the existing pattern
+- The `i18n/*.ts` files are auto-generated and must never be edited manually
+- Do not edit files under `sample/` and `tests/_lipsum/` unless explicitly requested unstaged changes under those folders are expected test/runtime churn (timestamps, counters, hashes) and ignore them completely during reviews, status checks, and commit preparation unless explicitly requested
 
 ## Codebase Navigation
 
-- The application code lives under `novelwriter/`. Everything else is supporting code and build
-  scripts that are not published.
-- `novelwriter/core/` contains code that manages the application user's writing project.
-- `novelwriter/dialogs/` contains GUI dialog classes with a smaller scope than full GUI tools.
-- `novelwriter/extensions/` contains GUI classes that modify or extend standard Qt6 classes.
-- `novelwriter/formats/` contains classes used for generating exports for the user's projects.
-- `novelwriter/gui/` contains GUI classes for the main GUI components.
-- `novelwriter/text/` contains various text processing utilities.
-- `novelwriter/tools/` contains larger GUI components that process data.
-- `novelwriter/` root contains shared codes, constants, variables and utility functions.
-- For formats changes, check adjacent format implementations before modifying shared logic.
-- All formats classes are write only, and do not need to read the same file formats.
+- Application code lives under `novelwriter/`; everything else is supporting code and build scripts
+- Manuscript build getter key strings used with `BuildSettings` are defined in `novelwriter/manuscript/buildsettings.py`
+- For format changes, check adjacent implementations before modifying shared logic; format classes are write-only and do not need to read the same file formats
 
 ## Validation
 
-- Run the most relevant tests for the changed area when available.
-- If tests are missing for the touched path, add focused tests alongside the change when practical.
-- Do not fix unrelated failures unless they block the requested task.
+- Run `uv run ruff format`, `uv run ruff check`, and `uv run pyright` on touched files when making code changes
+- Run the most relevant tests for the changed area when available
+- If tests are missing for the touched path, add tests alongside the change when practical but keep the topical test structure instead of targeted small test
+- Always run tests with `QT_QPA_PLATFORM=offscreen` in this repository as `QT_QPA_PLATFORM=offscreen uv run pytest ...`
+- Avoid adding test-specific code to the main code base
+- `CONFIG` is fully reset before every test by the autouse `functionFixture` fixture in `tests/conftest.py`; never save/restore `CONFIG.*` values in a test, just set them directly
+- Use the `coverage` tool directly when checking test coverage, not via `pytest-cov`
+- Both line and branch test coverage should be complete and at 100%
 
 ## Documentation
 
-- Link to existing docs instead of duplicating them.
-- Keep agent guidance concise and specific to repository conventions.
-- All titles should be in title case.
-- All text should be written with British English spelling.
+- Link to existing docs instead of duplicating them
+- Keep agent guidance concise and specific to repository conventions
+- Use title case for headings and British English spelling throughout

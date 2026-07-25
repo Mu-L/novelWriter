@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Main Window
+novelWriter - GUI Main Window
 =============================
 
 This file is a part of novelWriter
@@ -27,9 +27,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from time import time
+from typing import Any
 
-from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSlot
-from PyQt6.QtGui import QCloseEvent, QCursor, QIcon, QShortcut
+from PyQt6.QtCore import Qt, QTimer, pyqtSlot
+from PyQt6.QtGui import QCloseEvent, QCursor, QGuiApplication, QIcon
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -46,14 +47,14 @@ from novelwriter import CONFIG, SHARED, __hexversion__, __version__
 from novelwriter.common import formatFileFilter, formatVersion, hexToInt, minmax, safeIsFile
 from novelwriter.constants import nwConst
 from novelwriter.dialogs.about import GuiAbout
-from novelwriter.dialogs.preferences import GuiPreferences
+from novelwriter.dialogs.preferences import GuiNeedsUpdate, GuiPreferences
 from novelwriter.dialogs.projectsettings import GuiProjectSettings
 from novelwriter.dialogs.wordlist import GuiWordList
-from novelwriter.enum import nwDocAction, nwDocInsert, nwDocMode, nwFocus, nwItemType, nwView, nwVimMode
+from novelwriter.editor.editor import GuiDocEditor
+from novelwriter.editor.viewer import GuiDocViewer
+from novelwriter.editor.viewerpanel import GuiDocViewerPanel
+from novelwriter.enum import nwDocAction, nwDocInsert, nwDocMode, nwFocus, nwView
 from novelwriter.extensions.progressbars import NProgressSimple
-from novelwriter.gui.doceditor import GuiDocEditor
-from novelwriter.gui.docviewer import GuiDocViewer
-from novelwriter.gui.docviewerpanel import GuiDocViewerPanel
 from novelwriter.gui.itemdetails import GuiItemDetails
 from novelwriter.gui.mainmenu import GuiMainMenu
 from novelwriter.gui.noveltree import GuiNovelView
@@ -62,12 +63,11 @@ from novelwriter.gui.projtree import GuiProjectView
 from novelwriter.gui.search import GuiProjectSearch
 from novelwriter.gui.sidebar import GuiSideBar
 from novelwriter.gui.statusbar import GuiMainStatus
+from novelwriter.manuscript.manuscript import GuiManuscript
 from novelwriter.tools.dictionaries import GuiDictionaries
-from novelwriter.tools.manuscript import GuiManuscript
 from novelwriter.tools.noveldetails import GuiNovelDetails
 from novelwriter.tools.welcome import GuiWelcome
 from novelwriter.tools.writingstats import GuiWritingStats
-from novelwriter.types import QtModShift
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +100,10 @@ class GuiMain(QMainWindow):
 
         # Core Classes
         # ============
+
+        # Internal Variables
+        self._lastTotalCount = 0
+        self._switchingDocument = False
 
         # Initialise UserData Instance
         SHARED.initSharedData(self)
@@ -217,7 +221,9 @@ class GuiMain(QMainWindow):
 
         SHARED.focusModeChanged.connect(self._focusModeChanged)
         SHARED.indexAvailable.connect(self.docViewerPanel.indexHasAppeared)
+        SHARED.indexChangedRefs.connect(self.docViewerPanel.updateChangedRefs)
         SHARED.indexChangedTags.connect(self.docEditor.updateChangedTags)
+        SHARED.indexChangedTags.connect(self.docViewer.updateChangedTags)
         SHARED.indexChangedTags.connect(self.docViewerPanel.updateChangedTags)
         SHARED.indexCleared.connect(self.docViewerPanel.indexWasCleared)
         SHARED.mainClockTick.connect(self._timeTick)
@@ -230,7 +236,9 @@ class GuiMain(QMainWindow):
         SHARED.projectStatusMessage.connect(self.mainStatus.setStatusMessage)
         SHARED.rootFolderChanged.connect(self.novelView.updateRootItem)
         SHARED.rootFolderChanged.connect(self.outlineView.updateRootItem)
+        SHARED.rootFolderChanged.connect(self.projSearch.updateRootItem)
         SHARED.rootFolderChanged.connect(self.projView.updateRootItem)
+        SHARED.spellLanguageChanged.connect(self.docEditor.processSpellCheckChange)
         SHARED.spellLanguageChanged.connect(self.mainStatus.setLanguage)
         SHARED.statusLabelsChanged.connect(self.docViewerPanel.updateStatusLabels)
 
@@ -282,6 +290,22 @@ class GuiMain(QMainWindow):
         self.outlineView.loadDocumentTagRequest.connect(self._followTag)
         self.outlineView.openDocumentRequest.connect(self._openDocument)
 
+        # OS Theme Support
+        # ================
+
+        self._themeHints = None
+        self._themeChangedSlot = None
+        if CONFIG.checkMinQtVersion(0x060500):  # pragma: no branch
+            self._themeHints = QGuiApplication.styleHints()
+            if self._themeHints is not None:  # pragma: no branch
+
+                @pyqtSlot(Qt.ColorScheme)
+                def colorSchemeChangedSlot(schemeHint: Qt.ColorScheme) -> None:
+                    self.checkThemeUpdate(schemeHint=schemeHint)
+
+                self._themeHints.colorSchemeChanged.connect(colorSchemeChangedSlot)
+                self._themeChangedSlot = colorSchemeChangedSlot
+
         # Finalise Initialisation
         # =======================
 
@@ -292,18 +316,6 @@ class GuiMain(QMainWindow):
         # Set Up Auto-Save Document Timer
         self.asDocTimer = QTimer(self)
         self.asDocTimer.timeout.connect(self._autoSaveDocument)
-
-        # Shortcuts
-        self.keyReturn = QShortcut(self)
-        self.keyReturn.setKeys(["Return", "Enter", "Shift+Return", "Shift+Enter"])
-        self.keyReturn.activated.connect(self._keyPressReturn)
-
-        self.keyEscape = QShortcut(self)
-        self.keyEscape.setKey("Esc")
-        self.keyEscape.activated.connect(self._keyPressEscape)
-
-        # Internal Variables
-        self._lastTotalCount = 0
 
         # Initialise Main GUI
         self.initMain()
@@ -343,14 +355,12 @@ class GuiMain(QMainWindow):
         # If this is a new release, let the user know
         if hexToInt(CONFIG.lastNotes) < hexToInt(__hexversion__):
             CONFIG.lastNotes = __hexversion__
-            SHARED.info(
-                [
-                    self.tr("You are now running novelWriter version {0}.").format(formatVersion(__version__)),
-                    self.tr("Please check the {0}release notes{1} for further details.").format(
-                        f"<a href='{nwConst.URL_RELEASES}'>", "</a>"
-                    ),
-                ]
-            )
+            SHARED.info([
+                self.tr("You are now running novelWriter version {0}.").format(formatVersion(__version__)),
+                self.tr("Please check the {0}release notes{1} for further details.").format(
+                    f"<a href='{nwConst.URL_RELEASES}'>", "</a>"
+                ),
+            ])
 
     ##
     #  Project Actions
@@ -366,12 +376,10 @@ class GuiMain(QMainWindow):
             return True
 
         if not isYes:
-            msgYes = SHARED.question(
-                [
-                    self.tr("Close the current project?"),
-                    self.tr("Changes are saved automatically."),
-                ]
-            )
+            msgYes = SHARED.question([
+                self.tr("Close the current project?"),
+                self.tr("Changes are saved automatically."),
+            ])
             if not msgYes:
                 return False
 
@@ -462,9 +470,11 @@ class GuiMain(QMainWindow):
         self._updateWindowTitle(SHARED.project.data.name)
         self.docEditor.toggleSpellCheck(SHARED.project.data.spellCheck)
         self.mainStatus.setRefTime(SHARED.project.projOpened)
+        self.mainStatus.initProjectSettings()
         self.projView.openProjectTasks()
         self.novelView.openProjectTasks()
         self.outlineView.openProjectTasks()
+        self.projSearch.openProjectTasks()
         self.docViewerPanel.openProjectTasks()
         self._updateStatusWordCount()
 
@@ -533,19 +543,26 @@ class GuiMain(QMainWindow):
             logger.error("Nothing to open")
             return False
 
-        if sTitle and tLine is None:
-            if hItem := SHARED.project.index.getItemHeading(tHandle, sTitle):
-                tLine = hItem.line
+        if self._switchingDocument:
+            logger.debug("Ignoring re-entrant request to open '%s'", tHandle)
+            return False
+
+        if sTitle and tLine is None and (hItem := SHARED.project.index.getItemHeading(tHandle, sTitle)):
+            tLine = hItem.line
 
         self._changeView(nwView.EDITOR)
         if tHandle == self.docEditor.docHandle:
             self.docEditor.setCursorLine(tLine)
         else:
-            self.closeDocument()
-            if self.docEditor.loadText(tHandle, tLine):
-                self.projView.setSelectedHandle(tHandle, doScroll=doScroll)
-            else:
-                return False
+            self._switchingDocument = True
+            try:
+                self.closeDocument()
+                if self.docEditor.loadText(tHandle, tLine):
+                    self.projView.setSelectedHandle(tHandle, doScroll=doScroll)
+                else:
+                    return False
+            finally:
+                self._switchingDocument = False
 
         if changeFocus:
             self.docEditor.setFocus()
@@ -630,7 +647,7 @@ class GuiMain(QMainWindow):
                 # Since editor width changes, we need to make sure we
                 # restore cursor visibility in the editor. See #1302
                 if cursorVisible:
-                    self.docEditor.ensureCursorVisibleNoCentre()
+                    self.docEditor.ensureCursorVisible(centre=False)
 
             if sTitle:
                 self.docViewer.navigateTo(f"#{tHandle}:{sTitle}")
@@ -686,30 +703,19 @@ class GuiMain(QMainWindow):
 
     @pyqtSlot()
     def openSelectedItem(self) -> None:
-        """Open the selected item from the tree that is currently
-        active. It is not checked that the item is actually a document.
-        That should be handled by the openDocument function.
+        """Open the selected item in the tree view that is currently
+        active. Used by the main menu's Open Document action to forward
+        the request to whichever tree widget is visible.
         """
         if SHARED.hasProject:
-            tHandle = None
-            sTitle = None
             if self.projView.treeHasFocus():
-                tHandle = self.projView.getSelectedHandle()
+                self.projView.projTree.openSelectedItem()
             elif self.novelView.treeHasFocus():
-                tHandle, sTitle = self.novelView.getSelectedHandle()
+                self.novelView.novelTree.openSelectedItem()
             elif self.outlineView.treeHasFocus():
-                tHandle, sTitle = self.outlineView.getSelectedHandle()
+                self.outlineView.outlineTree.openSelectedItem()
             else:
                 logger.warning("No item selected")
-                return
-
-            if tHandle and SHARED.project.tree.checkType(tHandle, nwItemType.FILE):
-                if QApplication.keyboardModifiers() == QtModShift:
-                    self.viewDocument(tHandle)
-                else:
-                    self.openDocument(tHandle, sTitle=sTitle, changeFocus=False, doScroll=False)
-
-        return
 
     def rebuildIndex(self) -> None:
         """Rebuild the entire index."""
@@ -828,12 +834,10 @@ class GuiMain(QMainWindow):
         if (
             SHARED.hasProject
             and CONFIG.askBeforeExit
-            and not SHARED.question(
-                [
-                    self.tr("Do you want to exit novelWriter?"),
-                    self.tr("Changes are saved automatically."),
-                ]
-            )
+            and not SHARED.question([
+                self.tr("Do you want to exit novelWriter?"),
+                self.tr("Changes are saved automatically."),
+            ])
         ):
             return False
 
@@ -842,9 +846,11 @@ class GuiMain(QMainWindow):
         if not SHARED.focusMode:
             CONFIG.mainPanePos = self.splitMain.sizes()
             CONFIG.outlinePanePos = self.outlineView.splitSizes()
+            CONFIG.searchPanePos = self.projSearch.splitSizes()
             if self.docViewerPanel.isVisible():
                 CONFIG.viewPanePos = self.splitView.sizes()
 
+        CONFIG.showDetailsPanel = self.itemDetails.isExpanded()
         CONFIG.showViewerPanel = self.docViewerPanel.isVisible()
         wFull = Qt.WindowState.WindowFullScreen
         if self.windowState() & wFull != wFull:
@@ -854,6 +860,9 @@ class GuiMain(QMainWindow):
         if SHARED.hasProject:
             self.closeProject(True)
         CONFIG.saveConfig()
+
+        self.asProjTimer.stop()
+        self.asDocTimer.stop()
 
         QApplication.quit()
 
@@ -876,13 +885,13 @@ class GuiMain(QMainWindow):
         # Since editor width changes, we need to make sure we restore
         # cursor visibility in the editor. See #1302
         if cursorVisible:
-            self.docEditor.ensureCursorVisibleNoCentre()
+            self.docEditor.ensureCursorVisible(centre=False)
 
         return not self.splitView.isVisible()
 
-    def checkThemeUpdate(self) -> None:
+    def checkThemeUpdate(self, *, schemeHint: Any | None = None) -> None:
         """Load theme if mode changed."""
-        if SHARED.theme.loadTheme():
+        if SHARED.theme.loadTheme(schemeHint=schemeHint):
             self.refreshThemeColors(syntax=True)
             self.docEditor.initEditor()
             self.docViewer.initViewer()
@@ -914,16 +923,17 @@ class GuiMain(QMainWindow):
     #  Events
     ##
 
-    def changeEvent(self, event: QEvent) -> None:
-        """Capture application change events."""
-        if int(event.type()) == 210:  # ThemeChange
-            self.checkThemeUpdate()
-
     def closeEvent(self, event: QCloseEvent) -> None:
         """Capture the closing event of the GUI and call the close
         function to handle all the close process steps.
         """
-        event.accept() if self.closeMain() else event.ignore()
+        if self.closeMain():
+            if self._themeHints is not None:
+                self._themeHints.colorSchemeChanged.disconnect(self._themeChangedSlot)
+            self.docEditor.clearEditor()  # Extra safety to clear widgets
+            event.accept()
+        else:
+            event.ignore()
 
     ##
     #  Public Slots
@@ -997,7 +1007,7 @@ class GuiMain(QMainWindow):
             self.splitView.setVisible(True)
 
         if cursorVisible:
-            self.docEditor.ensureCursorVisibleNoCentre()
+            self.docEditor.ensureCursorVisible(centre=False)
 
     @pyqtSlot(nwFocus)
     def _switchFocus(self, paneNo: nwFocus) -> None:
@@ -1045,33 +1055,48 @@ class GuiMain(QMainWindow):
             self._changeView(nwView.OUTLINE, exitFocus=True)
             self.outlineView.setTreeFocus()
 
-    @pyqtSlot(bool, bool, bool, bool)
-    def _processConfigChanges(self, restart: bool, tree: bool, theme: bool, syntax: bool) -> None:
+    @pyqtSlot(GuiNeedsUpdate)
+    def _processConfigChanges(self, update: GuiNeedsUpdate) -> None:
         """Refresh GUI based on flags from the Preferences dialog."""
         logger.debug("Applying new preferences")
         self.initMain()
         self.saveDocument()
 
-        if tree and not theme:
+        if update.tree and not update.theme:
             # These are also updated by a theme refresh
             SHARED.project.tree.refreshAllItems()
             self.novelView.refreshCurrentTree()
 
-        if theme:
-            self.refreshThemeColors(syntax=syntax, force=True)
+        if update.theme:
+            self.refreshThemeColors(syntax=update.syntax, force=True)
+        if update.editor or update.syntax or update.theme:
+            self.docEditor.initEditor()
+        if update.viewer or update.syntax or update.theme:
+            self.docViewer.initViewer()
+        if update.viewport:
+            if not update.editor:
+                self.docEditor.initViewport()
+            if not update.viewer:
+                self.docViewer.initViewport()
+            self.projView.initViewport()
+            self.novelView.initViewport()
+            self.outlineView.initViewport()
+        if update.spelling:
+            SHARED.updateSpellCheckLanguage(reload=True)
 
-        self.docEditor.initEditor()
-        self.docViewer.initViewer()
-        self.projView.initSettings()
-        self.novelView.initSettings()
-        self.outlineView.initSettings()
+        if not update.editor:
+            self.docEditor.initSettings(updateVimMode=update.vim)
+        if not update.viewer:
+            self.docViewer.initSettings()
+
+        self.projSearch.initSettings()
         self.mainStatus.initSettings()
 
         # Force update of word count
         self._lastTotalCount = 0
         self._updateStatusWordCount()
 
-        if restart:
+        if update.restart:
             SHARED.info(self.tr("Some changes will not be applied until novelWriter has been restarted."))
 
     @pyqtSlot()
@@ -1080,6 +1105,8 @@ class GuiMain(QMainWindow):
         logger.debug("Applying new project settings")
         SHARED.updateSpellCheckLanguage()
         self.itemDetails.refreshDetails()
+        self.mainMenu.setSelectedProjectSpellCheckLanguage()
+        self.mainStatus.initProjectSettings()
         self._updateWindowTitle(SHARED.project.data.name)
 
     @pyqtSlot()
@@ -1106,6 +1133,8 @@ class GuiMain(QMainWindow):
                 self.openDocument(tHandle, sTitle=sTitle)
             elif mode == nwDocMode.VIEW:
                 self.viewDocument(tHandle=tHandle, sTitle=sTitle)
+            else:  # pragma: no cover
+                pass
 
     @pyqtSlot(Path)
     def _openProjectFromWelcome(self, path: Path) -> None:
@@ -1123,6 +1152,8 @@ class GuiMain(QMainWindow):
                 self.openDocument(tHandle, sTitle=sTitle, changeFocus=setFocus)
             elif mode == nwDocMode.VIEW:
                 self.viewDocument(tHandle=tHandle, sTitle=sTitle)
+            else:  # pragma: no cover
+                pass
 
     @pyqtSlot(str, int, int, bool)
     def _openDocumentSelection(self, tHandle: str, selStart: int, selLength: int, changeFocus: bool) -> None:
@@ -1159,6 +1190,8 @@ class GuiMain(QMainWindow):
             self.projSearch.beginSearch(self.docEditor.getSelectedText() if self.docEditor.anyFocus() else "")
         elif view == nwView.OUTLINE:
             self.mainStack.setCurrentWidget(self.outlineView)
+        else:  # pragma: no cover
+            pass
 
         # Set active status
         isMain = self.mainStack.currentWidget() == self.splitMain
@@ -1227,53 +1260,37 @@ class GuiMain(QMainWindow):
         """Update the word count on the status bar."""
         if not SHARED.hasProject:
             self.mainStatus.setProjectStats(0, 0)
+            self.mainStatus.updateGoals(0, 0)
 
         currentTotalCount = SHARED.project.currentTotalCount
-        if self._lastTotalCount != currentTotalCount:
+        if self._lastTotalCount != currentTotalCount or SHARED.project.countsDirty:
             self._lastTotalCount = currentTotalCount
 
+            data = SHARED.project.data
             SHARED.project.updateCounts()
             if CONFIG.incNotesWCount:
                 if CONFIG.useCharCount:
-                    iTotal = sum(SHARED.project.data.initCounts[2:])
-                    cTotal = sum(SHARED.project.data.currCounts[2:])
+                    iTotal = sum(data.initCounts[2:])
+                    cTotal = sum(data.currCounts[2:])
                 else:
-                    iTotal = sum(SHARED.project.data.initCounts[:2])
-                    cTotal = sum(SHARED.project.data.currCounts[:2])
+                    iTotal = sum(data.initCounts[:2])
+                    cTotal = sum(data.currCounts[:2])
             else:
                 if CONFIG.useCharCount:
-                    iTotal = SHARED.project.data.initCounts[2]
-                    cTotal = SHARED.project.data.currCounts[2]
+                    iTotal = data.initCounts[2]
+                    cTotal = data.currCounts[2]
                 else:
-                    iTotal = SHARED.project.data.initCounts[0]
-                    cTotal = SHARED.project.data.currCounts[0]
+                    iTotal = data.initCounts[0]
+                    cTotal = data.currCounts[0]
 
             self.mainStatus.setProjectStats(cTotal, cTotal - iTotal)
-
-    @pyqtSlot()
-    def _keyPressReturn(self) -> None:
-        """Process a return or enter keypress in the main window."""
-        if self.projStack.currentWidget() == self.projSearch:
-            self.projSearch.processReturn()
-        else:
-            self.openSelectedItem()
-
-    @pyqtSlot()
-    def _keyPressEscape(self) -> None:
-        """Process an escape keypress in the main window."""
-        if self.docEditor.searchVisible():
-            self.docEditor.closeSearch()
-        elif CONFIG.vimMode:
-            self.docEditor.setVimMode(nwVimMode.NORMAL)
-        elif SHARED.focusMode:
-            SHARED.setFocusMode(False)
+            self.mainStatus.updateGoals(data.targetLastCount, data.dailyProgress)
 
     @pyqtSlot(int)
     def _mainStackChanged(self, index: int) -> None:
         """Process main window tab change."""
-        if self.mainStack.widget(index) == self.outlineView:
-            if SHARED.hasProject:
-                self.outlineView.refreshTree()
+        if self.mainStack.widget(index) == self.outlineView and SHARED.hasProject:
+            self.outlineView.refreshTree()
 
     @pyqtSlot(int)
     def _projStackChanged(self, index: int) -> None:

@@ -1,5 +1,5 @@
 """
-novelWriter – Common Utils
+novelWriter - Common Utils
 ==========================
 
 This file is a part of novelWriter
@@ -90,6 +90,23 @@ def stripVersion(version: str) -> str:
         return version
 
 
+def splitVersion(version: str) -> tuple[int, int, int]:
+    """Split a version number into its major, minor and patch parts."""
+    major, minor, patch = 0, 0, 0
+    try:
+        parts = stripVersion(version).split(".")
+        if len(parts) > 0:
+            major = int(parts[0])
+        if len(parts) > 1:
+            minor = int(parts[1])
+        if len(parts) > 2:
+            patch = int(parts[2])
+    except Exception as exc:
+        print(f"Could not split version: {version}", flush=True)
+        print(str(exc), flush=True)
+    return major, minor, patch
+
+
 def formatVersion(value: str) -> str:
     """Format a version number into a more human readable form."""
     major, _, version = value.partition(".")
@@ -114,6 +131,27 @@ def copySourceCode(dst: Path) -> None:
             print("Ignored:", relSrc, flush=True)
             continue
         if item.parent.is_dir() and item.parent.name != "__pycache__":
+            dstDir = dst / relSrc.parent
+            if not dstDir.exists():
+                dstDir.mkdir(parents=True)
+                print("Created:", dstDir.relative_to(ROOT_DIR), flush=True)
+        if item.is_file():
+            shutil.copyfile(item, dst / relSrc)
+            print("Copied:", relSrc, flush=True)
+
+
+def copyTestCode(dst: Path) -> None:
+    """Copy the novelwriter test suite to path."""
+    src = ROOT_DIR / "tests"
+    skipDirs = {"__pycache__", ".pytest_cache", "_temp", "temp"}
+    for item in src.glob("**/*"):
+        relSrc = item.relative_to(ROOT_DIR)
+        if skipDirs & set(relSrc.parts):
+            continue
+        if item.suffix in (".pyc", ".pyo"):
+            print("Ignored:", relSrc, flush=True)
+            continue
+        if item.parent.is_dir() and item.parent.name not in skipDirs:
             dstDir = dst / relSrc.parent
             if not dstDir.exists():
                 dstDir.mkdir(parents=True)
