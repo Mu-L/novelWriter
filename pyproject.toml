@@ -37,7 +37,7 @@ dev = [
     { include-group = "test" },
     { include-group = "lint" },
 ]
-build = ["build", "setuptools>=77.0.3"]
+build = ["build", "pyyaml", "setuptools>=77.0.3"]
 docs = [
     "docutils>=0.17.1",
     "pygments>=2.7",

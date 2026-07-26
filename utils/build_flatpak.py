@@ -31,6 +31,8 @@ import urllib.request
 
 from pathlib import Path
 
+import yaml
+
 from utils.common import (
     ROOT_DIR,
     appdataXml,
@@ -46,6 +48,9 @@ from utils.common import (
 PIP_GEN_URL = "https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py"
 PYQT_BASEAPP_ID = "com.riverbankcomputing.PyQt.BaseApp"
 ENCHANT_RELEASE_API = "https://api.github.com/repos/rrthomas/enchant/releases/tags/v{version}"
+NOVELWRITER_REPO_URL = "https://github.com/vkbo/novelWriter.git"
+NOVELWRITER_COMMIT_API = "https://api.github.com/repos/vkbo/novelWriter/commits/v{version}"
+FLATHUB_FILES = ("io.novelwriter.novelwriter.yml", "pypi-deps.json", "enchant.json", "novelwriter.appdata.xml")
 
 
 def processEnchant(bldDir: Path, enchantVersion: str) -> None:
@@ -140,7 +145,7 @@ def processDependencies(bldDir: Path, qtVersion: str) -> None:
 
 
 def flatpak(args: argparse.Namespace) -> None:
-    """Build a flatpak bundle locally (not for flathub)."""
+    """Build a flatpak bundle locally, for direct download."""
     print("")
     print("Build Flatpak")
     print("=============")
@@ -174,8 +179,10 @@ def flatpak(args: argparse.Namespace) -> None:
     writeFile(bldDir / "novelwriter.appdata.xml", appdataXml())
 
     template = readFile(ROOT_DIR / "setup" / "flatpak" / "io.novelwriter.novelwriter.yml")
+    template = template.replace("@QT_VERSION@", qtVersion)
+    template = template.replace("@FILESYSTEM_PERMISSION@", "home")
     manifestFile = bldDir / "io.novelwriter.novelwriter.yml"
-    writeFile(manifestFile, template.replace("@QT_VERSION@", qtVersion))
+    writeFile(manifestFile, template)
 
     # Build flatpak
     # ==============
@@ -219,3 +226,93 @@ def flatpak(args: argparse.Namespace) -> None:
 
     toUpload(bundleFile)
     toUpload(shaFile)
+
+
+def flathub(args: argparse.Namespace) -> None:
+    """Generate the manifest and support files for a Flathub submission.
+
+    Unlike flatpak(), this doesn't invoke flatpak-builder itself. It just
+    prepares the files to be copied into the flathub/io.novelwriter.novelwriter
+    submission repository, since Flathub's own infrastructure builds from
+    that repo directly and has no access to this working tree.
+    """
+    print("")
+    print("Build Flathub Submission")
+    print("=========================")
+    print("")
+
+    buildInfo = extractBuildInfo("flatpak")
+    qtVersion = buildInfo["qt_version"]
+    enchantVersion = buildInfo["enchant_version"]
+
+    numVers, _, _ = extractVersion()
+    tag = f"v{numVers}"
+
+    bldDir = ROOT_DIR / "dist_flathub"
+    bldDir.mkdir(exist_ok=True)
+
+    processDependencies(bldDir, qtVersion)
+    processEnchant(bldDir, enchantVersion)
+    writeFile(bldDir / "novelwriter.appdata.xml", appdataXml())
+
+    print("Resolve Release Commit")
+    print("======================")
+    print("")
+
+    commitApiUrl = NOVELWRITER_COMMIT_API.format(version=numVers)
+    try:
+        print(f"Checking: {commitApiUrl}")
+        with urllib.request.urlopen(commitApiUrl) as response:
+            commit = json.loads(response.read())["sha"]
+        print(f"Tag: {tag}")
+        print(f"Commit: {commit}")
+    except Exception as exc:
+        print("Resolve Release Commit: FAILED")
+        print("")
+        print(str(exc))
+        print("")
+        print(f"Has version {numVers} been tagged and pushed to GitHub yet?")
+        print("")
+        sys.exit(1)
+
+    print("")
+
+    manifest = yaml.safe_load(readFile(ROOT_DIR / "setup" / "flatpak" / "io.novelwriter.novelwriter.yml"))
+    manifest["runtime-version"] = qtVersion
+    manifest["base-version"] = qtVersion
+    manifest["finish-args"] = [
+        "--filesystem=xdg-documents" if a.startswith("--filesystem=") else a for a in manifest["finish-args"]
+    ]
+    for module in manifest["modules"]:
+        if isinstance(module, dict) and module.get("name") == "novelWriter":
+            module["sources"] = [
+                {"type": "git", "url": NOVELWRITER_REPO_URL, "tag": tag, "commit": commit},
+                {"type": "file", "path": "novelwriter.appdata.xml"},
+            ]
+            break
+
+    manifestFile = bldDir / "io.novelwriter.novelwriter.yml"
+    with open(manifestFile, mode="w", encoding="utf-8") as outFile:
+        yaml.safe_dump(manifest, outFile, sort_keys=False)
+    print("Wrote:", manifestFile.relative_to(ROOT_DIR))
+    print("")
+
+    if path := args.path:
+        dstDir = Path(path)
+        if not dstDir.is_dir():
+            print(f"Error: not a directory: {dstDir}")
+            sys.exit(1)
+
+        print(f"Copy Files to {dstDir}")
+        print("=" * (len(str(dstDir)) + 14))
+        print("")
+        for name in FLATHUB_FILES:
+            shutil.copyfile(bldDir / name, dstDir / name)
+            print(f"Copied: {name}")
+        print("")
+    else:
+        print(f"Flathub submission files written to {bldDir.relative_to(ROOT_DIR)}/")
+        print(f"Copy these into the flathub/{manifest['app-id']} repository:")
+        for name in FLATHUB_FILES:
+            print(f" * {name}")
+        print("")

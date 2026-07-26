@@ -17,6 +17,10 @@ finish-args:
   - --socket=wayland
   # Needs to talk to the network
   - --share=network
+  # Project/file access mostly goes through the file chooser portal, but a
+  # static permission is also granted so recent projects show a real path
+  # instead of a portal document path
+  - --filesystem=@FILESYSTEM_PERMISSION@
   # OpenGL rendering
   - --device=dri
 modules:
