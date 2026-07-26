@@ -102,13 +102,7 @@ def processEnchant(bldDir: Path, enchantVersion: str) -> None:
 
 
 def processDependencies(bldDir: Path) -> None:
-    """Generate the pypi-deps.json file listing the flatpak build's PyPI
-    dependencies, i.e. everything not already provided by the PyQt BaseApp.
-
-    No --runtime is passed to the generator: it's only needed to resolve
-    platform-specific wheels, and every dependency fetched this way is
-    currently a universal py3-none-any wheel.
-    """
+    """Generate the pypi-deps.json file."""
     print("Generate PyPI Dependencies")
     print("==========================")
     print("")
@@ -233,18 +227,13 @@ def flatpak(args: argparse.Namespace) -> None:
 
 
 def flathub(args: argparse.Namespace) -> None:
-    """Generate the manifest and support files for a Flathub submission.
-
-    Unlike flatpak(), this doesn't invoke flatpak-builder itself. It just
-    prepares the files to be copied into the flathub/io.novelwriter.novelwriter
-    submission repository, since Flathub's own infrastructure builds from
-    that repo directly and has no access to this working tree.
-    """
+    """Generate the manifest and support files for a Flathub submission."""
+    # Import here so we can still run pkgutils with plain python
     import yaml
 
     print("")
     print("Build Flathub Submission")
-    print("=========================")
+    print("========================")
     print("")
 
     buildInfo = extractBuildInfo("flatpak")
@@ -318,7 +307,4 @@ def flathub(args: argparse.Namespace) -> None:
         print("")
     else:
         print(f"Flathub submission files written to {bldDir.relative_to(ROOT_DIR)}/")
-        print(f"Copy these into the flathub/{manifest['app-id']} repository:")
-        for name in FLATHUB_FILES:
-            print(f" * {name}")
         print("")
