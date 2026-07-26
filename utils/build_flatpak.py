@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import hashlib
 import json
 import shutil
 import subprocess
@@ -35,6 +34,7 @@ from pathlib import Path
 from utils.common import (
     ROOT_DIR,
     appdataXml,
+    extractBuildInfo,
     extractVersion,
     makeCheckSum,
     readFile,
@@ -43,15 +43,13 @@ from utils.common import (
     writeFile,
 )
 
-PIP_GENERATOR_URL = (
-    "https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py"
-)
+PIP_GEN_URL = "https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py"
 PYQT_BASEAPP_ID = "com.riverbankcomputing.PyQt.BaseApp"
-ENCHANT_RELEASES_API = "https://api.github.com/repos/rrthomas/enchant/releases/latest"
+ENCHANT_RELEASE_API = "https://api.github.com/repos/rrthomas/enchant/releases/tags/v{version}"
 
 
-def processEnchant(bldDir: Path) -> None:
-    """Generate the enchant.json flatpak module for the latest enchant release."""
+def processEnchant(bldDir: Path, enchantVersion: str) -> None:
+    """Generate the enchant.json flatpak module for the pinned enchant version."""
     print("Generate Enchant Module")
     print("=======================")
     print("")
@@ -59,22 +57,20 @@ def processEnchant(bldDir: Path) -> None:
     outFile = bldDir / "enchant.json"
 
     try:
-        print(f"Checking: {ENCHANT_RELEASES_API}")
-        with urllib.request.urlopen(ENCHANT_RELEASES_API) as response:
+        fileName = f"enchant-{enchantVersion}.tar.gz"
+        url = f"https://github.com/rrthomas/enchant/releases/download/v{enchantVersion}/{fileName}"
+
+        apiUrl = ENCHANT_RELEASE_API.format(version=enchantVersion)
+        print(f"Checking: {apiUrl}")
+        with urllib.request.urlopen(apiUrl) as response:
             release = json.loads(response.read())
 
-        tag = release["tag_name"]
-        version = tag.removeprefix("v")
-        fileName = f"enchant-{version}.tar.gz"
-        url = f"https://github.com/rrthomas/enchant/releases/download/{tag}/{fileName}"
+        assets = {a["name"]: a for a in release["assets"]}
+        if fileName not in assets:
+            raise ValueError(f"Asset '{fileName}' not found in release 'v{enchantVersion}'")
+        checksum = assets[fileName]["digest"].removeprefix("sha256:")
 
-        print(f"Downloading: {url}")
-        tarFile = bldDir / fileName
-        urllib.request.urlretrieve(url, tarFile)
-        checksum = hashlib.sha256(tarFile.read_bytes()).hexdigest()
-        tarFile.unlink()
-
-        print(f"Version: {version}")
+        print(f"Version: {enchantVersion}")
         print(f"SHA256: {checksum}")
 
         module = {
@@ -113,8 +109,8 @@ def processDependencies(bldDir: Path, qtVersion: str) -> None:
     outFile = bldDir / "pypi-deps"
 
     try:
-        print(f"Downloading: {PIP_GENERATOR_URL}")
-        urllib.request.urlretrieve(PIP_GENERATOR_URL, genScript)
+        print(f"Downloading: {PIP_GEN_URL}")
+        urllib.request.urlretrieve(PIP_GEN_URL, genScript)
         print("")
         subprocess.run(
             [
@@ -150,7 +146,9 @@ def flatpak(args: argparse.Namespace) -> None:
     print("=============")
     print("")
 
-    qtVersion: str = args.qt
+    buildInfo = extractBuildInfo("flatpak")
+    qtVersion = buildInfo["qt_version"]
+    enchantVersion = buildInfo["enchant_version"]
 
     numVers, _, relDate = extractVersion()
     pkgVers = stripVersion(numVers)
@@ -172,7 +170,7 @@ def flatpak(args: argparse.Namespace) -> None:
     outDir.mkdir(exist_ok=True)
 
     processDependencies(bldDir, qtVersion)
-    processEnchant(bldDir)
+    processEnchant(bldDir, enchantVersion)
     writeFile(bldDir / "novelwriter.appdata.xml", appdataXml())
 
     template = readFile(ROOT_DIR / "setup" / "flatpak" / "io.novelwriter.novelwriter.yml")

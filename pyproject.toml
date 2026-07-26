@@ -60,6 +60,9 @@ Issues = "https://github.com/vkbo/novelWriter/issues"
 [project.gui-scripts]
 novelwriter = "novelwriter:main"
 
+[tool.novelwriter.build]
+flatpak = { qt_version = "6.11", enchant_version = "2.8.19" }
+
 [tool.setuptools.dynamic]
 version = { attr = "novelwriter.__init__.__version__" }
 

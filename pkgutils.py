@@ -218,7 +218,6 @@ if __name__ == "__main__":
 
     # Build Flatpak
     cmdBuildFlatpak = parsers.add_parser("build-flatpak", help="Build a Flatpak image.")
-    cmdBuildFlatpak.add_argument("qt", help="Qt/PyQt BaseApp runtime version, e.g. 6.11")
     cmdBuildFlatpak.set_defaults(func=utils.build_flatpak.flatpak)
 
     # Build Windows Inno Setup Installer

@@ -345,3 +345,9 @@ def removeRedundantQt(qtBase: Path) -> None:
     deleteFolder(qt6Dir / "qml")
     deleteFolder(plugDir / "qmlls")
     deleteFolder(plugDir / "qmllint")
+
+
+def extractBuildInfo(tool: str) -> dict[str, str]:
+    """Extract the build information from pyproject.toml."""
+    data = tomllib.loads((ROOT_DIR / "pyproject.toml").read_text(encoding="utf-8"))
+    return data["tool"]["novelwriter"]["build"][tool]

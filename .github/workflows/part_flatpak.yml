@@ -31,7 +31,7 @@ jobs:
         id: build
         run: |
           echo "BUILD_VERSION=$(python pkgutils.py version)" >> $GITHUB_OUTPUT
-          sudo python pkgutils.py build-flatpak 6.11
+          sudo python pkgutils.py build-flatpak
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
