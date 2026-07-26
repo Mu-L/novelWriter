@@ -69,6 +69,7 @@ accent          = "#6c9173"
 helpText    = "#57565e"
 fadedText   = "faded"
 errorText   = "red"
+accentText  = "#6c9173"
 toggle      = "#6c91737f"
 searchMatch = "purple:80"
 

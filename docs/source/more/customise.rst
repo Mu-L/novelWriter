@@ -121,6 +121,7 @@ A colour theme ``.toml`` file consists of the following settings:
    helpText    = "#5c5c5c"
    fadedText   = "#6c6c6c"
    errorText   = "red"
+   accentText  = "blue"
    toggle      = "blue:96"
    searchMatch = "orange:96"
 
@@ -204,9 +205,9 @@ There are several ways to enter colour values:
    if the theme is included in the app, but not for user themes.
 
 .. versionadded:: 26.2
-   The ``toggle`` and ``searchMatch`` settings were added to the ``[GUI]`` section. The file
-   format was also converted from conf to toml, and a number of the colour settings were renamed to
-   camelCase format. The following values were renamed:
+   The ``accentText``, ``toggle`` and ``searchMatch`` settings were added to the ``[GUI]`` section.
+   The file format was also converted from conf to toml, and a number of the colour settings were
+   renamed to camelCase format. The following values were renamed:
 
    * ``altaction`` to ``option``
    * ``systemio`` to ``system``

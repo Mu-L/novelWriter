@@ -71,6 +71,7 @@ accent          = "blue"
 helpText    = "blue:L125"
 fadedText   = "faded"
 errorText   = "red"
+accentText  = "blue"
 toggle      = "blue:128"
 searchMatch = "orange:96"
 
