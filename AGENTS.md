@@ -44,3 +44,11 @@
 - Link to existing docs instead of duplicating them
 - Keep agent guidance concise and specific to repository conventions
 - Use title case for headings and British English spelling throughout
+
+## Changelog
+
+- Fill in a release's `CHANGELOG.md` entry from its closed GitHub milestone (issues and merged PRs), grouped under headers matching nearby past releases (e.g. Bugfixes, Features, Improvements, User Interface, Other Changes, Code Maintenance)
+- **Bugfixes must only list fixes for bugs from previous releases.** If a fix addresses a regression from a feature added in the same release, fold a short note into that feature's own bullet instead of adding a separate Bugfixes entry
+- Group follow-up/fixup PRs for one feature into a single bullet citing all PR numbers, rather than one bullet per PR
+- Skip trivial dev/release-process PRs (version bumps, branch merges, lockfile bumps) and any fix that duplicates one already published in an interim patch release
+- Credit non-`vkbo` contributors by `@handle`
