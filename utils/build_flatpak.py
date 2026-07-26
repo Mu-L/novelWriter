@@ -31,8 +31,6 @@ import urllib.request
 
 from pathlib import Path
 
-import yaml
-
 from utils.common import (
     ROOT_DIR,
     appdataXml,
@@ -236,6 +234,8 @@ def flathub(args: argparse.Namespace) -> None:
     submission repository, since Flathub's own infrastructure builds from
     that repo directly and has no access to this working tree.
     """
+    import yaml
+
     print("")
     print("Build Flathub Submission")
     print("=========================")
