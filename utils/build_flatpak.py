@@ -181,7 +181,7 @@ def flatpak(args: argparse.Namespace) -> None:
     # ==============
 
     manifestPath = str(manifestFile)
-    bundleFile = bldDir / f"novelWriter-{pkgVers}-linux.flatpak"
+    bundleFile = bldDir / f"novelwriter-{pkgVers}-linux.flatpak"
 
     try:
         subprocess.run(
