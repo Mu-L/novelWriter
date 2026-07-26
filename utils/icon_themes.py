@@ -1,5 +1,5 @@
 """
-novelWriter – Icon Theme Utils
+novelWriter - Icon Theme Utils
 ==============================
 
 This file is a part of novelWriter
@@ -37,15 +37,15 @@ ET.register_namespace("", "http://www.w3.org/2000/svg")
 
 ICON_SOURCES = {
     "material": "https://github.com/google/material-design-icons.git",
-    "font_awesome": "https://github.com/FortAwesome/Font-Awesome/archive/refs/tags/7.1.0.zip",
-    "remix": "https://github.com/Remix-Design/RemixIcon/archive/refs/tags/v4.8.0.zip",
-    "lucide": "https://github.com/lucide-icons/lucide/archive/refs/tags/0.562.0.zip",
+    "font_awesome": "https://github.com/FortAwesome/Font-Awesome/archive/refs/tags/7.3.1.zip",
+    "remix": "https://github.com/Remix-Design/RemixIcon/archive/refs/tags/v4.9.1.zip",
+    "lucide": "https://github.com/lucide-icons/lucide/archive/refs/tags/1.24.0.zip",
 }
 ICON_EXTRACT = {
     "material": "material-design-icons",
-    "font_awesome": "Font-Awesome-7.1.0",
-    "remix": "RemixIcon-4.8.0",
-    "lucide": "lucide-0.562.0",
+    "font_awesome": "Font-Awesome-7.3.1",
+    "remix": "RemixIcon-4.9.1",
+    "lucide": "lucide-1.24.0",
 }
 ICONS = [
     # Remember to also update tests/files/all_icons.json for test coverage
@@ -81,6 +81,7 @@ ICONS = [
     "fmt_underline",
     "fmt_toolbar",
     "search",
+    "search_auto",
     "search_cancel",
     "search_case",
     "search_loop",
@@ -281,9 +282,7 @@ def processFontAwesome(workDir: Path, iconsDir: Path, jobs: dict) -> None:
             iconRegular = iconSrc / "regular" / f"{icon}.svg"
             if forced == "regular":
                 iconFile = iconRegular
-            elif forced == "solid":
-                iconFile = iconSolid
-            elif iconSolid.is_file():
+            elif forced == "solid" or iconSolid.is_file():
                 iconFile = iconSolid
             elif iconRegular.is_file():
                 iconFile = iconRegular

@@ -27,7 +27,7 @@ classifiers = [
 dependencies = [
     "pyqt6>=6.4",
     "pyenchant>=3.3.0",
-    "pyobjc; sys_platform == 'darwin'",
+    "pyobjc-framework-Cocoa; sys_platform == 'darwin'",
 ]
 
 [dependency-groups]
@@ -71,37 +71,44 @@ novelwriter = ["assets/**/*"]
 
 [tool.ruff]
 line-length = 120
-
-[tool.ruff.lint]
 preview = true
 
+[tool.ruff.lint]
 # Rules: https://docs.astral.sh/ruff/rules
 select = [
     "A",     # flake8-builtins (A)
     "ANN",   # flake8-annotations (ANN)
     "B",     # flake8-bugbear (B)
+    "C4",    # flake8-comprehensions (C4)
+    "CPY",   # flake8-copyright (CPY)
     "D",     # pydocstyle (D)
     "E",     # pycodestyle (E)
     "F",     # Pyflakes (F)
     "FA",    # flake8-future-annotations (FA)
+    "G",     # flake8-logging-format (G)
     "I",     # isort (I)
+    "ISC",   # flake8-implicit-str-concat (ISC)
+    "LOG",   # flake8-logging (LOG)
     "PERF",  # Perflint (PERF)
+    "PIE",   # flake8-pie (PIE)
     "PLC",   # Pylint Convention (PLC)
     "PLE",   # Pylint Error (PLE)
     "PLR17", # Refactor (PLR) - Only PLR17xx
     "PLW",   # Pylint Warning (PLW)
+    "PT",    # flake8-pytest-style (PT)
     "Q",     # flake8-quotes (Q)
     "RET",   # flake8-return (RET)
     "RUF",   # Ruff-specific rules (RUF)
+    "SIM",   # flake8-simplify (SIM)
     "SLF",   # flake8-self (SLF)
     "SLOT",  # flake8-slots (SLOT)
     "TC",    # flake8-type-checking (TC)
+    "TID",   # flake8-tidy-imports (TID)
     "UP",    # pyupgrade (UP)
     "W",     # pycodestyle (W)
 ]
 ignore = [
     "ANN401",  # any-type
-    "D105",    # undocumented-magic-method
     "D107",    # undocumented-public-init
     "D203",    # incorrect-blank-line-before-class
     "D205",    # missing-blank-line-after-summary
@@ -112,10 +119,11 @@ ignore = [
     "PLW0717", # too-many-statements-in-try-clause
     "PLW2901", # redefined-loop-name
     "RET505",  # superfluous-else-return
-    "RUF001",  # ambiguous-unicode-character-string
     "RUF015",  # unnecessary-iterable-allocation-for-first-element
     "RUF067",  # non-empty-init-module
-    "RUF076",  # pytest-fixture-autouse
+    "RUF105",  # noqa-comments
+    "RUF201",  # rule-codes-in-selectors
+    "SIM108",  # if-else-block-instead-of-if-exp
     "UP015",   # redundant-open-modes
     "UP030",   # format-literals
 ]
@@ -136,6 +144,7 @@ ignore-decorators = [
 [tool.ruff.lint.isort]
 lines-between-types = 1
 forced-separate = ["tests"]
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.pylint]
 max-nested-blocks = 10
@@ -150,6 +159,7 @@ pythonVersion = "3.11"
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
+testpaths = ["tests"]
 log_level = "DEBUG"
 qt_api = "pyqt6"
 markers = [
@@ -160,9 +170,8 @@ markers = [
 ]
 
 [tool.coverage.run]
-branch = false
+branch = true
 source = ["novelwriter"]
 
 [tool.coverage.report]
 precision = 2
-exclude_also = ["if TYPE_CHECKING:"]

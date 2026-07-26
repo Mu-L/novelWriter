@@ -1,5 +1,5 @@
 """
-novelWriter – Custom Widget: Paged SideBar
+novelWriter - Custom Widget: Paged SideBar
 ==========================================
 
 This file is a part of novelWriter
@@ -174,13 +174,11 @@ class _PagedToolButton(QToolButton):
         if self.isChecked():
             painter.setBrush(textCol)
         painter.drawPolygon(
-            QPolygon(
-                [
-                    QPoint(tW, tC - self._aH),
-                    QPoint(tW + self._aH, tC),
-                    QPoint(tW, tC + self._aH),
-                ]
-            )
+            QPolygon([
+                QPoint(tW, tC - self._aH),
+                QPoint(tW + self._aH, tC),
+                QPoint(tW, tC + self._aH),
+            ])
         )
         painter.end()
 

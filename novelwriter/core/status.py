@@ -1,10 +1,6 @@
 """
-novelWriter – Project Item Status Class
-=======================================
-
-File History:
-Created:   2019-05-19 [0.1.3] NWStatus
-Rewritten: 2022-04-05 [2.0b1] NWStatus
+novelWriter - Project Item Status
+=================================
 
 This file is a part of novelWriter
 Copyright (C) 2019 Veronica Berglyd Olsen and novelWriter contributors
@@ -74,7 +70,7 @@ T_UpdateEntry = list[tuple[str | None, StatusEntry]]
 T_StatusKind = Literal["s", "i"]
 
 
-class NWStatus:
+class ItemStatus:
     """Core: Status/Importance Label Class."""
 
     STATUS = "s"
@@ -88,7 +84,12 @@ class NWStatus:
         self._prefix = prefix[:1]
         self._height = SHARED.theme.baseIconHeight
 
+    def __del__(self) -> None:  # pragma: no cover
+        """Class destructor."""
+        logger.debug("Delete: ItemStatus")
+
     def __len__(self) -> int:
+        """Return the number of entries in the status list."""
         return len(self._store)
 
     def __getitem__(self, key: str | None) -> StatusEntry:
@@ -184,7 +185,7 @@ class NWStatus:
             shape = nwStatusShape[str(data[0])]
             color = QColor(str(data[1]))
             theme = CUSTOM_COL if data[1].startswith("#") else data[1]
-            icon = NWStatus.createIcon(self._height, color, shape)
+            icon = ItemStatus.createIcon(self._height, color, shape)
             return StatusEntry(simplified(data[2]), color, theme, shape, icon)
         except Exception:
             logger.error("Could not parse entry %s", data)
@@ -195,7 +196,7 @@ class NWStatus:
         for entry in self._store.values():
             if entry.theme != CUSTOM_COL:
                 entry.color = SHARED.theme.parseColor(entry.theme)
-            entry.icon = NWStatus.createIcon(self._height, entry.color, entry.shape)
+            entry.icon = ItemStatus.createIcon(self._height, entry.color, entry.shape)
 
     @staticmethod
     def createIcon(height: int, color: QColor, shape: nwStatusShape) -> QIcon:
@@ -210,7 +211,10 @@ class NWStatus:
 
         return QIcon(
             pixmap.scaled(
-                height, height, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation
+                height,
+                height,
+                Qt.AspectRatioMode.IgnoreAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
         )
 
@@ -238,10 +242,7 @@ class NWStatus:
             return False
         if value[0] != self._prefix:
             return False
-        for c in value[1:]:
-            if c not in "0123456789abcdef":
-                return False
-        return True
+        return all(c in "0123456789abcdef" for c in value[1:])
 
     def _checkKey(self, key: str | None) -> str:
         """Check key is valid, and if not, generate one."""
@@ -262,76 +263,64 @@ class _ShapeCache:
             path.addRoundedRect(2.0, 2.0, 44.0, 44.0, 4.0, 4.0)
         elif shape == nwStatusShape.TRIANGLE:
             path.addPolygon(
-                QPolygonF(
-                    [
-                        QPointF(24.00, 3.00),
-                        QPointF(43.92, 37.50),
-                        QPointF(4.08, 37.50),
-                    ]
-                )
+                QPolygonF([
+                    QPointF(24.00, 3.00),
+                    QPointF(43.92, 37.50),
+                    QPointF(4.08, 37.50),
+                ])
             )
         elif shape == nwStatusShape.NABLA:
             path.addPolygon(
-                QPolygonF(
-                    [
-                        QPointF(24.00, 48.00),
-                        QPointF(4.08, 14.50),
-                        QPointF(43.92, 14.50),
-                    ]
-                )
+                QPolygonF([
+                    QPointF(24.00, 48.00),
+                    QPointF(4.08, 14.50),
+                    QPointF(43.92, 14.50),
+                ])
             )
         elif shape == nwStatusShape.DIAMOND:
             path.addPolygon(
-                QPolygonF(
-                    [
-                        QPointF(24.00, 2.00),
-                        QPointF(44.00, 24.00),
-                        QPointF(24.00, 46.00),
-                        QPointF(4.00, 24.00),
-                    ]
-                )
+                QPolygonF([
+                    QPointF(24.00, 2.00),
+                    QPointF(44.00, 24.00),
+                    QPointF(24.00, 46.00),
+                    QPointF(4.00, 24.00),
+                ])
             )
         elif shape == nwStatusShape.PENTAGON:
             path.addPolygon(
-                QPolygonF(
-                    [
-                        QPointF(24.00, 1.50),
-                        QPointF(45.87, 17.39),
-                        QPointF(37.52, 43.11),
-                        QPointF(10.48, 43.11),
-                        QPointF(2.13, 17.39),
-                    ]
-                )
+                QPolygonF([
+                    QPointF(24.00, 1.50),
+                    QPointF(45.87, 17.39),
+                    QPointF(37.52, 43.11),
+                    QPointF(10.48, 43.11),
+                    QPointF(2.13, 17.39),
+                ])
             )
         elif shape == nwStatusShape.HEXAGON:
             path.addPolygon(
-                QPolygonF(
-                    [
-                        QPointF(24.00, 1.50),
-                        QPointF(43.92, 13.00),
-                        QPointF(43.92, 36.00),
-                        QPointF(24.00, 47.50),
-                        QPointF(4.08, 36.00),
-                        QPointF(4.08, 13.00),
-                    ]
-                )
+                QPolygonF([
+                    QPointF(24.00, 1.50),
+                    QPointF(43.92, 13.00),
+                    QPointF(43.92, 36.00),
+                    QPointF(24.00, 47.50),
+                    QPointF(4.08, 36.00),
+                    QPointF(4.08, 13.00),
+                ])
             )
         elif shape == nwStatusShape.STAR:
             path.addPolygon(
-                QPolygonF(
-                    [
-                        QPointF(24.00, 0.50),
-                        QPointF(31.05, 14.79),
-                        QPointF(46.83, 17.08),
-                        QPointF(35.41, 28.21),
-                        QPointF(38.11, 43.92),
-                        QPointF(24.00, 36.50),
-                        QPointF(9.89, 43.92),
-                        QPointF(12.59, 28.21),
-                        QPointF(1.17, 17.08),
-                        QPointF(15.37, 16.16),
-                    ]
-                )
+                QPolygonF([
+                    QPointF(24.00, 0.50),
+                    QPointF(31.05, 14.79),
+                    QPointF(46.83, 17.08),
+                    QPointF(35.41, 28.21),
+                    QPointF(38.11, 43.92),
+                    QPointF(24.00, 36.50),
+                    QPointF(9.89, 43.92),
+                    QPointF(12.59, 28.21),
+                    QPointF(1.17, 17.08),
+                    QPointF(15.37, 16.16),
+                ])
             )
         elif shape == nwStatusShape.PACMAN:
             path.moveTo(24.0, 24.0)
@@ -375,6 +364,8 @@ class _ShapeCache:
             path.addRoundedRect(2.0, 24.0, 20.0, 20.0, 4.0, 4.0)
             path.addRoundedRect(24.0, 2.0, 20.0, 20.0, 4.0, 4.0)
             path.addRoundedRect(24.0, 24.0, 20.0, 20.0, 4.0, 4.0)
+        else:  # pragma: no cover
+            pass
 
         self._cache[shape] = path
 

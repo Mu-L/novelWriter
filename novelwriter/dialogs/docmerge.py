@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Doc Merge Dialog
+novelWriter - GUI Doc Merge Dialog
 ==================================
 
 This file is a part of novelWriter
@@ -124,6 +124,7 @@ class GuiDocMerge(NDialog):
         logger.debug("Ready: GuiDocMerge")
 
     def __del__(self) -> None:  # pragma: no cover
+        """Class destructor."""
         logger.debug("Delete: GuiDocMerge")
 
     def data(self) -> dict:

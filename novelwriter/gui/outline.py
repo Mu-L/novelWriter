@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Project Outline
+novelWriter - GUI Project Outline
 =================================
 
 This file is a part of novelWriter
@@ -29,9 +29,10 @@ from time import time
 from typing import Final
 
 from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtGui import QAction, QIcon, QShortcut
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QFileDialog,
     QFrame,
     QGridLayout,
@@ -61,10 +62,12 @@ from novelwriter.types import (
     QtAlignRight,
     QtAlignRightTop,
     QtDecorationRole,
+    QtModShift,
     QtScrollAlwaysOff,
     QtScrollAsNeeded,
     QtSizeExpanding,
     QtUserRole,
+    QtWidgetShortcut,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,6 +102,12 @@ class GuiOutlineView(QWidget):
 
         self.setLayout(self.outerBox)
 
+        # Keyboard Shortcuts
+        self.keyOpenItem = QShortcut(self.outlineTree)
+        self.keyOpenItem.setKeys(["Return", "Enter", "Shift+Return", "Shift+Enter"])
+        self.keyOpenItem.setContext(QtWidgetShortcut)
+        self.keyOpenItem.activated.connect(self.outlineTree.openSelectedItem)
+
         # Connect Signals
         self.outlineTree.hiddenStateChanged.connect(self._updateMenuColumns)
         self.outlineTree.activeItemChanged.connect(self.outlineData.showItem)
@@ -121,11 +130,12 @@ class GuiOutlineView(QWidget):
         self.outlineBar.updateTheme()
         self.outlineTree.updateTheme()
         self.outlineTree.refreshTree(rootHandle=SHARED.project.data.getLastHandle("outline"), overRide=True)
+        self.outlineData.clearDetails()
 
-    def initSettings(self) -> None:
-        """Initialise GUI elements that depend on specific settings."""
-        self.outlineTree.initSettings()
-        self.outlineData.initSettings()
+    def initViewport(self) -> None:
+        """Initialise viewport settings."""
+        self.outlineTree.initViewport()
+        self.outlineData.initViewport()
 
     def refreshTree(self) -> None:
         """Refresh the current tree."""
@@ -242,7 +252,7 @@ class GuiOutlineToolBar(QToolBar):
 
         # Column Menu
         self.mColumns = GuiOutlineHeaderMenu(self)
-        self.mColumns.columnToggled.connect(lambda isChecked, tItem: self.viewColumnToggled.emit(isChecked, tItem))
+        self.mColumns.columnToggled.connect(self._forwardColumnToggled)
 
         self.tbColumns = QToolButton(self)
         self.tbColumns.setMenu(self.mColumns)
@@ -271,9 +281,9 @@ class GuiOutlineToolBar(QToolBar):
 
         self.setStyleSheet("QToolBar {border: 0px;}")
         self.novelValue.refreshNovelList()
-        self.aRefresh.setIcon(SHARED.theme.getIcon("refresh", "change"))
-        self.aExport.setIcon(SHARED.theme.getIcon("export", "action"))
-        self.tbColumns.setIcon(SHARED.theme.getIcon("more_vertical", "default"))
+        self.aRefresh.setIcon(SHARED.theme.getIcon("refresh:change"))
+        self.aExport.setIcon(SHARED.theme.getIcon("export:action"))
+        self.tbColumns.setIcon(SHARED.theme.getIcon("more_vertical:default"))
         self.tbColumns.setStyleSheet("QToolButton::menu-indicator {image: none;}")
         self.novelLabel.setTextColors(color=self.palette().windowText().color())
 
@@ -307,6 +317,11 @@ class GuiOutlineToolBar(QToolBar):
     def _exportRequested(self) -> None:
         """Emit a signal that an export of the outline was requested."""
         self.outlineExportRequest.emit()
+
+    @pyqtSlot(bool, Enum)
+    def _forwardColumnToggled(self, isChecked: bool, tItem: Enum) -> None:
+        """Forward the column toggled signal from the header menu."""
+        self.viewColumnToggled.emit(isChecked, tItem)
 
 
 class GuiOutlineTree(QTreeWidget):
@@ -383,7 +398,7 @@ class GuiOutlineTree(QTreeWidget):
         self.setIconSize(SHARED.theme.baseIconSize)
         self.setIndentation(0)
 
-        if header := self.header():
+        if header := self.header():  # pragma: no branch
             header.sectionMoved.connect(self._columnMoved)
 
         # Pre-Generate Tree Formatting
@@ -406,7 +421,7 @@ class GuiOutlineTree(QTreeWidget):
         self._lastBuild = 0
 
         self.updateTheme()
-        self.initSettings()
+        self.initViewport()
         self.clearContent()
 
         self.hiddenStateChanged.emit()
@@ -430,8 +445,8 @@ class GuiOutlineTree(QTreeWidget):
     #  Methods
     ##
 
-    def initSettings(self) -> None:
-        """Set or update outline settings."""
+    def initViewport(self) -> None:
+        """Initialise viewport settings."""
         if CONFIG.hideVScroll:
             self.setVerticalScrollBarPolicy(QtScrollAlwaysOff)
         else:
@@ -521,6 +536,14 @@ class GuiOutlineTree(QTreeWidget):
     #  Public Slots
     ##
 
+    @pyqtSlot()
+    def openSelectedItem(self) -> None:
+        """Open the currently selected item, or view it if Shift is held."""
+        tHandle, sTitle = self.getSelectedHandle()
+        if tHandle:
+            mode = nwDocMode.VIEW if QApplication.keyboardModifiers() == QtModShift else nwDocMode.EDIT
+            self.outlineView.openDocumentRequest.emit(tHandle, mode, sTitle or "", False)
+
     @pyqtSlot(bool, Enum)
     def menuColumnToggled(self, isChecked: bool, hItem: nwOutline) -> None:
         """Receive the changes to column visibility forwarded by the
@@ -585,7 +608,7 @@ class GuiOutlineTree(QTreeWidget):
         """
         # Load whatever we saved last time, regardless of whether it
         # contains the correct names or number of columns.
-        colState = SHARED.project.options.getValue("GuiOutline", "columnState", {})
+        colState = SHARED.project.options.getDict("GuiOutline", "columnState", {})
 
         tmpOrder = []
         tmpHidden = {}
@@ -627,7 +650,10 @@ class GuiOutlineTree(QTreeWidget):
                 logHidden = self.isColumnHidden(iLog)
                 orgWidth = self._colWidth[hItem]
                 logWidth = self.columnWidth(iLog)
-                colState[hItem.name] = [logHidden, orgWidth if logHidden and logWidth == 0 else logWidth]
+                colState[hItem.name] = [
+                    logHidden,
+                    orgWidth if logHidden and logWidth == 0 else logWidth,
+                ]
 
             logger.debug("Saving State: GuiOutline")
             pOptions = SHARED.project.options
@@ -660,7 +686,7 @@ class GuiOutlineTree(QTreeWidget):
             self.setColumnHidden(self._colIdx[nwOutline.TITLE], False)
 
             headItem = self.headerItem()
-            if isinstance(headItem, QTreeWidgetItem):
+            if isinstance(headItem, QTreeWidgetItem):  # pragma: no branch
                 headItem.setTextAlignment(self._colIdx[nwOutline.CCOUNT], QtAlignRight)
                 headItem.setTextAlignment(self._colIdx[nwOutline.WCOUNT], QtAlignRight)
                 headItem.setTextAlignment(self._colIdx[nwOutline.PCOUNT], QtAlignRight)
@@ -757,32 +783,30 @@ class GuiOutlineTree(QTreeWidget):
                 comments = dict(novIdx.comments.items())
                 story = [comments.get(k, "") for k in sMatch]
                 notes = [comments.get(k, "") for k in nMatch]
-                data.append(
-                    [
-                        novIdx.level,
-                        novIdx.title,
-                        nwItem.itemName,
-                        novIdx.line,
-                        nwItem.getImportStatus()[0],
-                        novIdx.charCount,
-                        novIdx.wordCount,
-                        novIdx.paraCount,
-                        ", ".join(refs[nwKeyWords.POV_KEY]),
-                        ", ".join(refs[nwKeyWords.FOCUS_KEY]),
-                        ", ".join(refs[nwKeyWords.CHAR_KEY]),
-                        ", ".join(refs[nwKeyWords.PLOT_KEY]),
-                        ", ".join(refs[nwKeyWords.TIME_KEY]),
-                        ", ".join(refs[nwKeyWords.WORLD_KEY]),
-                        ", ".join(refs[nwKeyWords.OBJECT_KEY]),
-                        ", ".join(refs[nwKeyWords.ENTITY_KEY]),
-                        ", ".join(refs[nwKeyWords.CUSTOM_KEY]),
-                        ", ".join(refs[nwKeyWords.STORY_KEY]),
-                        ", ".join(refs[nwKeyWords.MENTION_KEY]),
-                        novIdx.synopsis,
-                        *story,
-                        *notes,
-                    ]
-                )
+                data.append([
+                    novIdx.level,
+                    novIdx.title,
+                    nwItem.itemName,
+                    novIdx.line,
+                    nwItem.getImportStatus()[0],
+                    novIdx.charCount,
+                    novIdx.wordCount,
+                    novIdx.paraCount,
+                    ", ".join(refs[nwKeyWords.POV_KEY]),
+                    ", ".join(refs[nwKeyWords.FOCUS_KEY]),
+                    ", ".join(refs[nwKeyWords.CHAR_KEY]),
+                    ", ".join(refs[nwKeyWords.PLOT_KEY]),
+                    ", ".join(refs[nwKeyWords.TIME_KEY]),
+                    ", ".join(refs[nwKeyWords.WORLD_KEY]),
+                    ", ".join(refs[nwKeyWords.OBJECT_KEY]),
+                    ", ".join(refs[nwKeyWords.ENTITY_KEY]),
+                    ", ".join(refs[nwKeyWords.CUSTOM_KEY]),
+                    ", ".join(refs[nwKeyWords.STORY_KEY]),
+                    ", ".join(refs[nwKeyWords.MENTION_KEY]),
+                    novIdx.synopsis,
+                    *story,
+                    *notes,
+                ])
 
         return data
 
@@ -807,9 +831,8 @@ class GuiOutlineHeaderMenu(QMenu):
                 continue
             self.actionMap[hItem] = QAction(trConst(nwLabels.OUTLINE_COLS[hItem]), self)
             self.actionMap[hItem].setCheckable(True)
-            self.actionMap[hItem].toggled.connect(
-                lambda isChecked, tItem=hItem: self.columnToggled.emit(isChecked, tItem)
-            )
+            self.actionMap[hItem].setData(hItem)
+            self.actionMap[hItem].toggled.connect(self._forwardToggled)
             self.addAction(self.actionMap[hItem])
 
     def setHiddenState(self, hiddenState: dict[nwOutline, bool]) -> None:
@@ -824,6 +847,14 @@ class GuiOutlineHeaderMenu(QMenu):
             self.actionMap[hItem].setChecked(not hiddenState[hItem])
 
         self.acceptToggle = True
+
+    @pyqtSlot(bool)
+    def _forwardToggled(self, isChecked: bool) -> None:
+        """Forward the toggled state of the sending action's column."""
+        if isinstance(action := self.sender(), QAction) and isinstance(
+            tItem := action.data(), nwOutline
+        ):  # pragma: no branch
+            self.columnToggled.emit(isChecked, tItem)
 
 
 class GuiOutlineDetails(QScrollArea):
@@ -941,7 +972,7 @@ class GuiOutlineDetails(QScrollArea):
             label.setFont(bFont)
             value = QLabel("", self)
             value.setWordWrap(True)
-            value.linkActivated.connect(lambda x: self.itemTagClicked.emit(x))
+            value.linkActivated.connect(self._forwardTagClicked)
             layout = QHBoxLayout()
             layout.addWidget(value, 1)
             n = len(self.tagValues)
@@ -968,12 +999,12 @@ class GuiOutlineDetails(QScrollArea):
         self.setWidgetResizable(True)
         self.setFrameStyle(QFrame.Shape.NoFrame)
 
-        self.initSettings()
+        self.initViewport()
 
         logger.debug("Ready: GuiOutlineDetails")
 
-    def initSettings(self) -> None:
-        """Set or update outline settings."""
+    def initViewport(self) -> None:
+        """Initialise viewport settings."""
         if CONFIG.hideVScroll:
             self.setVerticalScrollBarPolicy(QtScrollAlwaysOff)
         else:
@@ -982,19 +1013,16 @@ class GuiOutlineDetails(QScrollArea):
             self.setHorizontalScrollBarPolicy(QtScrollAlwaysOff)
         else:
             self.setHorizontalScrollBarPolicy(QtScrollAsNeeded)
-        self.updateClasses()
 
     def loadGuiSettings(self) -> None:
         """Run open project tasks."""
         parent = self.outlineView.parent()  # This widget is rendered already
         width = parent.width() if isinstance(parent, QWidget) else 1000
         pOptions = SHARED.project.options
-        self.mainSplit.setSizes(
-            [
-                pOptions.getInt("GuiOutlineDetails", "detailsWidth", width // 3),
-                pOptions.getInt("GuiOutlineDetails", "tagsWidth", 2 * width // 3),
-            ]
-        )
+        self.mainSplit.setSizes([
+            pOptions.getInt("GuiOutlineDetails", "detailsWidth", width // 3),
+            pOptions.getInt("GuiOutlineDetails", "tagsWidth", 2 * width // 3),
+        ])
 
     def saveGuiSettings(self) -> None:
         """Run close project tasks."""
@@ -1021,7 +1049,7 @@ class GuiOutlineDetails(QScrollArea):
         self.updateClasses()
 
     ##
-    #  Slots
+    #  Public Slots
     ##
 
     @pyqtSlot(str, str)
@@ -1057,10 +1085,23 @@ class GuiOutlineDetails(QScrollArea):
         usedClasses = SHARED.project.tree.rootClasses()
         for key, itemClass in nwKeyWords.KEY_CLASS.items():
             visible = itemClass in usedClasses
-            if key in self.tagValues:
+            if key in self.tagValues:  # pragma: no branch
                 label, value = self.tagValues[key]
                 label.setVisible(visible)
                 value.setVisible(visible)
+
+    ##
+    #  Private Slots
+    ##
+
+    @pyqtSlot(str)
+    def _forwardTagClicked(self, link: str) -> None:
+        """Forward a tag link activation from any of the tag labels."""
+        self.itemTagClicked.emit(link)
+
+    ##
+    #  Internal Functions
+    ##
 
     @staticmethod
     def _formatTags(refs: dict[str, list[str]], key: str) -> str:

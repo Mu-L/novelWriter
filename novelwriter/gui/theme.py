@@ -1,5 +1,5 @@
 """
-novelWriter – Theme and Icons Classes
+novelWriter - Theme and Icons Classes
 =====================================
 
 This file is a part of novelWriter
@@ -22,11 +22,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import logging
+import tomllib
 
-from configparser import ConfigParser
 from dataclasses import dataclass
 from math import ceil
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, QSize, Qt
 from PyQt6.QtGui import (
@@ -41,7 +41,7 @@ from PyQt6.QtGui import (
     QPalette,
     QPixmap,
 )
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication, QToolTip, QWidget
 
 from novelwriter import CONFIG
 from novelwriter.common import checkInt, minmax, safeIsFile
@@ -66,40 +66,39 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-STYLES_FLAT_TABS = "flatTabWidget"
 STYLES_MIN_TOOLBUTTON = "minimalToolButton"
 STYLES_BIG_TOOLBUTTON = "bigToolButton"
 
 STANDARD_BUTTONS = {
-    nwStandardButton.OK: (QT_TRANSLATE_NOOP("Button", "OK"), "btn_ok", "action"),
-    nwStandardButton.CANCEL: (QT_TRANSLATE_NOOP("Button", "Cancel"), "btn_cancel", "reject"),
-    nwStandardButton.YES: (QT_TRANSLATE_NOOP("Button", "&Yes"), "btn_yes", "accept"),
-    nwStandardButton.NO: (QT_TRANSLATE_NOOP("Button", "&No"), "btn_no", "reject"),
-    nwStandardButton.OPEN: (QT_TRANSLATE_NOOP("Button", "Open"), "btn_open", "action"),
-    nwStandardButton.CLOSE: (QT_TRANSLATE_NOOP("Button", "Close"), "btn_close", "destroy"),
-    nwStandardButton.SAVE: (QT_TRANSLATE_NOOP("Button", "Save"), "btn_save", "action"),
-    nwStandardButton.BROWSE: (QT_TRANSLATE_NOOP("Button", "Browse"), "btn_browse", "systemio"),
-    nwStandardButton.LIST: (QT_TRANSLATE_NOOP("Button", "List"), "btn_list", "action"),
-    nwStandardButton.NEW: (QT_TRANSLATE_NOOP("Button", "New"), "btn_new", "apply"),
-    nwStandardButton.CREATE: (QT_TRANSLATE_NOOP("Button", "Create"), "btn_create", "create"),
-    nwStandardButton.RESET: (QT_TRANSLATE_NOOP("Button", "Reset"), "btn_reset", "reset"),
-    nwStandardButton.INSERT: (QT_TRANSLATE_NOOP("Button", "Insert"), "btn_insert", "action"),
-    nwStandardButton.APPLY: (QT_TRANSLATE_NOOP("Button", "Apply"), "btn_apply", "apply"),
-    nwStandardButton.BUILD: (QT_TRANSLATE_NOOP("Button", "Build"), "btn_build", "action"),
-    nwStandardButton.PRINT: (QT_TRANSLATE_NOOP("Button", "Print"), "btn_print", "action"),
-    nwStandardButton.PREVIEW: (QT_TRANSLATE_NOOP("Button", "Preview"), "btn_preview", "action"),
+    nwStandardButton.OK: (QT_TRANSLATE_NOOP("Button", "OK"), "btn_ok:action"),
+    nwStandardButton.CANCEL: (QT_TRANSLATE_NOOP("Button", "Cancel"), "btn_cancel:reject"),
+    nwStandardButton.YES: (QT_TRANSLATE_NOOP("Button", "&Yes"), "btn_yes:accept"),
+    nwStandardButton.NO: (QT_TRANSLATE_NOOP("Button", "&No"), "btn_no:reject"),
+    nwStandardButton.OPEN: (QT_TRANSLATE_NOOP("Button", "Open"), "btn_open:action"),
+    nwStandardButton.CLOSE: (QT_TRANSLATE_NOOP("Button", "Close"), "btn_close:destroy"),
+    nwStandardButton.SAVE: (QT_TRANSLATE_NOOP("Button", "Save"), "btn_save:action"),
+    nwStandardButton.BROWSE: (QT_TRANSLATE_NOOP("Button", "Browse"), "btn_browse:system"),
+    nwStandardButton.LIST: (QT_TRANSLATE_NOOP("Button", "List"), "btn_list:action"),
+    nwStandardButton.NEW: (QT_TRANSLATE_NOOP("Button", "New"), "btn_new:apply"),
+    nwStandardButton.CREATE: (QT_TRANSLATE_NOOP("Button", "Create"), "btn_create:create"),
+    nwStandardButton.RESET: (QT_TRANSLATE_NOOP("Button", "Reset"), "btn_reset:reset"),
+    nwStandardButton.INSERT: (QT_TRANSLATE_NOOP("Button", "Insert"), "btn_insert:action"),
+    nwStandardButton.APPLY: (QT_TRANSLATE_NOOP("Button", "Apply"), "btn_apply:apply"),
+    nwStandardButton.BUILD: (QT_TRANSLATE_NOOP("Button", "Build"), "btn_build:action"),
+    nwStandardButton.PRINT: (QT_TRANSLATE_NOOP("Button", "Print"), "btn_print:action"),
+    nwStandardButton.PREVIEW: (QT_TRANSLATE_NOOP("Button", "Preview"), "btn_preview:action"),
 }
 
 TOOL_BUTTONS = {
-    nwToolButton.ADD: (QT_TRANSLATE_NOOP("Button", "Add"), "add", "add"),
-    nwToolButton.REMOVE: (QT_TRANSLATE_NOOP("Button", "Remove"), "remove", "remove"),
-    nwToolButton.MOVE_UP: (QT_TRANSLATE_NOOP("Button", "Move Up"), "chevron_up", "action"),
-    nwToolButton.MOVE_DOWN: (QT_TRANSLATE_NOOP("Button", "Move Down"), "chevron_down", "action"),
-    nwToolButton.IMPORT: (QT_TRANSLATE_NOOP("Button", "Import"), "import", "apply"),
-    nwToolButton.EXPORT: (QT_TRANSLATE_NOOP("Button", "Export"), "export", "action"),
-    nwToolButton.BROWSE: (QT_TRANSLATE_NOOP("Button", "Browse"), "browse", "systemio"),
-    nwToolButton.EDIT: (QT_TRANSLATE_NOOP("Button", "Edit"), "edit", "change"),
-    nwToolButton.REVERT: (QT_TRANSLATE_NOOP("Button", "Revert"), "revert", "reset"),
+    nwToolButton.ADD: (QT_TRANSLATE_NOOP("Button", "Add"), "add:add"),
+    nwToolButton.REMOVE: (QT_TRANSLATE_NOOP("Button", "Remove"), "remove:remove"),
+    nwToolButton.MOVE_UP: (QT_TRANSLATE_NOOP("Button", "Move Up"), "chevron_up:action"),
+    nwToolButton.MOVE_DOWN: (QT_TRANSLATE_NOOP("Button", "Move Down"), "chevron_down:action"),
+    nwToolButton.IMPORT: (QT_TRANSLATE_NOOP("Button", "Import"), "import:apply"),
+    nwToolButton.EXPORT: (QT_TRANSLATE_NOOP("Button", "Export"), "export:action"),
+    nwToolButton.BROWSE: (QT_TRANSLATE_NOOP("Button", "Browse"), "browse:system"),
+    nwToolButton.EDIT: (QT_TRANSLATE_NOOP("Button", "Edit"), "edit:change"),
+    nwToolButton.REVERT: (QT_TRANSLATE_NOOP("Button", "Revert"), "revert:reset"),
 }
 
 
@@ -188,6 +187,7 @@ class GuiTheme:
         "getHeaderDecorationNarrow",
         "getIcon",
         "getItemIcon",
+        "getItemIconStyle",
         "getPixmap",
         "getStandardButton",
         "getToggleIcon",
@@ -204,10 +204,12 @@ class GuiTheme:
         "iconCache",
         "isDarkTheme",
         "pushButtonIconSize",
+        "searchCol",
         "sidebarIconSize",
         "syntaxTheme",
         "textNHeight",
         "textNWidth",
+        "toggleCol",
         "toolButtonIconSize",
     )
 
@@ -223,6 +225,8 @@ class GuiTheme:
         self.fadedText = QColor(0, 0, 0)
         self.errorText = QColor(255, 0, 0)
         self.accentCol = QColor(255, 0, 255)  # Needed until we move to Qt 6.6
+        self.toggleCol = QColor(0, 0, 255)
+        self.searchCol = QColor(255, 196, 0, 96)
 
         # Theme Data
         self._meta = ThemeMeta()
@@ -240,6 +244,7 @@ class GuiTheme:
         self.getToggleIcon = self.iconCache.getToggleIcon
         self.getDecoration = self.iconCache.getDecoration
         self.getToolButton = self.iconCache.getToolButton
+        self.getItemIconStyle = self.iconCache.getItemIconStyle
         self.getStandardButton = self.iconCache.getStandardButton
         self.getHeaderDecoration = self.iconCache.getHeaderDecoration
         self.getHeaderDecorationNarrow = self.iconCache.getHeaderDecorationNarrow
@@ -346,24 +351,28 @@ class GuiTheme:
         """Initialise themes."""
         CONFIG.splashMessage("Scanning for colour themes ...")
         themes: list[Path] = []
-        _listContent(themes, CONFIG.assetPath("themes"), ".conf")
-        _listContent(themes, CONFIG.dataPath("themes"), ".conf")
+        _listContent(themes, CONFIG.assetPath("themes"), ".toml")
+        _listContent(themes, CONFIG.dataPath("themes"), ".toml")
         self._scanThemes(themes)
 
         self.iconCache.initIcons()
         self.loadTheme()
 
-    def isDesktopDarkMode(self) -> bool:
+    def isDesktopDarkMode(self, schemeHint: Any | None = None) -> bool:
         """Check if the desktop is in dark mode."""
-        if CONFIG.checkMinQtVersion(0x060500) and (hint := QGuiApplication.styleHints()):
-            return hint.colorScheme() == Qt.ColorScheme.Dark
+        if CONFIG.checkMinQtVersion(0x060500):
+            # Qt.ColorScheme was added in Qt 6.5
+            if schemeHint is not None:
+                return schemeHint == Qt.ColorScheme.Dark
+            elif styleHints := QGuiApplication.styleHints():
+                return styleHints.colorScheme() == Qt.ColorScheme.Dark
 
         palette = QPalette()
         text = palette.windowText().color()
         window = palette.window().color()
         return text.lightnessF() > window.lightnessF()
 
-    def loadTheme(self, force: bool = False) -> bool:
+    def loadTheme(self, *, schemeHint: Any | None = None, force: bool = False) -> bool:
         """Load the currently specified GUI theme. The boolean return
         can be used to determine if the GUI needs refreshing.
         """
@@ -373,7 +382,7 @@ class GuiTheme:
             case nwTheme.DARK:
                 darkMode = True
             case _:
-                darkMode = self.isDesktopDarkMode()
+                darkMode = self.isDesktopDarkMode(schemeHint=schemeHint)
 
         theme = CONFIG.darkTheme if darkMode else CONFIG.lightTheme
         if theme not in self._allThemes:
@@ -396,9 +405,9 @@ class GuiTheme:
 
         CONFIG.splashMessage(f"Loading colour theme: {entry.name}")
         logger.info("Loading GUI theme '%s'", theme)
-        parser = ConfigParser()
         try:
-            parser.read(entry.path, encoding="utf-8")
+            with open(entry.path, mode="rb") as fileObj:
+                data = tomllib.load(fileObj)
         except Exception:
             logger.error("Could not read file: %s", entry.path)
             logException()
@@ -408,120 +417,115 @@ class GuiTheme:
         self._resetTheme()
 
         # Main
-        sec = "Main"
         meta = ThemeMeta()
-        if parser.has_section(sec):
-            meta.name = parser.get(sec, "name", fallback="")
-            meta.mode = parser.get(sec, "mode", fallback="light")
-            meta.author = parser.get(sec, "author", fallback="")
-            meta.credit = parser.get(sec, "credit", fallback="")
-            meta.url = parser.get(sec, "url", fallback="")
+        if section := data.get("Main"):
+            meta.name = section.get("name", "")
+            meta.mode = section.get("mode", "light")
+            meta.author = section.get("author", "")
+            meta.credit = section.get("credit", "")
+            meta.url = section.get("url", "")
 
         self._meta = meta
 
         # Base
-        sec = "Base"
-        if parser.has_section(sec):
-            self._setBaseColor("base", self._readColor(parser, sec, "base"))
-            self._setBaseColor("default", self._readColor(parser, sec, "default"))
-            self._setBaseColor("faded", self._readColor(parser, sec, "faded"))
-            self._setBaseColor("red", self._readColor(parser, sec, "red"))
-            self._setBaseColor("orange", self._readColor(parser, sec, "orange"))
-            self._setBaseColor("yellow", self._readColor(parser, sec, "yellow"))
-            self._setBaseColor("green", self._readColor(parser, sec, "green"))
-            self._setBaseColor("cyan", self._readColor(parser, sec, "cyan"))
-            self._setBaseColor("blue", self._readColor(parser, sec, "blue"))
-            self._setBaseColor("purple", self._readColor(parser, sec, "purple"))
+        if section := data.get("Base"):
+            self._setBaseColor("base", self._readColor(section, "base"))
+            self._setBaseColor("default", self._readColor(section, "default"))
+            self._setBaseColor("faded", self._readColor(section, "faded"))
+            self._setBaseColor("red", self._readColor(section, "red"))
+            self._setBaseColor("orange", self._readColor(section, "orange"))
+            self._setBaseColor("yellow", self._readColor(section, "yellow"))
+            self._setBaseColor("green", self._readColor(section, "green"))
+            self._setBaseColor("cyan", self._readColor(section, "cyan"))
+            self._setBaseColor("blue", self._readColor(section, "blue"))
+            self._setBaseColor("purple", self._readColor(section, "purple"))
 
         # Project
-        sec = "Project"
-        if parser.has_section(sec):
-            self._setBaseColor("root", self._readColor(parser, sec, "root"))
-            self._setBaseColor("folder", self._readColor(parser, sec, "folder"))
-            self._setBaseColor("file", self._readColor(parser, sec, "file"))
-            self._setBaseColor("title", self._readColor(parser, sec, "title"))
-            self._setBaseColor("chapter", self._readColor(parser, sec, "chapter"))
-            self._setBaseColor("scene", self._readColor(parser, sec, "scene"))
-            self._setBaseColor("note", self._readColor(parser, sec, "note"))
-            self._setBaseColor("active", self._readColor(parser, sec, "active"))
-            self._setBaseColor("inactive", self._readColor(parser, sec, "inactive"))
-            self._setBaseColor("disabled", self._readColor(parser, sec, "disabled"))
+        if section := data.get("Project"):
+            self._setBaseColor("root", self._readColor(section, "root"))
+            self._setBaseColor("folder", self._readColor(section, "folder"))
+            self._setBaseColor("file", self._readColor(section, "file"))
+            self._setBaseColor("title", self._readColor(section, "title"))
+            self._setBaseColor("chapter", self._readColor(section, "chapter"))
+            self._setBaseColor("scene", self._readColor(section, "scene"))
+            self._setBaseColor("note", self._readColor(section, "note"))
+            self._setBaseColor("active", self._readColor(section, "active"))
+            self._setBaseColor("inactive", self._readColor(section, "inactive"))
+            self._setBaseColor("disabled", self._readColor(section, "disabled"))
 
         # Icon
-        sec = "Icon"
-        if parser.has_section(sec):
-            self._setBaseColor("tool", self._readColor(parser, sec, "tool"))
-            self._setBaseColor("sidebar", self._readColor(parser, sec, "sidebar"))
-            self._setBaseColor("accept", self._readColor(parser, sec, "accept"))
-            self._setBaseColor("reject", self._readColor(parser, sec, "reject"))
-            self._setBaseColor("action", self._readColor(parser, sec, "action"))
-            self._setBaseColor("altaction", self._readColor(parser, sec, "altaction"))
-            self._setBaseColor("apply", self._readColor(parser, sec, "apply"))
-            self._setBaseColor("create", self._readColor(parser, sec, "create"))
-            self._setBaseColor("destroy", self._readColor(parser, sec, "destroy"))
-            self._setBaseColor("reset", self._readColor(parser, sec, "reset"))
-            self._setBaseColor("add", self._readColor(parser, sec, "add"))
-            self._setBaseColor("change", self._readColor(parser, sec, "change"))
-            self._setBaseColor("remove", self._readColor(parser, sec, "remove"))
-            self._setBaseColor("shortcode", self._readColor(parser, sec, "shortcode"))
-            self._setBaseColor("markdown", self._readColor(parser, sec, "markdown"))
-            self._setBaseColor("systemio", self._readColor(parser, sec, "systemio"))
-            self._setBaseColor("info", self._readColor(parser, sec, "info"))
-            self._setBaseColor("warning", self._readColor(parser, sec, "warning"))
-            self._setBaseColor("error", self._readColor(parser, sec, "error"))
+        if section := data.get("Icon"):
+            self._setBaseColor("tool", self._readColor(section, "tool"))
+            self._setBaseColor("sidebar", self._readColor(section, "sidebar"))
+            self._setBaseColor("accept", self._readColor(section, "accept"))
+            self._setBaseColor("reject", self._readColor(section, "reject"))
+            self._setBaseColor("action", self._readColor(section, "action"))
+            self._setBaseColor("option", self._readColor(section, "option"))
+            self._setBaseColor("apply", self._readColor(section, "apply"))
+            self._setBaseColor("create", self._readColor(section, "create"))
+            self._setBaseColor("destroy", self._readColor(section, "destroy"))
+            self._setBaseColor("reset", self._readColor(section, "reset"))
+            self._setBaseColor("add", self._readColor(section, "add"))
+            self._setBaseColor("change", self._readColor(section, "change"))
+            self._setBaseColor("remove", self._readColor(section, "remove"))
+            self._setBaseColor("shortcode", self._readColor(section, "shortcode"))
+            self._setBaseColor("markdown", self._readColor(section, "markdown"))
+            self._setBaseColor("system", self._readColor(section, "system"))
+            self._setBaseColor("info", self._readColor(section, "info"))
+            self._setBaseColor("warning", self._readColor(section, "warning"))
+            self._setBaseColor("error", self._readColor(section, "error"))
 
         # Palette
-        sec = "Palette"
-        if parser.has_section(sec):
-            self._setPalette(parser, sec, "window", QPalette.ColorRole.Window)
-            self._setPalette(parser, sec, "windowtext", QPalette.ColorRole.WindowText)
-            self._setPalette(parser, sec, "base", QPalette.ColorRole.Base)
-            self._setPalette(parser, sec, "alternatebase", QPalette.ColorRole.AlternateBase)
-            self._setPalette(parser, sec, "text", QPalette.ColorRole.Text)
-            self._setPalette(parser, sec, "tooltipbase", QPalette.ColorRole.ToolTipBase)
-            self._setPalette(parser, sec, "tooltiptext", QPalette.ColorRole.ToolTipText)
-            self._setPalette(parser, sec, "button", QPalette.ColorRole.Button)
-            self._setPalette(parser, sec, "buttontext", QPalette.ColorRole.ButtonText)
-            self._setPalette(parser, sec, "brighttext", QPalette.ColorRole.BrightText)
-            self._setPalette(parser, sec, "highlight", QPalette.ColorRole.Highlight)
-            self._setPalette(parser, sec, "highlightedtext", QPalette.ColorRole.HighlightedText)
-            self._setPalette(parser, sec, "link", QPalette.ColorRole.Link)
-            self._setPalette(parser, sec, "linkvisited", QPalette.ColorRole.LinkVisited)
-            self.accentCol = self._readColor(parser, sec, "accent")  # Special handling 'til Qt 6.6
+        if section := data.get("Palette"):
+            self._setPalette(section, "window", QPalette.ColorRole.Window)
+            self._setPalette(section, "windowText", QPalette.ColorRole.WindowText)
+            self._setPalette(section, "base", QPalette.ColorRole.Base)
+            self._setPalette(section, "alternateBase", QPalette.ColorRole.AlternateBase)
+            self._setPalette(section, "text", QPalette.ColorRole.Text)
+            self._setPalette(section, "tooltipBase", QPalette.ColorRole.ToolTipBase)
+            self._setPalette(section, "tooltipText", QPalette.ColorRole.ToolTipText)
+            self._setPalette(section, "button", QPalette.ColorRole.Button)
+            self._setPalette(section, "buttonText", QPalette.ColorRole.ButtonText)
+            self._setPalette(section, "brightText", QPalette.ColorRole.BrightText)
+            self._setPalette(section, "highlight", QPalette.ColorRole.Highlight)
+            self._setPalette(section, "highlightedText", QPalette.ColorRole.HighlightedText)
+            self._setPalette(section, "link", QPalette.ColorRole.Link)
+            self._setPalette(section, "linkVisited", QPalette.ColorRole.LinkVisited)
+            self.accentCol = self._readColor(section, "accent")  # Special handling 'til Qt 6.6
 
         # GUI
-        sec = "GUI"
-        if parser.has_section(sec):
-            self.helpText = self._readColor(parser, sec, "helptext")
-            self.fadedText = self._readColor(parser, sec, "fadedtext")
-            self.errorText = self._readColor(parser, sec, "errortext")
+        if section := data.get("GUI"):
+            self.helpText = self._readColor(section, "helpText")
+            self.fadedText = self._readColor(section, "fadedText")
+            self.errorText = self._readColor(section, "errorText")
+            self.toggleCol = self._readColor(section, "toggle")
+            self.searchCol = self._readColor(section, "searchMatch")
 
         # Syntax
-        sec = "Syntax"
         self.syntaxTheme = SyntaxColors()
-        if parser.has_section(sec):
-            self.syntaxTheme.back = self._readColor(parser, sec, "background")
-            self.syntaxTheme.text = self._readColor(parser, sec, "text")
-            self.syntaxTheme.line = self._readColor(parser, sec, "line")
-            self.syntaxTheme.link = self._readColor(parser, sec, "link")
-            self.syntaxTheme.head = self._readColor(parser, sec, "headertext")
-            self.syntaxTheme.headH = self._readColor(parser, sec, "headertag")
-            self.syntaxTheme.emph = self._readColor(parser, sec, "emphasis")
-            self.syntaxTheme.space = self._readColor(parser, sec, "whitespace")
-            self.syntaxTheme.dialN = self._readColor(parser, sec, "dialog")
-            self.syntaxTheme.dialA = self._readColor(parser, sec, "altdialog")
-            self.syntaxTheme.hidden = self._readColor(parser, sec, "hidden")
-            self.syntaxTheme.note = self._readColor(parser, sec, "note")
-            self.syntaxTheme.code = self._readColor(parser, sec, "shortcode")
-            self.syntaxTheme.key = self._readColor(parser, sec, "keyword")
-            self.syntaxTheme.tag = self._readColor(parser, sec, "tag")
-            self.syntaxTheme.val = self._readColor(parser, sec, "value")
-            self.syntaxTheme.opt = self._readColor(parser, sec, "optional")
-            self.syntaxTheme.spell = self._readColor(parser, sec, "spellcheckline")
-            self.syntaxTheme.error = self._readColor(parser, sec, "errorline")
-            self.syntaxTheme.repTag = self._readColor(parser, sec, "replacetag")
-            self.syntaxTheme.mod = self._readColor(parser, sec, "modifier")
-            self.syntaxTheme.mark = self._readColor(parser, sec, "texthighlight")
+        if section := data.get("Syntax"):
+            self.syntaxTheme.back = self._readColor(section, "background")
+            self.syntaxTheme.text = self._readColor(section, "text")
+            self.syntaxTheme.line = self._readColor(section, "line")
+            self.syntaxTheme.link = self._readColor(section, "link")
+            self.syntaxTheme.head = self._readColor(section, "headerText")
+            self.syntaxTheme.headH = self._readColor(section, "headerTag")
+            self.syntaxTheme.emph = self._readColor(section, "emphasis")
+            self.syntaxTheme.space = self._readColor(section, "whitespace")
+            self.syntaxTheme.dialN = self._readColor(section, "dialog")
+            self.syntaxTheme.dialA = self._readColor(section, "altDialog")
+            self.syntaxTheme.hidden = self._readColor(section, "hidden")
+            self.syntaxTheme.note = self._readColor(section, "note")
+            self.syntaxTheme.code = self._readColor(section, "shortcode")
+            self.syntaxTheme.key = self._readColor(section, "keyword")
+            self.syntaxTheme.tag = self._readColor(section, "tag")
+            self.syntaxTheme.val = self._readColor(section, "value")
+            self.syntaxTheme.opt = self._readColor(section, "optional")
+            self.syntaxTheme.spell = self._readColor(section, "spellCheckLine")
+            self.syntaxTheme.error = self._readColor(section, "errorLine")
+            self.syntaxTheme.repTag = self._readColor(section, "replaceTag")
+            self.syntaxTheme.mod = self._readColor(section, "modifier")
+            self.syntaxTheme.mark = self._readColor(section, "textHighlight")
 
         # Update Dependant Colours
         # Based on: https://github.com/qt/qtbase/blob/dev/src/gui/kernel/qplatformtheme.cpp
@@ -593,6 +597,7 @@ class GuiTheme:
 
         # Finalise
         QApplication.setPalette(self._guiPalette)
+        QToolTip.setPalette(self._guiPalette)  # Fixes an issue with desktop overrides on Linux, see #2871
         self._buildStyleSheets(self._guiPalette)
 
         return True
@@ -617,20 +622,54 @@ class GuiTheme:
             name, _, adjust = value.partition(":")
             color = QColor(self._qColors.get(name.strip(), default))
             if adjust.startswith("L"):
-                color = color.lighter(checkInt(adjust[1:], 100))
+                color = color.lighter(minmax(checkInt(adjust[1:], 100), 0, 10000))
             elif adjust.startswith("D"):
-                color = color.darker(checkInt(adjust[1:], 100))
+                color = color.darker(minmax(checkInt(adjust[1:], 100), 0, 10000))
             else:
-                color.setAlpha(checkInt(adjust, 255))
+                color.setAlpha(minmax(checkInt(adjust, 255), 0, 255))
             return color
         elif "," in value:
             # Integer red, green, blue, alpha
             data = value.split(",")
             result = [0, 0, 0, 255]
             for i in range(min(len(data), 4)):
-                result[i] = checkInt(data[i].strip(), result[i])
+                result[i] = minmax(checkInt(data[i].strip(), result[i]), 0, 255)
             return QColor(*result)
         return default
+
+    def generateColorRange(self, start: str, end: str, mid: str | None = None, steps: int = 10) -> list[QColor]:
+        """Generate a range of colours between start and end, optionally passing through mid."""
+        result: list[QColor] = []
+        scale = max(steps - 1, 1)
+        colS = self.parseColor(start)
+        colE = self.parseColor(end)
+        colM = self.parseColor(mid) if mid is not None else None
+
+        if colM is None:
+            for i in range(steps):
+                t = i / scale
+                r = round(colS.red() + (colE.red() - colS.red()) * t)
+                g = round(colS.green() + (colE.green() - colS.green()) * t)
+                b = round(colS.blue() + (colE.blue() - colS.blue()) * t)
+                a = round(colS.alpha() + (colE.alpha() - colS.alpha()) * t)
+                result.append(QColor(r, g, b, a))
+        else:
+            for i in range(steps):
+                t = i / scale
+                if t < 0.5:
+                    t *= 2
+                    r = round(colS.red() + (colM.red() - colS.red()) * t)
+                    g = round(colS.green() + (colM.green() - colS.green()) * t)
+                    b = round(colS.blue() + (colM.blue() - colS.blue()) * t)
+                    a = round(colS.alpha() + (colM.alpha() - colS.alpha()) * t)
+                else:
+                    t = (t - 0.5) * 2
+                    r = round(colM.red() + (colE.red() - colM.red()) * t)
+                    g = round(colM.green() + (colE.green() - colM.green()) * t)
+                    b = round(colM.blue() + (colE.blue() - colM.blue()) * t)
+                    a = round(colM.alpha() + (colE.alpha() - colM.alpha()) * t)
+                result.append(QColor(r, g, b, a))
+        return result
 
     ##
     #  Internal Functions
@@ -663,6 +702,12 @@ class GuiTheme:
         self.helpText = dimmed
         self.fadedText = faded
         self.errorText = red
+
+        # Accent Colours
+        self.accentCol = purple
+        self.toggleCol = blue
+        self.searchCol = QColor(orange)
+        self.searchCol.setAlpha(96)
 
         self._guiPalette = palette
 
@@ -701,7 +746,7 @@ class GuiTheme:
         self._setBaseColor("accept", green)
         self._setBaseColor("reject", red)
         self._setBaseColor("action", blue)
-        self._setBaseColor("altaction", orange)
+        self._setBaseColor("option", orange)
         self._setBaseColor("apply", green)
         self._setBaseColor("create", yellow)
         self._setBaseColor("destroy", faded)
@@ -711,18 +756,18 @@ class GuiTheme:
         self._setBaseColor("remove", red)
         self._setBaseColor("shortcode", default)
         self._setBaseColor("markdown", orange)
-        self._setBaseColor("systemio", yellow)
+        self._setBaseColor("system", yellow)
         self._setBaseColor("info", blue)
         self._setBaseColor("warning", orange)
         self._setBaseColor("error", red)
 
-    def _readColor(self, parser: ConfigParser, section: str, name: str) -> QColor:
+    def _readColor(self, section: dict[str, Any], name: str) -> QColor:
         """Parse a colour value from a config string."""
-        return self.parseColor(parser.get(section, name, fallback="default"))
+        return self.parseColor(str(section.get(name, "default")))
 
-    def _setPalette(self, parser: ConfigParser, section: str, name: str, value: QPalette.ColorRole) -> None:
+    def _setPalette(self, section: dict[str, Any], name: str, value: QPalette.ColorRole) -> None:
         """Set a palette colour value from a config string."""
-        self._guiPalette.setBrush(value, self._readColor(parser, section, name))
+        self._guiPalette.setBrush(value, self._readColor(section, name))
 
     def _buildStyleSheets(self, palette: QPalette) -> None:
         """Build default style sheets."""
@@ -731,14 +776,6 @@ class GuiTheme:
         text = palette.text().color()
         text.setAlpha(48)
         tCol = text.name(QtHexArgb)
-        hCol = palette.highlight().color().name(QtHexArgb)
-
-        # Flat Tab Widget and Tab Bar:
-        self._styleSheets[STYLES_FLAT_TABS] = (
-            "QTabWidget::pane {border: 0;} "
-            "QTabWidget QTabBar::tab {border: 0; padding: 4px 8px;} "
-            f"QTabWidget QTabBar::tab:selected {{color: {hCol};}} "
-        )
 
         # Minimal Tool Button
         self._styleSheets[STYLES_MIN_TOOLBUTTON] = (
@@ -756,15 +793,14 @@ class GuiTheme:
 
     def _scanThemes(self, files: list[Path]) -> None:
         """Scan the GUI themes folder and list all themes."""
-        parser = ConfigParser()
         data: dict[str, tuple[str, str, bool, Path]] = {}
         keys = []
         for file in files:
             try:
-                parser.clear()
-                parser.read(file, encoding="utf-8")
-                name = parser.get("Main", "name", fallback="")
-                mode = parser.get("Main", "mode", fallback="").lower()
+                with open(file, mode="rb") as fileObj:
+                    section = tomllib.load(fileObj).get("Main", {})
+                name = section.get("name", "")
+                mode = section.get("mode", "").lower()
                 if name and mode in ("light", "dark"):
                     key = file.stem
                     prefix = "*" if key.startswith("default") else ""
@@ -905,25 +941,29 @@ class GuiIcons:
     #  Access Functions
     ##
 
-    def getIcon(self, name: str, color: str, w: int = 24, h: int = 24) -> QIcon:
+    def getIcon(self, name: str, width: int = 24, height: int = 24) -> QIcon:
         """Return an icon from the icon buffer, or load it."""
+        color = "default"
+        if ":" in name:
+            name, _, color = name.partition(":")
         variant = f"{name}-{color}" if color else name
-        if (key := f"{variant}-{w}x{h}") in self._qIcons:
+        if (key := f"{variant}-{width}x{height}") in self._qIcons:
             return self._qIcons[key]
         else:
-            icon = self._loadIcon(name, color, w, h)
+            icon = self._loadIcon(name, color, width, height)
             self._qIcons[key] = icon
             logger.debug("Icon: %s", key)
             return icon
 
-    def getToggleIcon(self, name: str, size: tuple[int, int], color: str) -> QIcon:
+    def getToggleIcon(self, name: str, width: int, height: int) -> QIcon:
         """Return a toggle icon from the icon buffer, or load it."""
-        if name in self.TOGGLE_ICON_KEYS:
-            pOne = self.getPixmap(self.TOGGLE_ICON_KEYS[name][0], size, color)
-            pTwo = self.getPixmap(self.TOGGLE_ICON_KEYS[name][1], size, color)
+        key, _, color = name.partition(":")
+        if key in self.TOGGLE_ICON_KEYS:
+            pix0 = self.getPixmap(f"{self.TOGGLE_ICON_KEYS[key][0]}:{color}", width, height)
+            pix1 = self.getPixmap(f"{self.TOGGLE_ICON_KEYS[key][1]}:{color}", width, height)
             icon = QIcon()
-            icon.addPixmap(pOne, QIcon.Mode.Normal, QIcon.State.On)
-            icon.addPixmap(pTwo, QIcon.Mode.Normal, QIcon.State.Off)
+            icon.addPixmap(pix0, QIcon.Mode.Normal, QIcon.State.On)
+            icon.addPixmap(pix1, QIcon.Mode.Normal, QIcon.State.Off)
             return icon
         return self._noIcon
 
@@ -931,54 +971,60 @@ class GuiIcons:
         """Get the correct icon for a project item based on type, class
         and heading level.
         """
-        name = None
-        color = "default"
+        if name := self.getItemIconStyle(tType, tClass, tLayout, hLevel):
+            return self.getIcon(name)
+        return self._noIcon
+
+    def getItemIconStyle(
+        self,
+        tType: nwItemType,
+        tClass: nwItemClass,
+        tLayout: nwItemLayout,
+        hLevel: str = "H0",
+    ) -> str:
+        """Get the correct icon styles for a project item based on type,
+        class and heading level.
+        """
+        name = ""
         if tType == nwItemType.ROOT:
             name = nwLabels.CLASS_ICON[tClass]
-            color = "root"
         elif tType == nwItemType.FOLDER:
-            name = "prj_folder"
-            color = "folder"
+            name = "prj_folder:folder"
         elif tType == nwItemType.FILE:
             if tLayout == nwItemLayout.DOCUMENT:
                 if hLevel == "H1":
-                    name = "prj_title"
-                    color = "title"
+                    name = "prj_title:title"
                 elif hLevel == "H2":
-                    name = "prj_chapter"
-                    color = "chapter"
+                    name = "prj_chapter:chapter"
                 elif hLevel == "H3":
-                    name = "prj_scene"
-                    color = "scene"
+                    name = "prj_scene:scene"
                 else:
-                    name = "prj_document"
-                    color = "file"
+                    name = "prj_document:file"
             elif tLayout == nwItemLayout.NOTE:
-                name = "prj_note"
-                color = "note"
-        if name is None:
-            return self._noIcon
+                name = "prj_note:note"
 
-        return self.getIcon(name, color)
+        return name
 
-    def getPixmap(self, name: str, size: tuple[int, int], color: str | None = None) -> QPixmap:
+    def getPixmap(self, name: str, width: int, height: int) -> QPixmap:
         """Return an icon from the icon buffer as a QPixmap. If it
         doesn't exist, return an empty QPixmap.
         """
-        w, h = size
-        return self.getIcon(name, color or "default", w, h).pixmap(w, h, QIcon.Mode.Normal)
+        return self.getIcon(name, width, height).pixmap(width, height, QIcon.Mode.Normal)
 
     def getStandardButton(self, button: nwStandardButton, parent: QWidget) -> NPushButton:
         """Return a standard button with icon and text."""
-        text, icon, color = STANDARD_BUTTONS.get(button, ("", "", ""))
+        text, icon = STANDARD_BUTTONS.get(button, ("", ""))
         return NPushButton(
-            parent, QCoreApplication.translate("Button", text), self._theme.pushButtonIconSize, icon, color
+            parent,
+            QCoreApplication.translate("Button", text),
+            self._theme.pushButtonIconSize,
+            icon,
         )
 
     def getToolButton(self, button: nwToolButton, parent: QWidget) -> NIconToolButton:
         """Return a tool button with icon."""
-        toolTip, icon, color = TOOL_BUTTONS.get(button, ("", "", ""))
-        toolButton = NIconToolButton(parent, self._theme.baseIconSize, icon, color)
+        toolTip, icon = TOOL_BUTTONS.get(button, ("", ""))
+        toolButton = NIconToolButton(parent, self._theme.baseIconSize, icon)
         toolButton.setToolTip(QCoreApplication.translate("Button", toolTip))
         return toolButton
 
@@ -1050,7 +1096,7 @@ class GuiIcons:
             return QIcon(str(CONFIG.assetPath("icons") / "x-novelwriter-project.svg"))
 
         if svg := self._svgData.get(name, b""):
-            if fill := self._theme.getRawBaseColor(color or "default"):
+            if fill := self._theme.getRawBaseColor(color or "default"):  # pragma: no branch
                 svg = svg.replace(b"#000000", fill)
             pixmap = QPixmap(w, h)
             pixmap.fill(QtTransparent)
@@ -1072,7 +1118,7 @@ class GuiIcons:
 
         painter = QPainter(pixmap)
         painter.setRenderHint(QtPaintAntiAlias)
-        if fill := self._theme.getRawBaseColor(color or "default"):
+        if fill := self._theme.getRawBaseColor(color or "default"):  # pragma: no branch
             painter.fillPath(path, QColor(fill.decode(encoding="utf-8")))
         painter.end()
 

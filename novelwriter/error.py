@@ -1,9 +1,6 @@
 """
-novelWriter – Exception Handling
+novelWriter - Exception Handling
 ================================
-
-File History:
-Created: 2020-08-02 [0.10.2]
 
 This file is a part of novelWriter
 Copyright (C) 2020 Veronica Berglyd Olsen and novelWriter contributors
@@ -53,7 +50,7 @@ def logException() -> None:
     """Log the content of an exception message."""
     exType, exValue, _ = sys.exc_info()
     if exType is not None:
-        logger.error(f"{exType.__name__}: {exValue!s}", stacklevel=2)
+        logger.error(f"{exType.__name__}: {exValue!s}", stacklevel=2)  # noqa: G004
 
 
 def formatException(exc: BaseException) -> str:
@@ -63,16 +60,16 @@ def formatException(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {exc!s}"
 
 
-class NWErrorMessage(QDialog):
+class ErrorMessage(QDialog):
     """GUI: Error Dialog."""
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent=parent)
-        self.setObjectName("NWErrorMessage")
+        self.setObjectName("ErrorMessage")
 
         # Widgets
         self.msgIcon = QLabel()
-        if style := QApplication.style():
+        if style := QApplication.style():  # pragma: no branch
             self.msgIcon.setPixmap(style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxCritical).pixmap(64, 64))
 
         self.msgHead = QLabel()
@@ -187,7 +184,7 @@ def exceptionHandler(exType: type, exValue: BaseException, exTrace: TracebackTyp
     try:
         nwGUI = None
         for qWin in QApplication.topLevelWidgets():
-            if qWin.objectName() == "GuiMain":
+            if qWin.objectName() == "GuiMain":  # pragma: no branch (this branch is flaky)
                 nwGUI = qWin
                 break
 
@@ -195,7 +192,7 @@ def exceptionHandler(exType: type, exValue: BaseException, exTrace: TracebackTyp
             logger.warning("Could not find main GUI window so cannot open error dialog")
             return
 
-        errMsg = NWErrorMessage(nwGUI)
+        errMsg = ErrorMessage(nwGUI)
         errMsg.setMessage(exType, exValue, exTrace)
         errMsg.exec()
 

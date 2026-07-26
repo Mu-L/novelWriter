@@ -20,7 +20,7 @@ on older versions of Qt. Japanese and Russian translations have also been update
 
 **Internationalisation**
 
-* Japanese translation updated bu @hebekeg. PR #2897.
+* Japanese translation updated by @hebekeg. PR #2897.
 * Russian translation updated by Kuro Ryuu (kuroryuu) and Konstantin Tan (@k1kimosha). PR #2897.
 
 ----

@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Novel Info
+novelWriter - GUI Novel Info
 ============================
 
 This file is a part of novelWriter
@@ -43,8 +43,7 @@ from PyQt6.QtWidgets import (
 )
 
 from novelwriter import SHARED
-from novelwriter.common import formatTime, numberToRoman
-from novelwriter.constants import nwUnicode
+from novelwriter.common import formatPercent, formatTime, numberToRoman
 from novelwriter.enum import nwStandardButton
 from novelwriter.extensions.configlayout import NColorLabel, NFixedPage, NScrollablePage
 from novelwriter.extensions.modified import NNonBlockingDialog
@@ -146,6 +145,7 @@ class GuiNovelDetails(NNonBlockingDialog):
         logger.debug("Ready: GuiNovelDetails")
 
     def __del__(self) -> None:  # pragma: no cover
+        """Class destructor."""
         logger.debug("Delete: GuiNovelDetails")
 
     ##
@@ -225,7 +225,10 @@ class _OverviewPage(NScrollablePage):
 
         # Novel Info
         self.novelLabel = NColorLabel(
-            self.tr("Selected Novel"), self, color=SHARED.theme.helpText, scale=NColorLabel.HEADER_SCALE
+            self.tr("Selected Novel"),
+            self,
+            color=SHARED.theme.helpText,
+            scale=NColorLabel.HEADER_SCALE,
         )
 
         self.novelName = QLabel("", self)
@@ -308,7 +311,10 @@ class _ContentsPage(NFixedPage):
 
         # Title
         self.contentLabel = NColorLabel(
-            self.tr("Table of Contents"), self, color=SHARED.theme.helpText, scale=NColorLabel.HEADER_SCALE
+            self.tr("Table of Contents"),
+            self,
+            color=SHARED.theme.helpText,
+            scale=NColorLabel.HEADER_SCALE,
         )
 
         # Contents Tree
@@ -317,25 +323,23 @@ class _ContentsPage(NFixedPage):
         self.tocTree.setIndentation(0)
         self.tocTree.setColumnCount(6)
         self.tocTree.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
-        self.tocTree.setHeaderLabels(
-            [
-                self.tr("Title"),
-                self.tr("Words"),
-                self.tr("Pages"),
-                self.tr("Page"),
-                self.tr("Progress"),
-                "",
-            ]
-        )
+        self.tocTree.setHeaderLabels([
+            self.tr("Title"),
+            self.tr("Words"),
+            self.tr("Pages"),
+            self.tr("Page"),
+            self.tr("Progress"),
+            "",
+        ])
 
         treeHeadItem = self.tocTree.headerItem()
-        if treeHeadItem:
+        if treeHeadItem:  # pragma: no branch
             treeHeadItem.setTextAlignment(self.C_WORDS, QtAlignRight)
             treeHeadItem.setTextAlignment(self.C_PAGES, QtAlignRight)
             treeHeadItem.setTextAlignment(self.C_PAGE, QtAlignRight)
             treeHeadItem.setTextAlignment(self.C_PROG, QtAlignRight)
 
-        if header := self.tocTree.header():
+        if header := self.tocTree.header():  # pragma: no branch
             header.setStretchLastSection(True)
             header.setMinimumSectionSize(12)
 
@@ -458,9 +462,8 @@ class _ContentsPage(NFixedPage):
                 progText = ""
             else:
                 cPage = tPages - fstPage
-                pgProg = 100.0 * (cPage - 1) / pMax if pMax > 0 else 0.0
                 progPage = f"{cPage:n}"
-                progText = f"{pgProg:.1f}{nwUnicode.U_THSP}%"
+                progText = formatPercent(cPage - 1, divisor=pMax, prec=1)
 
             hDec = SHARED.theme.getHeaderDecoration(tLevel)
             if tTitle.strip() == "":

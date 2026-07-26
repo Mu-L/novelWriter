@@ -1,5 +1,5 @@
 """
-novelWriter – Lorem Ipsum Tool
+novelWriter - Lorem Ipsum Tool
 ==============================
 
 This file is a part of novelWriter
@@ -54,7 +54,7 @@ class GuiLipsum(NDialog):
 
         # Icon
         self.docIcon = QLabel(self)
-        self.docIcon.setPixmap(SHARED.theme.getPixmap("text", (64, 64), "info"))
+        self.docIcon.setPixmap(SHARED.theme.getPixmap("text:info", 64, 64))
 
         self.leftBox = QVBoxLayout()
         self.leftBox.setSpacing(4)
@@ -109,6 +109,7 @@ class GuiLipsum(NDialog):
         logger.debug("Ready: GuiLipsum")
 
     def __del__(self) -> None:  # pragma: no cover
+        """Class destructor."""
         logger.debug("Delete: GuiLipsum")
 
     @property

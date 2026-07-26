@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Doc Split Dialog
+novelWriter - GUI Doc Split Dialog
 ==================================
 
 This file is a part of novelWriter
@@ -66,7 +66,10 @@ class GuiDocSplit(NDialog):
         self.headLabel = QLabel(self.tr("Document Headings"), self)
         self.headLabel.setFont(SHARED.theme.guiFontB)
         self.helpLabel = NColorLabel(
-            self.tr("Select the maximum level to split into files."), self, color=SHARED.theme.helpText, wrap=True
+            self.tr("Select the maximum level to split into files."),
+            self,
+            color=SHARED.theme.helpText,
+            wrap=True,
         )
 
         # Values
@@ -88,8 +91,7 @@ class GuiDocSplit(NDialog):
         self.splitLevel.addItem(self.tr("Split up to Heading Level 2 (Chapter)"), 2)
         self.splitLevel.addItem(self.tr("Split up to Heading Level 3 (Scene)"), 3)
         self.splitLevel.addItem(self.tr("Split up to Heading Level 4 (Section)"), 4)
-        spIndex = self.splitLevel.findData(spLevel)
-        if spIndex != -1:
+        if (spIndex := self.splitLevel.findData(spLevel)) != -1:
             self.splitLevel.setCurrentIndex(spIndex)
         self.splitLevel.currentIndexChanged.connect(self._reloadList)
 
@@ -150,23 +152,18 @@ class GuiDocSplit(NDialog):
         logger.debug("Ready: GuiDocSplit")
 
     def __del__(self) -> None:  # pragma: no cover
+        """Class destructor."""
         logger.debug("Delete: GuiDocSplit")
 
     def data(self) -> tuple[dict, list[str]]:
         """Return the user's choices. Also save the users options for
         the next time the dialog is used.
         """
-        headerList = []
-        for i in range(self.listBox.count()):
-            item = self.listBox.item(i)
-            if item is not None:
-                headerList.append(
-                    (
-                        item.data(self.LINE_ROLE),
-                        item.data(self.LEVEL_ROLE),
-                        item.data(self.LABEL_ROLE),
-                    )
-                )
+        headerList = [
+            (item.data(self.LINE_ROLE), item.data(self.LEVEL_ROLE), item.data(self.LABEL_ROLE))
+            for i in range(self.listBox.count())
+            if (item := self.listBox.item(i))  # pragma: no branch
+        ]
 
         spLevel = self.splitLevel.currentData()
         intoFolder = self.folderSwitch.isChecked()

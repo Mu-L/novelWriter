@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Quotes Dialog
+novelWriter - GUI Quotes Dialog
 ===============================
 
 This file is a part of novelWriter
@@ -119,6 +119,7 @@ class GuiQuoteSelect(NDialog):
         logger.debug("Ready: GuiQuoteSelect")
 
     def __del__(self) -> None:  # pragma: no cover
+        """Class destructor."""
         logger.debug("Delete: GuiQuoteSelect")
 
     @property

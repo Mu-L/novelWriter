@@ -1,9 +1,6 @@
 """
-novelWriter – Project Item Class
-================================
-
-File History:
-Created: 2018-10-27 [0.0.1] NWItem
+novelWriter - Project Item
+==========================
 
 This file is a part of novelWriter
 Copyright (C) 2018 Veronica Berglyd Olsen and novelWriter contributors
@@ -41,13 +38,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class NWItem:
+class ProjectItem:
     """Core: Item Data Class.
 
     This class holds all the project information about a project item.
     Each item must be associated with a project and have a valid handle.
-    Only the NWTree class should create instances of this class, and
-    must ensure that the handle is valid for all items in the tree.
+    Only the ProjectTree class should create instances of this class,
+    and must ensure that the handle is valid for all items in the tree.
     """
 
     __slots__ = (
@@ -56,6 +53,7 @@ class NWItem:
         "_charInit",
         "_class",
         "_cursorPos",
+        "_dailyTarget",
         "_expanded",
         "_handle",
         "_heading",
@@ -95,17 +93,21 @@ class NWItem:
         self._wordCount = 0  # Current word count
         self._paraCount = 0  # Current paragraph count
         self._cursorPos = 0  # Last cursor position
-        self._wordInit = 0  # Initial character count
-        self._charInit = 0  # Initial word count
+        self._charInit = 0  # Initial character count
+        self._wordInit = 0  # Initial word count
+
+        # Internals
+        self._dailyTarget = False  # Whether the item is included in the project goal
 
     def __repr__(self) -> str:
-        return f"<NWItem handle={self._handle}, parent={self._parent}, name='{self._name}'>"
+        """Return a string representation of the item."""
+        return f"<ProjectItem handle={self._handle}, parent={self._parent}, name='{self._name}'>"
 
     def __bool__(self) -> bool:
         """Check the truthiness of the class. The handle used to be
         initiated to None, but this is no longer the case. It should
         always evaluate to True since 2.1-beta1, although unpack and the
-        NWTree class can leave it as an empty string.
+        ProjectTree class can leave it as an empty string.
         """
         return bool(self._handle)
 
@@ -183,7 +185,7 @@ class NWItem:
 
     @property
     def initCount(self) -> int:
-        return self._wordInit if CONFIG.useCharCount else self._charInit
+        return self._charInit if CONFIG.useCharCount else self._wordInit
 
     @property
     def cursorPos(self) -> int:
@@ -272,13 +274,15 @@ class NWItem:
             self._paraCount = 0
             self._cursorPos = 0
 
-        self._wordInit = self._charCount
-        self._charInit = self._wordCount
+        self._charInit = self._charCount
+        self._wordInit = self._wordCount
+
+        self._updateDailyTarget()
 
         return True
 
     @classmethod
-    def duplicate(cls, source: NWItem, handle: str) -> NWItem:
+    def duplicate(cls, source: ProjectItem, handle: str) -> ProjectItem:
         """Make a copy of an item."""
         new = cls(source._project, handle)
         new._name = source._name
@@ -297,8 +301,9 @@ class NWItem:
         new._wordCount = source._wordCount
         new._paraCount = source._paraCount
         new._cursorPos = source._cursorPos
-        new._wordInit = source._wordInit
         new._charInit = source._charInit
+        new._wordInit = source._wordInit
+        new._dailyTarget = source._dailyTarget
         return new
 
     ##
@@ -306,7 +311,7 @@ class NWItem:
     ##
 
     def notifyToRefresh(self) -> None:
-        """Notify GUI that item info needs to be refreshed."""
+        """Notify the project model/view that item data has changed."""
         self._project.tree.refreshItems([self._handle])
 
     def notifyNovelStructureChange(self) -> None:
@@ -342,6 +347,10 @@ class NWItem:
 
         return trConst(nwLabels.ITEM_DESCRIPTION.get(descKey, ""))
 
+    def getMainIconStyle(self) -> str:
+        """Get the main item icon style."""
+        return SHARED.theme.getItemIconStyle(self._type, self._class, self._layout, self._heading)
+
     def getMainIcon(self) -> QIcon:
         """Get the main item icon."""
         return SHARED.theme.getItemIcon(self._type, self._class, self._layout, self._heading)
@@ -370,14 +379,12 @@ class NWItem:
         the current item based on its type.
         """
         if self.isFileType():
-            key = "checked" if self._active else "unchecked"
-            color = "active" if self._active else "inactive"
-            text = trConst(nwLabels.ACTIVE_NAME[key])
+            icon = "checked:active" if self._active else "unchecked:inactive"
+            text = trConst(nwLabels.ACTIVE_NAME[self._active])
         else:
-            key = "noncheckable"
-            color = "disabled"
+            icon = "noncheckable:disabled"
             text = ""
-        return text, SHARED.theme.getIcon(key, color)
+        return text, SHARED.theme.getIcon(icon)
 
     ##
     #  Checker Methods
@@ -413,6 +420,14 @@ class NWItem:
             nwItemClass.TRASH,
         )
 
+    def isSearchableClass(self) -> bool:
+        """Check if the item is in a searchable class."""
+        return self._class not in (
+            nwItemClass.NO_CLASS,
+            nwItemClass.TEMPLATE,
+            nwItemClass.TRASH,
+        )
+
     def isRootType(self) -> bool:
         """Check if item is a root item."""
         return self._type == nwItemType.ROOT
@@ -433,6 +448,14 @@ class NWItem:
         """Check if item is a novel document."""
         return self._layout == nwItemLayout.DOCUMENT
 
+    def dailyProgress(self) -> tuple[int, int]:
+        """Return the total word count and session change for items
+        included in the project goal.
+        """
+        if self._dailyTarget and self._root not in self._project.data.targetSkipRoots:
+            return self._wordCount, self._wordCount - self._wordInit
+        return 0, 0
+
     ##
     #  Special Setters
     ##
@@ -441,23 +464,22 @@ class NWItem:
         """Set the default values based on the item's class and the
         project settings.
         """
-        if self._parent is not None:
+        if self._parent is not None and itemClass != self._class:
             # Only update for child items
-            if itemClass != self._class:
-                self.setClass(itemClass)
-                if self._type == nwItemType.FILE:
-                    # Notify the index of the class change
-                    self._project.index.refreshHandle(self._handle)
+            self.setClass(itemClass)
+            if self._type == nwItemType.FILE:
+                # Notify the index of the class change
+                self._project.index.refreshHandle(self._handle)
 
         if self._layout == nwItemLayout.NO_LAYOUT:
             # If no layout is set, pick one
             if self.isNovelLike():
-                self._layout = nwItemLayout.DOCUMENT
+                self.setLayout(nwItemLayout.DOCUMENT)
             else:
-                self._layout = nwItemLayout.NOTE
+                self.setLayout(nwItemLayout.NOTE)
         elif not self.documentAllowed():
             # Change layout to note if it is not in an allowed folder
-            self._layout = nwItemLayout.NOTE
+            self.setLayout(nwItemLayout.NOTE)
 
         if self._status is None:
             self.setStatus("New")  # This forces a default value lookup
@@ -494,6 +516,10 @@ class NWItem:
         else:
             self._root = None
 
+        if self._dailyTarget:
+            # May have moved between skipped/non-skipped roots
+            self._project.markCountsDirty()
+
     def setOrder(self, order: Any) -> None:
         """Set the item order, and ensure that it is valid. This value
         is purely a meta value, and not actually used by novelWriter at
@@ -524,6 +550,7 @@ class NWItem:
         else:
             logger.error("Unrecognised item class '%s'", value)
             self._class = nwItemClass.NO_CLASS
+        self._processDailyTarget()
 
     def setLayout(self, value: Any) -> None:
         """Set the item layout from either a proper nwItemLayout, or set
@@ -536,6 +563,7 @@ class NWItem:
         else:
             logger.error("Unrecognised item layout '%s'", value)
             self._layout = nwItemLayout.NO_LAYOUT
+        self._processDailyTarget()
 
     def setStatus(self, value: Any) -> None:
         """Set the item status by looking it up in the valid status
@@ -555,6 +583,7 @@ class NWItem:
             self._active = state
         else:
             self._active = False
+        self._processDailyTarget()
 
     def setExpanded(self, state: Any) -> None:
         """Set the expanded status of an item in the project tree."""
@@ -599,3 +628,22 @@ class NWItem:
             self._cursorPos = max(0, position)
         else:
             self._cursorPos = 0
+
+    ##
+    #  Internal Functions
+    ##
+
+    def _updateDailyTarget(self) -> None:
+        """Update whether the item is included in the project goal. This
+        does not check if the item is skipped.
+        """
+        self._dailyTarget = self._active and self._class == nwItemClass.NOVEL and self._layout == nwItemLayout.DOCUMENT
+
+    def _processDailyTarget(self) -> None:
+        """Update the daily target status of the item and notify the
+        project of any changes.
+        """
+        oldStatus = self._dailyTarget
+        self._updateDailyTarget()
+        if oldStatus != self._dailyTarget:
+            self._project.markCountsDirty()

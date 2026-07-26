@@ -1,5 +1,5 @@
 """
-novelWriter – GUI Novel Tree
+novelWriter - GUI Novel Tree
 ============================
 
 This file is a part of novelWriter
@@ -26,9 +26,10 @@ import logging
 from enum import Enum
 
 from PyQt6.QtCore import QModelIndex, QPoint, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QActionGroup, QPainter, QPalette, QResizeEvent
+from PyQt6.QtGui import QActionGroup, QPainter, QPalette, QResizeEvent, QShortcut
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QFrame,
     QHBoxLayout,
     QInputDialog,
@@ -40,14 +41,22 @@ from PyQt6.QtWidgets import (
 )
 
 from novelwriter import CONFIG, SHARED
-from novelwriter.common import minmax, qtAddAction, qtAddMenu, qtLambda
+from novelwriter.common import minmax, qtAddAction, qtAddMenu, qtWeakLambda
 from novelwriter.constants import nwKeyWords, nwLabels, trConst
-from novelwriter.core.novelmodel import NovelModel
 from novelwriter.enum import nwChange, nwDocMode, nwNovelExtra, nwOutline
 from novelwriter.extensions.modified import NIconToolButton, NTreeView
 from novelwriter.extensions.novelselector import NovelSelector
 from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
-from novelwriter.types import QtHeaderStretch, QtHeaderToContents, QtScrollAlwaysOff, QtScrollAsNeeded, QtSizeExpanding
+from novelwriter.models.novelmodel import NovelModel
+from novelwriter.types import (
+    QtHeaderStretch,
+    QtHeaderToContents,
+    QtModShift,
+    QtScrollAlwaysOff,
+    QtScrollAsNeeded,
+    QtSizeExpanding,
+    QtWidgetShortcut,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +85,12 @@ class GuiNovelView(QWidget):
 
         self.setLayout(self.outerBox)
 
+        # Keyboard Shortcuts
+        self.keyOpenItem = QShortcut(self.novelTree)
+        self.keyOpenItem.setKeys(["Return", "Enter", "Shift+Return", "Shift+Enter"])
+        self.keyOpenItem.setContext(QtWidgetShortcut)
+        self.keyOpenItem.activated.connect(self.novelTree.openSelectedItem)
+
         # Function Mappings
         self.setActive = self.novelBar.setActive
         self.getSelectedHandle = self.novelTree.getSelectedHandle
@@ -90,9 +105,9 @@ class GuiNovelView(QWidget):
         logger.debug("Theme Update: GuiNovelView")
         self.novelBar.updateTheme()
 
-    def initSettings(self) -> None:
-        """Initialise GUI elements that depend on specific settings."""
-        self.novelTree.initSettings()
+    def initViewport(self) -> None:
+        """Initialise viewport settings."""
+        self.novelTree.initViewport()
 
     def clearNovelView(self) -> None:
         """Clear project-related GUI content."""
@@ -184,12 +199,12 @@ class GuiNovelToolBar(QWidget):
         self.novelValue.setSizePolicy(QtSizeExpanding, QtSizeExpanding)
         self.novelValue.novelSelectionChanged.connect(self.setCurrentRoot)
 
-        self.tbNovel = NIconToolButton(self, iSz)
+        self.tbNovel = NIconToolButton(self, iSz, "cls_novel:root")
         self.tbNovel.setToolTip(self.tr("Novel Root"))
         self.tbNovel.clicked.connect(self.novelValue.showPopup)
 
         # Refresh Button
-        self.tbRefresh = NIconToolButton(self, iSz)
+        self.tbRefresh = NIconToolButton(self, iSz, "refresh:change")
         self.tbRefresh.setToolTip(self.tr("Refresh"))
         self.tbRefresh.clicked.connect(self.forceRefreshNovelTree)
 
@@ -208,7 +223,7 @@ class GuiNovelToolBar(QWidget):
         self.aLastColSize = qtAddAction(self.mLastCol, self.tr("Column Size"))
         self.aLastColSize.triggered.connect(self._selectLastColumnSize)
 
-        self.tbMore = NIconToolButton(self, iSz)
+        self.tbMore = NIconToolButton(self, iSz, "more_vertical:default")
         self.tbMore.setToolTip(self.tr("More Options"))
         self.tbMore.setMenu(self.mMore)
 
@@ -223,7 +238,7 @@ class GuiNovelToolBar(QWidget):
 
         self.setLayout(self.outerBox)
 
-        self.updateTheme()
+        self.updateTheme(init=True)
 
         # Connect Signals
         SHARED.novelStructureChanged.connect(self._refreshNovelTree)
@@ -234,13 +249,14 @@ class GuiNovelToolBar(QWidget):
     #  Methods
     ##
 
-    def updateTheme(self) -> None:
+    def updateTheme(self, *, init: bool = False) -> None:
         """Update theme elements."""
         logger.debug("Theme Update: GuiNovelToolBar")
 
-        self.tbNovel.setThemeIcon("cls_novel", "root")
-        self.tbRefresh.setThemeIcon("refresh", "change")
-        self.tbMore.setThemeIcon("more_vertical", "default")
+        if not init:
+            self.tbNovel.refreshTheme()
+            self.tbRefresh.refreshTheme()
+            self.tbMore.refreshTheme()
 
         buttonStyle = SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON)
         self.tbNovel.setStyleSheet(buttonStyle)
@@ -336,7 +352,7 @@ class GuiNovelToolBar(QWidget):
         aLast = qtAddAction(self.mLastCol, actionLabel)
         aLast.setCheckable(True)
         aLast.setActionGroup(self.gLastCol)
-        aLast.triggered.connect(qtLambda(self.setLastColType, colType))
+        aLast.triggered.connect(qtWeakLambda(self.setLastColType, colType))
         self.aLastCol[colType] = aLast
 
 
@@ -374,12 +390,12 @@ class GuiNovelTree(NTreeView):
         self.middleClicked.connect(self._onMiddleClick)
 
         # Set custom settings
-        self.initSettings()
+        self.initViewport()
 
         logger.debug("Ready: GuiNovelTree")
 
-    def initSettings(self) -> None:
-        """Set or update tree widget settings."""
+    def initViewport(self) -> None:
+        """Initialise viewport settings."""
         if CONFIG.hideVScroll:
             self.setVerticalScrollBarPolicy(QtScrollAlwaysOff)
         else:
@@ -423,15 +439,18 @@ class GuiNovelTree(NTreeView):
         """Set the current novel model."""
         if tHandle and (model := SHARED.project.index.getNovelModel(tHandle)):
             if model is not self.model():
+                selectModelOld = self.selectionModel()
                 self.setModel(model)
                 self.resizeColumns()
+                if selectModelOld is not None:
+                    selectModelOld.setParent(None)
         else:
             self.clearContent()
 
     def setActiveHandle(self, tHandle: str | None) -> None:
         """Set the handle to be highlighted."""
         self._actHandle = tHandle
-        if viewport := self.viewport():
+        if viewport := self.viewport():  # pragma: no branch
             viewport.repaint()
 
     def setLastColType(self, colType: nwNovelExtra) -> None:
@@ -453,7 +472,7 @@ class GuiNovelTree(NTreeView):
 
     def resizeColumns(self) -> None:
         """Set the correct column sizes."""
-        if (header := self.header()) and (model := self._getModel()) and (vp := self.viewport()):
+        if (header := self.header()) and (model := self._getModel()) and (vp := self.viewport()):  # pragma: no branch
             header.setStretchLastSection(False)
             header.setMinimumSectionSize(SHARED.theme.baseIconHeight + 6)
             header.setSectionResizeMode(0, QtHeaderStretch)
@@ -483,18 +502,34 @@ class GuiNovelTree(NTreeView):
         self.resizeColumns()
 
     ##
+    #  Public Slots
+    ##
+
+    @pyqtSlot()
+    def openSelectedItem(self) -> None:
+        """Open the currently selected item, or view it if Shift is held."""
+        index = self.currentIndex()
+        if (model := self._getModel()) and (tHandle := model.handle(index)) and (sTitle := model.key(index)):
+            mode = nwDocMode.VIEW if QApplication.keyboardModifiers() == QtModShift else nwDocMode.EDIT
+            self.novelView.openDocumentRequest.emit(tHandle, mode, sTitle, False)
+
+    ##
     #  Private Slots
     ##
 
     @pyqtSlot(QModelIndex)
     def _onSingleClick(self, index: QModelIndex) -> None:
         """Process user single-click on an index."""
-        if index.isValid() and (model := self._getModel()):
-            if (tHandle := model.handle(index)) and (sTitle := model.key(index)):
-                self.novelView.selectedItemChanged.emit(tHandle)
-                if index.column() == model.columnCount(index) - 1:
-                    pos = self.mapToGlobal(self.visualRect(index).topRight())
-                    self._popMetaBox(pos, tHandle, sTitle)
+        if (
+            index.isValid()
+            and (model := self._getModel())
+            and (tHandle := model.handle(index))
+            and (sTitle := model.key(index))
+        ):
+            self.novelView.selectedItemChanged.emit(tHandle)
+            if index.column() == model.columns - 1:
+                pos = self.mapToGlobal(self.visualRect(index).topRight())
+                self._popMetaBox(pos, tHandle, sTitle)
 
     @pyqtSlot(QModelIndex)
     def _onDoubleClick(self, index: QModelIndex) -> None:
@@ -532,23 +567,23 @@ class GuiNovelTree(NTreeView):
                 label = trConst(nwLabels.OUTLINE_COLS[nwOutline.SYNOP])
                 synopsis = f"<p><b>{label}:</b> {synopsis}</p>"
 
-            lines = []
-            if head := SHARED.project.index.getItemHeading(tHandle, sTitle):
-                tags = head.getReferences()
-                appendTags(tags, nwKeyWords.TAG_KEY, lines)
-                appendTags(tags, nwKeyWords.POV_KEY, lines)
-                appendTags(tags, nwKeyWords.FOCUS_KEY, lines)
-                appendTags(tags, nwKeyWords.CHAR_KEY, lines)
-                appendTags(tags, nwKeyWords.PLOT_KEY, lines)
-                appendTags(tags, nwKeyWords.TIME_KEY, lines)
-                appendTags(tags, nwKeyWords.WORLD_KEY, lines)
-                appendTags(tags, nwKeyWords.OBJECT_KEY, lines)
-                appendTags(tags, nwKeyWords.ENTITY_KEY, lines)
-                appendTags(tags, nwKeyWords.CUSTOM_KEY, lines)
+            lines: list[str] = []
+            tags = head.getReferences()
+            appendTags(tags, nwKeyWords.TAG_KEY, lines)
+            appendTags(tags, nwKeyWords.POV_KEY, lines)
+            appendTags(tags, nwKeyWords.FOCUS_KEY, lines)
+            appendTags(tags, nwKeyWords.CHAR_KEY, lines)
+            appendTags(tags, nwKeyWords.PLOT_KEY, lines)
+            appendTags(tags, nwKeyWords.TIME_KEY, lines)
+            appendTags(tags, nwKeyWords.WORLD_KEY, lines)
+            appendTags(tags, nwKeyWords.OBJECT_KEY, lines)
+            appendTags(tags, nwKeyWords.ENTITY_KEY, lines)
+            appendTags(tags, nwKeyWords.CUSTOM_KEY, lines)
 
             text = ""
             if lines:
                 refs = "<br>".join(lines)
                 text = f"<p>{refs}</p>"
-            if tooltip := (text + synopsis or self.tr("No meta data")):
-                QToolTip.showText(qPos, tooltip)
+
+            tooltip = text + synopsis or self.tr("No meta data")
+            QToolTip.showText(qPos, tooltip)

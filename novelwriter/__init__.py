@@ -1,9 +1,6 @@
 """
-novelWriter – Init File
+novelWriter - Init File
 =======================
-
-File History:
-Created: 2018-09-22 [0.0.1]  main
 
 This file is a part of novelWriter
 Copyright (C) 2018 Veronica Berglyd Olsen and novelWriter contributors
@@ -20,7 +17,7 @@ General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
-"""  # ruff: ignore[multi-line-summary-first-line, missing-trailing-period, missing-terminal-punctuation, ambiguous-unicode-character-docstring]
+"""  # noqa
 
 from __future__ import annotations
 
@@ -50,8 +47,8 @@ __license__ = "GPLv3"
 __author__ = "Veronica Berglyd Olsen"
 __maintainer__ = "Veronica Berglyd Olsen"
 __email__ = "code@vkbo.net"
-__version__ = "26.1.2"
-__hexversion__ = "0x260102f0"
+__version__ = "26.2a2"
+__hexversion__ = "0x260200a2"
 __date__ = "2026-07-25"
 __status__ = "Stable"
 __domain__ = "novelwriter.io"
@@ -95,7 +92,7 @@ def main(sysArgs: list | None = None) -> GuiMain | None:
 
     # Valid Input Options
     shortOpt = "hvidc"
-    longOpt = ["help", "version", "info", "debug", "color", "style=", "config=", "data=", "meminfo"]
+    longOpt = ["help", "version", "info", "debug", "color", "config=", "data=", "meminfo"]
 
     helpMsg = (
         f"novelWriter {__version__} ({__date__})\n"
@@ -121,18 +118,16 @@ def main(sysArgs: list | None = None) -> GuiMain | None:
         " -d, --debug    Print debug output. Includes --info.\n"
         " -c, --color    Add ANSI colors to log output.\n"
         "     --meminfo  Show memory usage information in the status bar.\n"
-        "     --style=   Sets Qt style flag. Defaults to 'Fusion'.\n"
         "     --config=  Alternative config file.\n"
         "     --data=    Alternative user data path.\n"
     )
 
     # Defaults
-    logLevel = logging.WARN
+    logLevel = logging.WARNING
     fmtColor = FORCE_COLOR
     fmtLong = False
     confPath = None
     dataPath = None
-    qtStyle = "Fusion"
     cmdOpen = None
 
     # Parse Options
@@ -163,12 +158,12 @@ def main(sysArgs: list | None = None) -> GuiMain | None:
             fmtColor = not NO_COLOR
         elif inOpt == "--meminfo":
             CONFIG.memInfo = True
-        elif inOpt == "--style":
-            qtStyle = inArg
         elif inOpt == "--config":
             confPath = inArg
         elif inOpt == "--data":
             dataPath = inArg
+        else:  # pragma: no cover
+            pass
 
     if fmtColor:
         # This will overwrite the default level names, and also ensure that
@@ -251,7 +246,7 @@ def main(sysArgs: list | None = None) -> GuiMain | None:
     from novelwriter.guimain import GuiMain
 
     # Create App
-    app = _createApp(qtStyle)
+    app = _createApp()
 
     # Connect the exception handler before making the main GUI
     sys.excepthook = exceptionHandler
@@ -280,12 +275,12 @@ def main(sysArgs: list | None = None) -> GuiMain | None:
     sys.exit(app.exec())
 
 
-def _createApp(style: str) -> QApplication:
+def _createApp() -> QApplication:
     """Create the app. This is done in a function to make it easier to
     block app creation during testing.
     """
     app = QApplication([CONFIG.appName])
-    app.setStyle(style)
+    app.setStyle("Fusion")
     app.setApplicationName(CONFIG.appName)
     app.setApplicationVersion(__version__)
     app.setOrganizationDomain(__domain__)
