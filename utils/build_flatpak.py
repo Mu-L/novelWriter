@@ -43,7 +43,7 @@ def flatpak(args: argparse.Namespace) -> None:
 
     bldDir = ROOT_DIR / "dist_flatpak"
     bldPkg = f"novelwriter_{pkgVers}"
-    outDir = ROOT_DIR / bldPkg
+    outDir = bldDir / bldPkg
 
     # Set Up Folders
     # ==============
@@ -59,25 +59,31 @@ def flatpak(args: argparse.Namespace) -> None:
     # Build flatpak
     # ==============
 
-    manifestPath = "setup/flatpak/io.novelwriter.novelWriter.yml"
+    manifestPath = "setup/flatpak/io.novelwriter.novelwriter.yml"
     bundleFile = bldDir / f"novelWriter-{pkgVers}-linux.flatpak"
 
     try:
-        subprocess.call([
-            "flatpak-builder",
-            f"--repo={outDir}/repo",
-            "--install-deps-from=flathub",
-            "--force-clean",
-            outDir,
-            manifestPath,
-        ])
-        subprocess.call([
-            "flatpak",
-            "build-bundle",
-            f"{outDir}/repo",
-            bundleFile,
-            "io.novelwriter.novelWriter",
-        ])
+        subprocess.run(
+            [
+                "flatpak-builder",
+                f"--repo={outDir}/repo",
+                "--install-deps-from=flathub",
+                "--force-clean",
+                outDir,
+                manifestPath,
+            ],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "flatpak",
+                "build-bundle",
+                f"{outDir}/repo",
+                bundleFile,
+                "io.novelwriter.novelwriter",
+            ],
+            check=True,
+        )
     except Exception as exc:
         print("Flatpak build: FAILED")
         print("")

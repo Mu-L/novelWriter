@@ -1,12 +1,9 @@
 #! /bin/sh
 # uses https://github.com/flatpak/flatpak-builder-tools/blob/master/pip/flatpak-pip-generator
-
-cp ../requirements.txt .
-sed -e '/pyqt5/s/^/#/g' -i requirements.txt
-curl -LO https://github.com/flatpak/flatpak-builder-tools/raw/master/pip/flatpak-pip-generator
-python3 flatpak-pip-generator \
-    --requirements-file=requirements.txt \
-    --runtime=com.riverbankcomputing.PyQt.BaseApp//5.15-22.08 \
+curl -LO https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py
+uv run flatpak-pip-generator.py \
+    --pyproject-file=../../pyproject.toml \
+    --ignore-pkg=pyqt6 \
+    --runtime=com.riverbankcomputing.PyQt.BaseApp//6.11 \
     -o pypi-deps
-rm requirements.txt
-rm flatpak-pip-generator
+rm flatpak-pip-generator.py
