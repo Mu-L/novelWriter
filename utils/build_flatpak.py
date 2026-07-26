@@ -43,11 +43,12 @@ from utils.common import (
     writeFile,
 )
 
-PIP_GEN_URL = "https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py"
-PYQT_BASEAPP_ID = "com.riverbankcomputing.PyQt.BaseApp"
+PIP_GEN_COMMIT = "737c0085912f9f7dabf9341d4608e2a77a51a73a"
+PIP_GEN_FILE = "pip/flatpak-pip-generator.py"
+PIP_GEN_URL = f"https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/{PIP_GEN_COMMIT}/{PIP_GEN_FILE}"
 ENCHANT_RELEASE_API = "https://api.github.com/repos/rrthomas/enchant/releases/tags/v{version}"
-NOVELWRITER_REPO_URL = "https://github.com/vkbo/novelWriter.git"
-NOVELWRITER_COMMIT_API = "https://api.github.com/repos/vkbo/novelWriter/commits/v{version}"
+NW_REPO_URL = "https://github.com/vkbo/novelWriter.git"
+NW_COMMIT_API = "https://api.github.com/repos/vkbo/novelWriter/commits/v{version}"
 FLATHUB_FILES = ("io.novelwriter.novelwriter.yml", "pypi-deps.json", "enchant.json", "novelwriter.appdata.xml")
 
 
@@ -100,9 +101,13 @@ def processEnchant(bldDir: Path, enchantVersion: str) -> None:
     print("")
 
 
-def processDependencies(bldDir: Path, qtVersion: str) -> None:
+def processDependencies(bldDir: Path) -> None:
     """Generate the pypi-deps.json file listing the flatpak build's PyPI
     dependencies, i.e. everything not already provided by the PyQt BaseApp.
+
+    No --runtime is passed to the generator: it's only needed to resolve
+    platform-specific wheels, and every dependency fetched this way is
+    currently a universal py3-none-any wheel.
     """
     print("Generate PyPI Dependencies")
     print("==========================")
@@ -126,8 +131,6 @@ def processDependencies(bldDir: Path, qtVersion: str) -> None:
                 str(ROOT_DIR / "pyproject.toml"),
                 "--ignore-pkg",
                 "pyqt6",
-                "--runtime",
-                f"{PYQT_BASEAPP_ID}//{qtVersion}",
                 "-o",
                 str(outFile),
             ],
@@ -174,7 +177,7 @@ def flatpak(args: argparse.Namespace) -> None:
     bldDir.mkdir(exist_ok=True)
     outDir.mkdir(exist_ok=True)
 
-    processDependencies(bldDir, qtVersion)
+    processDependencies(bldDir)
     processEnchant(bldDir, enchantVersion)
     writeFile(bldDir / "novelwriter.appdata.xml", appdataXml())
 
@@ -253,7 +256,7 @@ def flathub(args: argparse.Namespace) -> None:
     bldDir = ROOT_DIR / "dist_flathub"
     bldDir.mkdir(exist_ok=True)
 
-    processDependencies(bldDir, qtVersion)
+    processDependencies(bldDir)
     processEnchant(bldDir, enchantVersion)
     writeFile(bldDir / "novelwriter.appdata.xml", appdataXml())
 
@@ -261,7 +264,7 @@ def flathub(args: argparse.Namespace) -> None:
     print("======================")
     print("")
 
-    commitApiUrl = NOVELWRITER_COMMIT_API.format(version=numVers)
+    commitApiUrl = NW_COMMIT_API.format(version=numVers)
     try:
         print(f"Checking: {commitApiUrl}")
         with urllib.request.urlopen(commitApiUrl) as response:
@@ -288,7 +291,7 @@ def flathub(args: argparse.Namespace) -> None:
     for module in manifest["modules"]:
         if isinstance(module, dict) and module.get("name") == "novelWriter":
             module["sources"] = [
-                {"type": "git", "url": NOVELWRITER_REPO_URL, "tag": tag, "commit": commit},
+                {"type": "git", "url": NW_REPO_URL, "tag": tag, "commit": commit},
                 {"type": "file", "path": "novelwriter.appdata.xml"},
             ]
             break
