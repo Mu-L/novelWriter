@@ -197,6 +197,7 @@ def flatpak(args: argparse.Namespace) -> None:
         subprocess.run(
             [
                 "flatpak-builder",
+                "--user",
                 f"--repo={outDir}/repo",
                 "--install-deps-from=flathub",
                 "--force-clean",
