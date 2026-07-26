@@ -55,12 +55,15 @@ def cleanBuildDirs(args: argparse.Namespace) -> None:
     print("")
 
     folders = [
+        ROOT_DIR / ".flatpak-builder",
         ROOT_DIR / "build_bin",
         ROOT_DIR / "build",
         ROOT_DIR / "dist_appimage",
         ROOT_DIR / "dist_bin",
         ROOT_DIR / "dist_deb",
         ROOT_DIR / "dist_doc",
+        ROOT_DIR / "dist_flathub",
+        ROOT_DIR / "dist_flatpak",
         ROOT_DIR / "dist",
         ROOT_DIR / "novelWriter.egg-info",
     ]
