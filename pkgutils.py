@@ -217,9 +217,7 @@ if __name__ == "__main__":
     cmdBuildAppImage.set_defaults(func=utils.build_appimage.appImage)
 
     # Build Flatpak
-    cmdBuildFlatpak = parsers.add_parser(
-        "build-flatpak", help=("Build a Flatpak image.")
-    )
+    cmdBuildFlatpak = parsers.add_parser("build-flatpak", help="Build a Flatpak image.")
     cmdBuildFlatpak.set_defaults(func=utils.build_flatpak.flatpak)
 
     # Build Windows Inno Setup Installer

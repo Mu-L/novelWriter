@@ -1,5 +1,5 @@
 """
-novelWriter – Flatpak Build
+novelWriter - Flatpak Build
 ===========================
 
 This file is a part of novelWriter
@@ -17,9 +17,11 @@ General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
-"""
+"""  # noqa
+
 from __future__ import annotations
 
+import argparse
 import datetime
 import shutil
 import subprocess
@@ -28,9 +30,8 @@ import sys
 from utils.common import ROOT_DIR, extractVersion, makeCheckSum, stripVersion, toUpload
 
 
-def flatpak() -> None:
-    """build a flatpak bundle locally (not for flathub)."""
-
+def flatpak(args: argparse.Namespace) -> None:
+    """Build a flatpak bundle locally (not for flathub)."""
     print("")
     print("Build flatpak")
     print("==============")
@@ -63,11 +64,19 @@ def flatpak() -> None:
 
     try:
         subprocess.call([
-            "flatpak-builder", f"--repo={outDir}/repo", "--install-deps-from=flathub",
-            "--force-clean", outDir, manifestPath
+            "flatpak-builder",
+            f"--repo={outDir}/repo",
+            "--install-deps-from=flathub",
+            "--force-clean",
+            outDir,
+            manifestPath,
         ])
         subprocess.call([
-            "flatpak", "build-bundle", f"{outDir}/repo", bundleFile, "io.novelwriter.novelWriter",
+            "flatpak",
+            "build-bundle",
+            f"{outDir}/repo",
+            bundleFile,
+            "io.novelwriter.novelWriter",
         ])
     except Exception as exc:
         print("Flatpak build: FAILED")
