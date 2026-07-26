@@ -14,3 +14,10 @@ jobs:
     secrets: inherit
     permissions:
       contents: read
+
+  buildLinux-Flatpak:
+    needs: buildAssets
+    uses: ./.github/workflows/part_flatpak.yml
+    secrets: inherit
+    permissions:
+      contents: read
