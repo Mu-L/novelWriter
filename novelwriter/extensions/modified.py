@@ -438,6 +438,7 @@ class NTabBar(QTabBar):
                 painter.fillRect(rect, palette.alternateBase())
                 painter.setPen(palette.highlight().color())
                 painter.drawLine(rL, rT, rR, rT)
+                painter.setPen(SHARED.theme.selectedText)
             else:
                 painter.setPen(palette.text().color())
 
