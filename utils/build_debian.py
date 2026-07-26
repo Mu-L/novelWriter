@@ -1,5 +1,5 @@
 """
-novelWriter – Debian Build
+novelWriter - Debian Build
 ==========================
 
 This file is a part of novelWriter
@@ -17,27 +17,71 @@ General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
-"""
+"""  # noqa
+
 from __future__ import annotations
 
 import argparse
 import datetime
 import email.utils
 import shutil
-import subprocess
 import sys
 
 from utils.common import (
-    ROOT_DIR, SETUP_DIR, checkAssetsExist, copyPackageFiles, copySourceCode,
-    extractVersion, makeCheckSum, toUpload, writeFile
+    MIN_PY_VERSION,
+    MIN_QT_VERS,
+    ROOT_DIR,
+    SETUP_DIR,
+    checkAssetsExist,
+    copyPackageFiles,
+    copySourceCode,
+    copyTestCode,
+    extractVersion,
+    makeCheckSum,
+    systemCall,
+    toUpload,
+    writeFile,
 )
 
 SIGN_KEY = "D6A9F6B8F227CF7C6F6D1EE84DBBE4B734B0BD08"
 
+DEB_STABLE = 13
+DEB_CONTROL = f"""
+Source: novelwriter
+Maintainer: Veronica Berglyd Olsen <code@vkbo.net>
+Section: text
+Priority: optional
+Build-Depends:
+  dh-python,
+  pybuild-plugin-pyproject,
+  python3-build,
+  python3-setuptools,
+  python3-all,
+  debhelper (>= 9),
+  %dependencies%,
+  %test-dependencies%
+Standards-Version: 4.5.1
+Homepage: https://novelwriter.io
+X-Python3-Version: >= {MIN_PY_VERSION}
+
+Package: novelwriter
+Architecture: all
+Depends:
+  ${{misc:Depends}},
+  ${{python3:Depends}},
+  %dependencies%
+Description: A plain text editor for planning and writing novels
+"""
+
 
 def makeDebianPackage(
-    signKey: str | None = None, sourceBuild: bool = False, distName: str = "unstable",
-    buildName: str = "", forLaunchpad: bool = False
+    signKey: str | None = None,
+    sourceBuild: bool = False,
+    distName: str = "unstable",
+    buildName: str = "",
+    debianVersion: int = 13,
+    forLaunchpad: bool = False,
+    oldLicense: bool = False,
 ) -> str:
     """Build a Debian package."""
     print("")
@@ -55,10 +99,15 @@ def makeDebianPackage(
     pkgDate = email.utils.format_datetime(relDate.replace(hour=12, tzinfo=None))
     print("")
 
+    pkgDist = ""
     if forLaunchpad:
         pkgVers = numVers.replace("a", "~a").replace("b", "~b").replace("rc", "~rc")
     else:
         pkgVers = numVers
+        if debianVersion < DEB_STABLE:
+            pkgDist = "-oldstable"
+        elif debianVersion > DEB_STABLE:
+            pkgDist = "-testing"
     pkgVers = f"{pkgVers}+{buildName}" if buildName else pkgVers
 
     # Set Up Folder
@@ -92,12 +141,13 @@ def makeDebianPackage(
     print("")
 
     copySourceCode(outDir)
+    copyTestCode(outDir)
 
     print("")
     print("Copying or generating additional files ...")
     print("")
 
-    copyPackageFiles(outDir, setupPy=True)
+    copyPackageFiles(outDir, oldLicense=oldLicense)
 
     # Copy/Write Debian Files
     # =======================
@@ -105,11 +155,35 @@ def makeDebianPackage(
     shutil.copytree(SETUP_DIR / "debian", debDir)
     print("Copied: debian/*")
 
-    writeFile(debDir / "changelog", (
-        f"novelwriter ({pkgVers}) {distName}; urgency=low\n\n"
-        f"  * Update to version {pkgVers}\n\n"
-        f" -- Veronica Berglyd Olsen <code@vkbo.net>  {pkgDate}\n"
-    ))
+    depend = [
+        f"python3 (>= {MIN_PY_VERSION})",
+        f"python3-pyqt6 (>= {MIN_QT_VERS})",
+        f"python3-pyqt6.qtsvg (>= {MIN_QT_VERS})",
+        "python3-enchant (>= 2.0)",
+        f"qt6-image-formats-plugins (>= {MIN_QT_VERS})",
+    ]
+    if debianVersion > 12:
+        depend.append(f"qt6-svg-plugins (>= {MIN_QT_VERS})")
+
+    testDepend = [
+        "python3-pytest (>= 6.0)",
+        "python3-pytestqt",
+        "python3-pytest-timeout",
+    ]
+
+    control = DEB_CONTROL.replace("%dependencies%", ",\n  ".join(depend))
+    control = control.replace("%test-dependencies%", ",\n  ".join(testDepend))
+    writeFile(debDir / "control", control)
+    print("Wrote:  debian/control")
+
+    writeFile(
+        debDir / "changelog",
+        (
+            f"novelwriter ({pkgVers}) {distName}; urgency=low\n\n"
+            f"  * Update to version {pkgVers}\n\n"
+            f" -- Veronica Berglyd Olsen <code@vkbo.net>  {pkgDate}\n"
+        ),
+    )
     print("Wrote:  debian/changelog")
 
     # Copy/Write Data Files
@@ -134,15 +208,17 @@ def makeDebianPackage(
         signArgs = [f"-k{signKey}"]
 
     if sourceBuild:
-        subprocess.call(["debuild", "-S"] + signArgs, cwd=outDir)
+        systemCall(["debuild", "-S", *signArgs], cwd=outDir)
         toUpload(bldDir / f"{bldPkg}.tar.xz")
     else:
-        subprocess.call(["dpkg-buildpackage"] + signArgs, cwd=outDir)
-        shutil.copyfile(bldDir / f"{bldPkg}.tar.xz", bldDir / f"{bldPkg}.debian.tar.xz")
-        toUpload(bldDir / f"{bldPkg}.debian.tar.xz")
-        toUpload(bldDir / f"{bldPkg}_all.deb")
-        toUpload(makeCheckSum(f"{bldPkg}.debian.tar.xz", cwd=bldDir))
-        toUpload(makeCheckSum(f"{bldPkg}_all.deb", cwd=bldDir))
+        systemCall(["dpkg-buildpackage", *signArgs], cwd=outDir)
+        shutil.copyfile(bldDir / f"{bldPkg}.tar.xz", bldDir / f"{bldPkg}{pkgDist}.debian.tar.xz")
+        if pkgDist:
+            shutil.copyfile(bldDir / f"{bldPkg}_all.deb", bldDir / f"{bldPkg}{pkgDist}_all.deb")
+        toUpload(bldDir / f"{bldPkg}{pkgDist}.debian.tar.xz")
+        toUpload(bldDir / f"{bldPkg}{pkgDist}_all.deb")
+        toUpload(makeCheckSum(f"{bldPkg}{pkgDist}.debian.tar.xz", cwd=bldDir))
+        toUpload(makeCheckSum(f"{bldPkg}{pkgDist}_all.deb", cwd=bldDir))
 
     print("")
     print("Done!")
@@ -156,17 +232,17 @@ def makeDebianPackage(
 
 
 def debian(args: argparse.Namespace) -> None:
-    """Build a .deb package"""
+    """Build a .deb package."""
     if sys.platform != "linux":
         print("ERROR: Command 'build-deb' can only be used on Linux")
         sys.exit(1)
     signKey = SIGN_KEY if args.sign else None
-    makeDebianPackage(signKey)
-    return
+    makeDebianPackage(signKey, debianVersion=12)
+    makeDebianPackage(signKey, debianVersion=13)
 
 
 def launchpad(args: argparse.Namespace) -> None:
-    """Wrapper for building Debian packages for Launchpad."""
+    """Build Debian packages for Launchpad."""
     if sys.platform != "linux":
         print("ERROR: Command 'build-ubuntu' can only be used on Linux")
         sys.exit(1)
@@ -182,31 +258,33 @@ def launchpad(args: argparse.Namespace) -> None:
         bldNum = "0"
 
     distLoop = [
-        ("24.04", "noble"),
-        ("24.10", "oracular"),
-        ("25.04", "plucky"),
+        ("24.04", "noble", 12, True),
+        ("26.04", "resolute", 13, False),
+        ("26.10", "stonking", 13, False),
     ]
 
     print("Building Ubuntu packages for:")
     print("")
-    for distNum, codeName in distLoop:
+    for distNum, codeName, _, _ in distLoop:
         print(f" * Ubuntu {distNum} {codeName.title()}")
     print("")
 
     signKey = SIGN_KEY if args.sign else None
 
-    print(f"Sign Key: {str(signKey)}")
+    print(f"Sign Key: {signKey!s}")
     print("")
 
     dputCmd = []
-    for distNum, codeName in distLoop:
+    for distNum, codeName, debVer, oldLicense in distLoop:
         buildName = f"ubuntu{distNum}.{bldNum}"
         dCmd = makeDebianPackage(
             signKey=signKey,
             sourceBuild=True,
             distName=codeName,
             buildName=buildName,
+            debianVersion=debVer,
             forLaunchpad=True,
+            oldLicense=oldLicense,
         )
         dputCmd.append(dCmd)
 
@@ -216,5 +294,3 @@ def launchpad(args: argparse.Namespace) -> None:
     for dCmd in dputCmd:
         print(f" > {dCmd}")
     print("")
-
-    return

@@ -1,0 +1,54 @@
+# novelWriter Agent Instructions
+
+## AI Policy
+
+- This repository does not allow large AI-generated contributions, and such PRs will be rejected
+- Code can be written with AI assistance, but it must stay concise, performant, and match the existing code quality
+
+## Scope
+
+- This repository is `novelWriter`, a Python application using PyQt6 (Qt6)
+- The root import path for application code is `novelwriter`
+- This code base uses British English as the main language for documents, docstrings, and comments
+- This repository uses `uv` for running python code, tests. and tools
+
+## Working Rules
+
+- Use camelCase naming to match Qt-style conventions
+- Single-sentence inline comments should not end with punctuation
+- Code comments and docstrings should be concise and avoid overly long explanations and context
+- For Qt enums and related Qt constants, prefer aliases from `novelwriter/types.py` when available
+- When connecting Qt signals and passing parameters, prefer `qtLambda` or `gqtWakLambda` from `novelwriter/common.py` over inline lambdas where it fits the existing pattern
+- The `i18n/*.ts` files are auto-generated and must never be edited manually
+- Do not edit files under `sample/` and `tests/_lipsum/` unless explicitly requested unstaged changes under those folders are expected test/runtime churn (timestamps, counters, hashes) and ignore them completely during reviews, status checks, and commit preparation unless explicitly requested
+
+## Codebase Navigation
+
+- Application code lives under `novelwriter/`; everything else is supporting code and build scripts
+- Manuscript build getter key strings used with `BuildSettings` are defined in `novelwriter/manuscript/buildsettings.py`
+- For format changes, check adjacent implementations before modifying shared logic; format classes are write-only and do not need to read the same file formats
+
+## Validation
+
+- Run `uv run ruff format`, `uv run ruff check`, and `uv run pyright` on touched files when making code changes
+- Run the most relevant tests for the changed area when available
+- If tests are missing for the touched path, add tests alongside the change when practical but keep the topical test structure instead of targeted small test
+- Always run tests with `QT_QPA_PLATFORM=offscreen` in this repository as `QT_QPA_PLATFORM=offscreen uv run pytest ...`
+- Avoid adding test-specific code to the main code base
+- `CONFIG` is fully reset before every test by the autouse `functionFixture` fixture in `tests/conftest.py`; never save/restore `CONFIG.*` values in a test, just set them directly
+- Use the `coverage` tool directly when checking test coverage, not via `pytest-cov`
+- Both line and branch test coverage should be complete and at 100%
+
+## Documentation
+
+- Link to existing docs instead of duplicating them
+- Keep agent guidance concise and specific to repository conventions
+- Use title case for headings and British English spelling throughout
+
+## Changelog
+
+- Fill in a release's `CHANGELOG.md` entry from its closed GitHub milestone (issues and merged PRs), grouped under headers matching nearby past releases (e.g. Bugfixes, Features, Improvements, User Interface, Other Changes, Code Maintenance)
+- **Bugfixes must only list fixes for bugs from previous releases.** If a fix addresses a regression from a feature added in the same release, fold a short note into that feature's own bullet instead of adding a separate Bugfixes entry
+- Group follow-up/fixup PRs for one feature into a single bullet citing all PR numbers, rather than one bullet per PR
+- Skip trivial dev/release-process PRs (version bumps, branch merges, lockfile bumps) and any fix that duplicates one already published in an interim patch release
+- Credit non-`vkbo` contributors by `@handle`
