@@ -28,10 +28,7 @@ i18n/*.qph
 # Documentation
 /docs/build/
 /docs/source/locales/**/*.mo
-/novelwriter/assets/help/
 /novelwriter/assets/manual*.pdf
-*.qch
-*.qhc
 .~lock.*
 
 # Python Temp
@@ -59,7 +56,6 @@ __pycache__
 /coverage.*
 
 # Other
-/test.py
 .config
 .local
 *.patch
@@ -67,7 +63,6 @@ __pycache__
 # IDE
 .vscode
 .ruff_cache
-.claude/
 
 # Debug
 /debug/
