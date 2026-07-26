@@ -1,6 +1,14 @@
 name: Part-Assets
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      icons-free:
+        required: true
+        type: boolean
+      icons-non-free:
+        required: true
+        type: boolean
 
 jobs:
   buildAssets:
@@ -30,7 +38,16 @@ jobs:
       - name: Build Assets
         run: |
           uv run --no-sync pkgutils.py build-assets
-          uv run --no-sync pkgutils.py icons optional
+
+      - name: Build Free Icons
+        if: ${{ inputs.icons-free }}
+        run: |
+          uv run --no-sync pkgutils.py icons free
+
+      - name: Build Non-Free Icons
+        if: ${{ inputs.icons-non-free }}
+        run: |
+          uv run --no-sync pkgutils.py icons non-free
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
