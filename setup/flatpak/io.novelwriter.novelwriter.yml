@@ -11,21 +11,20 @@ build-options:
   env:
     - BASEAPP_REMOVE_WEBENGINE=1
 finish-args:
-  # X11 + XShm access
+  # X11 + XShm access, as a Wayland fallback
   - --share=ipc
-  - --socket=x11
-  # Wayland access
+  - --socket=fallback-x11
   - --socket=wayland
   # Needs to talk to the network
   - --share=network
-  # Needs to save files locally
-  - --filesystem=host
   # OpenGL rendering
   - --device=dri
 modules:
   - pypi-deps.json
   - name: enchant
     buildsystem: autotools
+    post-install:
+      - install -Dm644 -T COPYING.LIB ${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/enchant-COPYING.LIB
     sources:
       - type: archive
         url: https://github.com/rrthomas/enchant/releases/download/v2.8.19/enchant-2.8.19.tar.gz
@@ -35,6 +34,8 @@ modules:
     build-commands:
       - python3 -m build --wheel --no-isolation
       - python3 -m installer --prefix=${FLATPAK_DEST} dist/*.whl
+
+      # XDG Files
       - install -Dm644 setup/data/novelwriter.desktop -T ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       - sed -i "s/Icon=novelwriter/Icon=${FLATPAK_ID}/" ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       - for size in 16x16 24x24 32x32 48x48 64x64 128x128 256x256 512x512; do
@@ -45,6 +46,10 @@ modules:
       - install -Dm644 -T setup/data/hicolor/scalable/mimetypes/application-x-novelwriter-project.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/mimetypes/application-x-novelwriter-project.svg;
       - install -Dm644 -T novelwriter.appdata.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
       - sed -i "s/novelwriter.desktop/${FLATPAK_ID}.desktop/" ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+
+      # License Files
+      - install -Dm644 -T LICENSE.md ${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/LICENSE.md
+      - install -Dm644 -T setup/LICENSE-Apache-2.0.txt ${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/LICENSE-Apache-2.0.txt
     sources:
       - type: file
         path: ../../pyproject.toml
