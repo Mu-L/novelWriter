@@ -174,6 +174,7 @@ class GuiTheme:
         "_svgColors",
         "_syntaxList",
         "accentCol",
+        "accentText",
         "baseButtonHeight",
         "baseIconHeight",
         "baseIconSize",
@@ -205,7 +206,6 @@ class GuiTheme:
         "isDarkTheme",
         "pushButtonIconSize",
         "searchCol",
-        "selectedText",
         "sidebarIconSize",
         "syntaxTheme",
         "textNHeight",
@@ -225,7 +225,7 @@ class GuiTheme:
         self.helpText = QColor(0, 0, 0)
         self.fadedText = QColor(0, 0, 0)
         self.errorText = QColor(255, 0, 0)
-        self.selectedText = QColor(0, 0, 255)
+        self.accentText = QColor(0, 0, 255)
         self.accentCol = QColor(255, 0, 255)  # Needed until we move to Qt 6.6
         self.toggleCol = QColor(0, 0, 255)
         self.searchCol = QColor(255, 196, 0, 96)
@@ -500,7 +500,7 @@ class GuiTheme:
             self.helpText = self._readColor(section, "helpText")
             self.fadedText = self._readColor(section, "fadedText")
             self.errorText = self._readColor(section, "errorText")
-            self.selectedText = self._readColor(section, "selectedText")
+            self.accentText = self._readColor(section, "accentText")
             self.toggleCol = self._readColor(section, "toggle")
             self.searchCol = self._readColor(section, "searchMatch")
 
