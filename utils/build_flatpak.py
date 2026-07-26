@@ -27,7 +27,7 @@ import shutil
 import subprocess
 import sys
 
-from utils.common import ROOT_DIR, extractVersion, makeCheckSum, stripVersion, toUpload
+from utils.common import ROOT_DIR, appdataXml, extractVersion, makeCheckSum, stripVersion, toUpload, writeFile
 
 
 def flatpak(args: argparse.Namespace) -> None:
@@ -55,6 +55,8 @@ def flatpak(args: argparse.Namespace) -> None:
 
     bldDir.mkdir(exist_ok=True)
     outDir.mkdir(exist_ok=True)
+
+    writeFile(bldDir / "novelwriter.appdata.xml", appdataXml())
 
     # Build flatpak
     # ==============
