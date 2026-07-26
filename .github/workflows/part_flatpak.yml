@@ -34,6 +34,7 @@ jobs:
       - name: Build Flatpak
         id: build
         run: |
+          echo "BUILD_VERSION=$(uv run pkgutils.py version)" >> $GITHUB_OUTPUT
           uv run --no-sync pkgutils.py build-flatpak
 
       - name: Upload Artifacts
