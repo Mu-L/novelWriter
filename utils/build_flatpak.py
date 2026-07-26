@@ -112,8 +112,10 @@ def processDependencies(bldDir: Path, qtVersion: str) -> None:
     outFile = bldDir / "pypi-deps"
 
     try:
-        print(f"Downloading: {PIP_GEN_URL}")
-        urllib.request.urlretrieve(PIP_GEN_URL, genScript)
+        if not genScript.exists():
+            print(f"Downloading: {PIP_GEN_URL}")
+            urllib.request.urlretrieve(PIP_GEN_URL, genScript)
+
         print("")
         subprocess.run(
             [

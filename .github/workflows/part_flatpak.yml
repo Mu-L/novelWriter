@@ -6,20 +6,24 @@ jobs:
   buildLinux-Flatpak:
     runs-on: ubuntu-latest
     steps:
-      - name: Python Setup
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-          architecture: x64
-
       - name: Install Packages
         run: |
-          sudo apt update
-          sudo apt install -y flatpak flatpak-builder
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder python3-pyyaml
           sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
       - name: Checkout Source
         uses: actions/checkout@v7
+
+      - name: Install UV and Python
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Install Dependencies
+        run: |
+          uv sync --no-dev --group build
 
       - name: Download Artifacts
         uses: actions/download-artifact@v8
@@ -30,8 +34,7 @@ jobs:
       - name: Build Flatpak
         id: build
         run: |
-          echo "BUILD_VERSION=$(python pkgutils.py version)" >> $GITHUB_OUTPUT
-          sudo python pkgutils.py build-flatpak
+          uv run --no-sync pkgutils.py build-flatpak
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
