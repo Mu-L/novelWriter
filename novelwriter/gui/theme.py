@@ -705,6 +705,7 @@ class GuiTheme:
         self.helpText = dimmed
         self.fadedText = faded
         self.errorText = red
+        self.accentText = blue
 
         # Accent Colours
         self.accentCol = purple
