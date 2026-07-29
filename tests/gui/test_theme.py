@@ -827,7 +827,8 @@ def testGuiTheme_CheckTheme(theme):
             "fadedText",
             "errorText",
             "accentText",
-            "toggle",
+            "activeButton",
+            "activeBase",
             "searchMatch",
         ],
         "Syntax": [

@@ -332,7 +332,7 @@ class NIconToolButton(QToolButton):
         """Overload the checkable setter to change the button style."""
         super().setCheckable(checkable)
         if checkable:
-            col = SHARED.theme.toggleCol.name(QtHexArgb)
+            col = SHARED.theme.activeButton.name(QtHexArgb)
             self.setStyleSheet(f"QToolButton:checked {{background: {col};}}")
 
     def setThemeIcon(self, icon: str) -> None:
@@ -345,7 +345,7 @@ class NIconToolButton(QToolButton):
         if self._icon:  # pragma: no branch
             self.setIcon(SHARED.theme.getIcon(self._icon))
         if self.isCheckable():
-            col = SHARED.theme.toggleCol.name(QtHexArgb)
+            col = SHARED.theme.activeButton.name(QtHexArgb)
             self.setStyleSheet(f"QToolButton:checked {{background: {col};}}")
 
 
@@ -435,7 +435,7 @@ class NTabBar(QTabBar):
                 continue
 
             if i == selected:
-                painter.fillRect(rect, palette.alternateBase())
+                painter.fillRect(rect, SHARED.theme.activeBase)
                 painter.setPen(SHARED.theme.accentText)
                 painter.drawLine(rL, rT, rR, rT)
             else:

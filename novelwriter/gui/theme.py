@@ -175,6 +175,8 @@ class GuiTheme:
         "_syntaxList",
         "accentCol",
         "accentText",
+        "activeBase",
+        "activeButton",
         "baseButtonHeight",
         "baseIconHeight",
         "baseIconSize",
@@ -210,7 +212,6 @@ class GuiTheme:
         "syntaxTheme",
         "textNHeight",
         "textNWidth",
-        "toggleCol",
         "toolButtonIconSize",
     )
 
@@ -227,7 +228,8 @@ class GuiTheme:
         self.errorText = QColor(255, 0, 0)
         self.accentText = QColor(0, 0, 255)
         self.accentCol = QColor(255, 0, 255)  # Needed until we move to Qt 6.6
-        self.toggleCol = QColor(0, 0, 255)
+        self.activeButton = QColor(0, 0, 255)
+        self.activeBase = QColor(225, 225, 225)
         self.searchCol = QColor(255, 196, 0, 96)
 
         # Theme Data
@@ -501,7 +503,8 @@ class GuiTheme:
             self.fadedText = self._readColor(section, "fadedText")
             self.errorText = self._readColor(section, "errorText")
             self.accentText = self._readColor(section, "accentText")
-            self.toggleCol = self._readColor(section, "toggle")
+            self.activeButton = self._readColor(section, "activeButton")
+            self.activeBase = self._readColor(section, "activeBase")
             self.searchCol = self._readColor(section, "searchMatch")
 
         # Syntax
@@ -690,6 +693,7 @@ class GuiTheme:
 
         # Reset GUI Palette
         base = palette.color(QPalette.ColorRole.Base)
+        altBase = palette.color(QPalette.ColorRole.AlternateBase)
         default = palette.color(QPalette.ColorRole.Text)
         faded = QColor(128, 128, 128)
         dimmed = QColor(130, 130, 130) if isDark else QColor(190, 190, 190)
@@ -709,7 +713,8 @@ class GuiTheme:
 
         # Accent Colours
         self.accentCol = purple
-        self.toggleCol = blue
+        self.activeButton = blue
+        self.activeBase = altBase
         self.searchCol = QColor(orange)
         self.searchCol.setAlpha(96)
 
