@@ -56,7 +56,9 @@ from novelwriter.types import (
     QtColDisabled,
     QtColInactive,
     QtFontSemiBold,
-    QtHexArgb,
+    QtIconNormal,
+    QtIconOff,
+    QtIconOn,
     QtPaintAntiAlias,
     QtTransparent,
 )
@@ -65,9 +67,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
-STYLES_MIN_TOOLBUTTON = "minimalToolButton"
-STYLES_BIG_TOOLBUTTON = "bigToolButton"
 
 STANDARD_BUTTONS = {
     nwStandardButton.OK: (QT_TRANSLATE_NOOP("Button", "OK"), "btn_ok:action"),
@@ -171,7 +170,6 @@ class GuiTheme:
         "_lightThemes",
         "_meta",
         "_qColors",
-        "_styleSheets",
         "_svgColors",
         "_syntaxList",
         "accentCol",
@@ -239,7 +237,6 @@ class GuiTheme:
         self._currentTheme = ""
         self._guiPalette = QPalette()
         self._allThemes: dict[str, ThemeEntry] = {}
-        self._styleSheets: dict[str, str] = {}
         self._svgColors: dict[str, bytes] = {}
         self._qColors: dict[str, QColor] = {}
 
@@ -607,13 +604,8 @@ class GuiTheme:
         # Finalise
         QApplication.setPalette(self._guiPalette)
         QToolTip.setPalette(self._guiPalette)  # Fixes an issue with desktop overrides on Linux, see #2871
-        self._buildStyleSheets(self._guiPalette)
 
         return True
-
-    def getStyleSheet(self, name: str) -> str:
-        """Load a standard style sheet."""
-        return self._styleSheets.get(name, "")
 
     def parseColor(self, value: str, default: QColor = QtBlack) -> QColor:
         """Parse a string as a colour value."""
@@ -781,28 +773,6 @@ class GuiTheme:
         """Set a palette colour value from a config string."""
         self._guiPalette.setBrush(value, self._readColor(section, name))
 
-    def _buildStyleSheets(self, palette: QPalette) -> None:
-        """Build default style sheets."""
-        self._styleSheets = {}
-
-        text = palette.text().color()
-        text.setAlpha(48)
-        tCol = text.name(QtHexArgb)
-
-        # Minimal Tool Button
-        self._styleSheets[STYLES_MIN_TOOLBUTTON] = (
-            "QToolButton {padding: 2px; margin: 0; border: none; background: transparent;} "
-            f"QToolButton:hover {{border: none; background: {tCol};}} "
-            "QToolButton::menu-indicator {image: none;} "
-        )
-
-        # Big Tool Button
-        self._styleSheets[STYLES_BIG_TOOLBUTTON] = (
-            "QToolButton {padding: 6px; margin: 0; border: none; background: transparent;} "
-            f"QToolButton:hover {{border: none; background: {tCol};}} "
-            "QToolButton::menu-indicator {image: none;} "
-        )
-
     def _scanThemes(self, files: list[Path]) -> None:
         """Scan the GUI themes folder and list all themes."""
         data: dict[str, tuple[str, str, bool, Path]] = {}
@@ -851,8 +821,8 @@ class GuiIcons:
     )
 
     TOGGLE_ICON_KEYS: Final[dict[str, tuple[str, str]]] = {
-        "bullet": ("bullet-on", "bullet-off"),
-        "unfold": ("unfold-show", "unfold-hide"),
+        "toggle-bullet": ("bullet-on", "bullet-off"),
+        "toggle-unfold": ("unfold-show", "unfold-hide"),
     }
     IMAGE_MAP: Final[dict[str, tuple[str, str]]] = {
         "welcome": ("welcome.webp", "welcome.webp"),
@@ -974,8 +944,8 @@ class GuiIcons:
             pix0 = self.getPixmap(f"{self.TOGGLE_ICON_KEYS[key][0]}:{color}", width, height)
             pix1 = self.getPixmap(f"{self.TOGGLE_ICON_KEYS[key][1]}:{color}", width, height)
             icon = QIcon()
-            icon.addPixmap(pix0, QIcon.Mode.Normal, QIcon.State.On)
-            icon.addPixmap(pix1, QIcon.Mode.Normal, QIcon.State.Off)
+            icon.addPixmap(pix0, QtIconNormal, QtIconOn)
+            icon.addPixmap(pix1, QtIconNormal, QtIconOff)
             return icon
         return self._noIcon
 
@@ -1021,7 +991,7 @@ class GuiIcons:
         """Return an icon from the icon buffer as a QPixmap. If it
         doesn't exist, return an empty QPixmap.
         """
-        return self.getIcon(name, width, height).pixmap(width, height, QIcon.Mode.Normal)
+        return self.getIcon(name, width, height).pixmap(width, height, QtIconNormal)
 
     def getStandardButton(self, button: nwStandardButton, parent: QWidget) -> NPushButton:
         """Return a standard button with icon and text."""

@@ -46,7 +46,6 @@ from novelwriter.constants import nwKeyWords, nwLabels, trConst
 from novelwriter.enum import nwChange, nwDocMode, nwNovelExtra, nwOutline
 from novelwriter.extensions.modified import NFlatIconButton, NTreeView
 from novelwriter.extensions.novelselector import NovelSelector
-from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 from novelwriter.models.novelmodel import NovelModel
 from novelwriter.types import (
     QtHeaderStretch,
@@ -257,11 +256,6 @@ class GuiNovelToolBar(QWidget):
             self.tbNovel.refreshTheme()
             self.tbRefresh.refreshTheme()
             self.tbMore.refreshTheme()
-
-        buttonStyle = SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON)
-        self.tbNovel.setStyleSheet(buttonStyle)
-        self.tbRefresh.setStyleSheet(buttonStyle)
-        self.tbMore.setStyleSheet(buttonStyle)
 
         self.novelValue.setStyleSheet(
             "QComboBox {border-style: none; padding-left: 0;} QComboBox::drop-down {border-style: none}"

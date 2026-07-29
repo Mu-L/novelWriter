@@ -75,7 +75,7 @@ class GuiSideBar(QWidget):
         self.tbOutline.setToolTip("{0} [Ctrl+Shift+T]".format(self.tr("Novel Outline View")))
         self.tbOutline.clicked.connect(qtWeakLambda(self._emitViewChange, nwView.OUTLINE))
 
-        self.tbTheme = NFlatIconButton(self, iSz, None, 0.25)
+        self.tbTheme = NFlatIconButton(self, iSz, "", 0.25)
         self.tbTheme.setToolTip(self.tr("Switch Colour Theme"))
         self.tbTheme.clicked.connect(self._cycleColorTheme)
 

@@ -43,7 +43,6 @@ from novelwriter.common import checkInt, qtAddAction
 from novelwriter.constants import nwLabels, nwLists, nwStyles, trConst
 from novelwriter.enum import nwChange, nwDocMode, nwItemClass
 from novelwriter.extensions.modified import NFlatIconButton, NTabWidget
-from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 from novelwriter.types import QtDecorationRole, QtHeaderFixed, QtHeaderToContents, QtUserRole
 
 if TYPE_CHECKING:
@@ -113,7 +112,6 @@ class GuiDocViewerPanel(QWidget):
         """Update theme elements."""
         logger.debug("Theme Update: GuiDocViewerPanel")
 
-        self.optsButton.setStyleSheet(SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON))
         self.mainTabs.refreshTheme()
         if not init:
             self.optsButton.refreshTheme()

@@ -36,7 +36,6 @@ from novelwriter.constants import nwConst, nwLabels, nwStats, trStats
 from novelwriter.extensions.modified import NClickableLabel, NFlatIconButton
 from novelwriter.extensions.progressbars import NColorRangeProgress
 from novelwriter.extensions.statusled import StatusLED
-from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 
 if TYPE_CHECKING:
     from novelwriter.types import T_MsgSeverity
@@ -193,9 +192,6 @@ class GuiMainStatus(QStatusBar):
         self.dayReset.refreshTheme()
         self.dayProg.refreshTheme()
         self.projProg.refreshTheme()
-
-        buttonStyle = SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON)
-        self.dayReset.setStyleSheet(buttonStyle)
 
     ##
     #  Setters

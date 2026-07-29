@@ -52,7 +52,6 @@ from novelwriter.dialogs.editlabel import GuiEditLabel
 from novelwriter.dialogs.projectsettings import GuiProjectSettings
 from novelwriter.enum import nwChange, nwDocMode, nwItemClass, nwItemLayout, nwItemType
 from novelwriter.extensions.modified import NFlatIconButton
-from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 from novelwriter.models.itemmodel import ProjectModel, ProjectNode
 from novelwriter.types import (
     QtHeaderFixed,
@@ -353,13 +352,6 @@ class GuiProjectToolBar(QWidget):
     def updateTheme(self, *, init: bool = False) -> None:
         """Update theme elements."""
         logger.debug("Theme Update: GuiProjectToolBar")
-
-        buttonStyle = SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON)
-        self.tbQuick.setStyleSheet(buttonStyle)
-        self.tbMoveU.setStyleSheet(buttonStyle)
-        self.tbMoveD.setStyleSheet(buttonStyle)
-        self.tbAdd.setStyleSheet(buttonStyle)
-        self.tbMore.setStyleSheet(buttonStyle)
 
         if not init:
             self.tbQuick.refreshTheme()

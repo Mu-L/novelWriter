@@ -31,7 +31,7 @@ from PyQt6.QtWidgets import QApplication, QFrame, QGridLayout, QHBoxLayout, QLab
 
 from novelwriter import CONFIG, SHARED
 from novelwriter.constants import nwConst
-from novelwriter.extensions.modified import NFlatIconButton, NIconToggleButton
+from novelwriter.extensions.modified import NFlatIconButton
 from novelwriter.text.autoreplace import LineEditAutoReplace
 from novelwriter.types import QtKeyEscape, QtModShift
 
@@ -132,7 +132,7 @@ class GuiDocEditSearch(QFrame):
         # Buttons
         # =======
 
-        self.showReplace = NIconToggleButton(self, iSz, "unfold:default")
+        self.showReplace = NFlatIconButton(self, iSz, "toggle-unfold:default")
         self.showReplace.toggled.connect(self._doToggleReplace)
 
         self.searchButton = NFlatIconButton(self, iSz, "search:action")

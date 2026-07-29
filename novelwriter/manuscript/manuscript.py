@@ -65,7 +65,6 @@ from novelwriter.extensions.progressbars import NProgressCircle
 from novelwriter.extensions.switch import NSwitch
 from novelwriter.formats.tokenizer import HeadingFormatter
 from novelwriter.formats.toqdoc import ToQTextDocument
-from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 from novelwriter.manuscript.buildsettings import BuildCollection, BuildSettings
 from novelwriter.manuscript.docbuild import DocumentBuilder
 from novelwriter.manuscript.manusbuild import GuiManuscriptBuild
@@ -296,12 +295,6 @@ class GuiManuscript(NToolDialog):
             self.btnPrint.refreshTheme()
             self.btnBuild.refreshTheme()
             self.btnClose.refreshTheme()
-
-        buttonStyle = SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON)
-        self.tbAdd.setStyleSheet(buttonStyle)
-        self.tbDel.setStyleSheet(buttonStyle)
-        self.tbCopy.setStyleSheet(buttonStyle)
-        self.tbEdit.setStyleSheet(buttonStyle)
 
         self.detailsTabs.refreshTheme()
 

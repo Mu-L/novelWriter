@@ -26,7 +26,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QEvent, QModelIndex, QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QIcon, QPainter, QPaintEvent, QPalette
+from PyQt6.QtGui import QPainter, QPaintEvent, QPalette
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -49,7 +49,20 @@ from PyQt6.QtWidgets import (
 
 from novelwriter import CONFIG, SHARED
 from novelwriter.enum import nwStandardButton
-from novelwriter.types import QtAlignCenter, QtMouseLeft, QtMouseMiddle, QtMouseOver, QtRoleAccept, QtRoleReject
+from novelwriter.types import (
+    QtAlignCenter,
+    QtAlignLeftMiddle,
+    QtIconDisabled,
+    QtIconNormal,
+    QtIconOff,
+    QtIconOn,
+    QtMouseLeft,
+    QtMouseMiddle,
+    QtMouseOver,
+    QtRoleAccept,
+    QtRoleReject,
+    QtToolButtonTextIcon,
+)
 
 if TYPE_CHECKING:
     from enum import Enum
@@ -351,51 +364,56 @@ class NFlatIconButton(QToolButton):
     A flat icon-only tool button.
     """
 
-    __slots__ = ("_icon",)
+    __slots__ = ("_icon", "_iconToggle")
 
-    def __init__(self, parent: QWidget, iconSize: QSize, icon: str | None = None, padding: float = 0.23) -> None:
+    def __init__(self, parent: QWidget, iconSize: QSize, icon: str, padding: float = 0.23) -> None:
         super().__init__(parent=parent)
         self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.setIconSize(iconSize)
         self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setFixedSize(round(iconSize.width() * (1 + 2 * padding)), round(iconSize.height() * (1 + 2 * padding)))
         self._icon = icon
+        self._iconToggle = icon.startswith("toggle-")
+        self.setCheckable(self._iconToggle)
         if icon:  # pragma: no branch
             self.setThemeIcon(icon)
 
     def setThemeIcon(self, icon: str) -> None:
         """Set an icon from the current theme."""
         self._icon = icon
-        self.setIcon(SHARED.theme.getIcon(icon))
+        if self._iconToggle:
+            self.setIcon(SHARED.theme.getToggleIcon(icon, self.iconSize().width(), self.iconSize().height()))
+        else:
+            self.setIcon(SHARED.theme.getIcon(icon))
 
     def refreshTheme(self) -> None:
         """Refresh the icon for theme updates."""
         if self._icon:  # pragma: no branch
-            self.setIcon(SHARED.theme.getIcon(self._icon))
+            self.setThemeIcon(self._icon)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         """Paint the icon with a background colour when hovered or checked."""
         opt = QStyleOptionToolButton()
         opt.initFrom(self)
 
+        rect = self.rect()
         painter = QPainter(self)
-        if self.isCheckable() and self.isChecked():
-            painter.fillRect(self.rect(), SHARED.theme.activeButton)
+        if not self._iconToggle and self.isCheckable() and self.isChecked():
+            painter.fillRect(rect, SHARED.theme.activeButton)
         elif opt.state & QtMouseOver == QtMouseOver:
-            painter.fillRect(self.rect(), SHARED.theme.activeBase)
+            painter.fillRect(rect, SHARED.theme.activeBase)
 
         icon = self.icon()
         if not icon.isNull():
             size = self.iconSize()
-            rect = self.rect()
             x = rect.x() + (rect.width() - size.width()) // 2
             y = rect.y() + (rect.height() - size.height()) // 2
-            mode = QIcon.Mode.Normal if self.isEnabled() else QIcon.Mode.Disabled
-            state = QIcon.State.On if self.isChecked() else QIcon.State.Off
+            mode = QtIconNormal if self.isEnabled() else QtIconDisabled
+            state = QtIconOn if self.isChecked() else QtIconOff
             icon.paint(painter, x, y, size.width(), size.height(), QtAlignCenter, mode, state)
 
 
-class NIconToggleButton(QToolButton):
+class NFlatIconTextButton(QToolButton):
     """Custom: Modified QToolButton.
 
     A quicker way to create a toggle button that switches icon when
@@ -404,30 +422,60 @@ class NIconToggleButton(QToolButton):
     setCheckable(True) instead.
     """
 
-    __slots__ = ("_icon", "_size")
+    __slots__ = ("_icon", "_iconToggle")
 
-    def __init__(self, parent: QWidget, iconSize: QSize, icon: str | None = None) -> None:
+    def __init__(self, parent: QWidget, iconSize: QSize, icon: str, text: str) -> None:
         super().__init__(parent=parent)
-        self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.setToolButtonStyle(QtToolButtonTextIcon)
         self.setIconSize(iconSize)
         self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.setCheckable(True)
-        self.setStyleSheet("border: none; background: transparent;")
+        self.setText(text)
         self._icon = icon
-        self._size = iconSize
+        self._iconToggle = icon.startswith("toggle-")
+        self.setCheckable(self._iconToggle)
         if icon:  # pragma: no branch
             self.setThemeIcon(icon)
 
     def setThemeIcon(self, icon: str) -> None:
         """Set an icon from the current theme."""
         self._icon = icon
-        self._size = self.iconSize()
-        self.setIcon(SHARED.theme.getToggleIcon(icon, self._size.width(), self._size.height()))
+        if self._iconToggle:
+            self.setIcon(SHARED.theme.getToggleIcon(icon, self.iconSize().width(), self.iconSize().height()))
+        else:
+            self.setIcon(SHARED.theme.getIcon(icon))
 
     def refreshTheme(self) -> None:
         """Refresh the icon for theme updates."""
         if self._icon:  # pragma: no branch
-            self.setIcon(SHARED.theme.getToggleIcon(self._icon, self._size.width(), self._size.height()))
+            self.setThemeIcon(self._icon)
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Paint the icon with a background colour when hovered or checked."""
+        opt = QStyleOptionToolButton()
+        opt.initFrom(self)
+
+        rect = self.rect()
+        painter = QPainter(self)
+        if opt.state & QtMouseOver == QtMouseOver:
+            painter.fillRect(rect, SHARED.theme.activeBase)
+
+        icon = self.icon()
+        size = self.iconSize()
+        mode = QtIconNormal if self.isEnabled() else QtIconDisabled
+        state = QtIconOn if self.isChecked() else QtIconOff
+        if text := self.text():
+            margin = (rect.height() - size.height()) // 2
+            x = rect.x() + margin
+            y = rect.y() + margin
+            if not icon.isNull():
+                icon.paint(painter, x, y, size.width(), size.height(), QtAlignCenter, mode, state)
+            textRect = rect.adjusted(x + size.width() + margin, 0, -margin, 0)
+            painter.setPen(opt.palette.color(QPalette.ColorRole.ButtonText))
+            painter.drawText(textRect, QtAlignLeftMiddle, text)
+        elif not icon.isNull():
+            x = rect.x() + (rect.width() - size.width()) // 2
+            y = rect.y() + (rect.height() - size.height()) // 2
+            icon.paint(painter, x, y, size.width(), size.height(), QtAlignCenter, mode, state)
 
 
 class NTabWidget(QTabWidget):

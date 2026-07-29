@@ -508,12 +508,9 @@ class _StatusPage(NFixedPage):
         self.labelColor = QLabel(self.tr("Colour"), self)
         self.labelColor.setBuddy(self.iconColor)
 
-        buttonStyle = "QToolButton {padding: 0 4px;} QToolButton::menu-indicator {image: none;}"
-
         self.colorButton = NIconButton(self, iSz)
         self.colorButton.setToolTip(self.tr("Colour"))
         self.colorButton.setSizePolicy(QtSizeMinimum, QtSizeMinimumExpanding)
-        self.colorButton.setStyleSheet(buttonStyle)
         self.colorButton.setEnabled(False)
         self.colorButton.clicked.connect(self._onColorSelect)
 
@@ -535,7 +532,6 @@ class _StatusPage(NFixedPage):
         self.shapeButton.setMenu(self.shapeMenu)
         self.shapeButton.setToolTip(self.tr("Shape"))
         self.shapeButton.setSizePolicy(QtSizeMinimum, QtSizeMinimumExpanding)
-        self.shapeButton.setStyleSheet(buttonStyle)
         self.shapeButton.setEnabled(False)
 
         self.labelShape = QLabel(self.tr("Shape"), self)
