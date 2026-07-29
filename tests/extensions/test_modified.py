@@ -35,8 +35,8 @@ from novelwriter.extensions.modified import (
     NDialog,
     NDoubleSpinBox,
     NFlatIconButton,
+    NFlatIconTextButton,
     NFontDialog,
-    NIconToggleButton,
     NNonBlockingDialog,
     NSpinBox,
     NSplitterHandle,
@@ -268,13 +268,13 @@ def testNClickableLabel_Main(qtbot):
 
 
 @pytest.mark.gui
-def testNToolButtons_Main(qtbot, mockGUI):
-    """Test the NFlatIconButton and NIconToggleButton classes."""
+def testNFlatButtons_Main(qtbot, mockGUI):
+    """Test the NFlatIconButton and NFlatIconTextButton classes."""
     dialog = SimpleDialog(None)
 
     size = QSize(16, 16)
     button1 = NFlatIconButton(dialog, size, "add:add")
-    button2 = NIconToggleButton(dialog, size, "bullet:action")
+    button2 = NFlatIconTextButton(dialog, size, "bullet:action", "Text")
 
     assert button1.iconSize() == size
     assert button2.iconSize() == size

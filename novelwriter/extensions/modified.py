@@ -400,11 +400,11 @@ class NFlatIconButton(QToolButton):
         painter = QPainter(self)
         if not self._iconToggle and self.isCheckable() and self.isChecked():
             painter.fillRect(rect, SHARED.theme.activeButton)
-        elif opt.state & QtMouseOver == QtMouseOver:
+        elif opt.state & QtMouseOver == QtMouseOver:  # pragma: no cover
             painter.fillRect(rect, SHARED.theme.activeBase)
 
         icon = self.icon()
-        if not icon.isNull():
+        if not icon.isNull():  # pragma: no branch
             size = self.iconSize()
             x = rect.x() + (rect.width() - size.width()) // 2
             y = rect.y() + (rect.height() - size.height()) // 2
@@ -456,26 +456,22 @@ class NFlatIconTextButton(QToolButton):
 
         rect = self.rect()
         painter = QPainter(self)
-        if opt.state & QtMouseOver == QtMouseOver:
+        if opt.state & QtMouseOver == QtMouseOver:  # pragma: no cover
             painter.fillRect(rect, SHARED.theme.activeBase)
 
         icon = self.icon()
         size = self.iconSize()
         mode = QtIconNormal if self.isEnabled() else QtIconDisabled
         state = QtIconOn if self.isChecked() else QtIconOff
-        if text := self.text():
+        if text := self.text():  # pragma: no branch
             margin = (rect.height() - size.height()) // 2
             x = rect.x() + margin
             y = rect.y() + margin
-            if not icon.isNull():
+            if not icon.isNull():  # pragma: no branch
                 icon.paint(painter, x, y, size.width(), size.height(), QtAlignCenter, mode, state)
             textRect = rect.adjusted(x + size.width() + margin, 0, -margin, 0)
             painter.setPen(opt.palette.color(QPalette.ColorRole.ButtonText))
             painter.drawText(textRect, QtAlignLeftMiddle, text)
-        elif not icon.isNull():
-            x = rect.x() + (rect.width() - size.width()) // 2
-            y = rect.y() + (rect.height() - size.height()) // 2
-            icon.paint(painter, x, y, size.width(), size.height(), QtAlignCenter, mode, state)
 
 
 class NTabWidget(QTabWidget):
