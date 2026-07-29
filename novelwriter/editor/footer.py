@@ -33,7 +33,7 @@ from novelwriter import CONFIG, SHARED
 from novelwriter.common import qtWeakLambda
 from novelwriter.constants import nwLabels, nwStats, trStats
 from novelwriter.enum import nwVimMode
-from novelwriter.extensions.modified import NIconToolButton
+from novelwriter.extensions.modified import NFlatIconButton
 from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 from novelwriter.types import QtAlignLeftTop, QtBlack
 
@@ -282,7 +282,7 @@ class GuiDocViewFooter(QWidget):
         self.setAutoFillBackground(True)
 
         # Show/Hide Details
-        self.showHide = NIconToolButton(self, iSz, "panel:default")
+        self.showHide = NFlatIconButton(self, iSz, "panel:default")
         self.showHide.setToolTip(self.tr("Show/Hide Viewer Panel"))
         self.showHide.clicked.connect(qtWeakLambda(self._emitTogglePanelVisibility))
 

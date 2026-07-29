@@ -42,7 +42,7 @@ from novelwriter import SHARED
 from novelwriter.common import checkInt, qtAddAction
 from novelwriter.constants import nwLabels, nwLists, nwStyles, trConst
 from novelwriter.enum import nwChange, nwDocMode, nwItemClass
-from novelwriter.extensions.modified import NIconToolButton, NTabWidget
+from novelwriter.extensions.modified import NFlatIconButton, NTabWidget
 from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 from novelwriter.types import QtDecorationRole, QtHeaderFixed, QtHeaderToContents, QtUserRole
 
@@ -78,7 +78,7 @@ class GuiDocViewerPanel(QWidget):
         self.aInactive.setCheckable(True)
         self.aInactive.toggled.connect(self._toggleHideInactive)
 
-        self.optsButton = NIconToolButton(self, iSz, "more_vertical:default")
+        self.optsButton = NFlatIconButton(self, iSz, "more_vertical:default")
         self.optsButton.setToolTip(self.tr("Options"))
         self.optsButton.setMenu(self.optsMenu)
         self.optsButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)

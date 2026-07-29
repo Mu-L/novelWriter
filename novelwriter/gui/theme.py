@@ -49,7 +49,7 @@ from novelwriter.config import DEF_GUI_DARK, DEF_GUI_LIGHT, DEF_ICONS, DEF_TREEC
 from novelwriter.constants import nwLabels
 from novelwriter.enum import nwItemClass, nwItemLayout, nwItemType, nwStandardButton, nwTheme, nwToolButton
 from novelwriter.error import logException
-from novelwriter.extensions.modified import NIconToolButton, NPushButton
+from novelwriter.extensions.modified import NFlatIconButton, NIconButton, NPushButton
 from novelwriter.types import (
     QtBlack,
     QtColActive,
@@ -99,6 +99,7 @@ TOOL_BUTTONS = {
     nwToolButton.BROWSE: (QT_TRANSLATE_NOOP("Button", "Browse"), "browse:system"),
     nwToolButton.EDIT: (QT_TRANSLATE_NOOP("Button", "Edit"), "edit:change"),
     nwToolButton.REVERT: (QT_TRANSLATE_NOOP("Button", "Revert"), "revert:reset"),
+    nwToolButton.FONT: (QT_TRANSLATE_NOOP("Button", "Select Font"), "font:tool"),
 }
 
 
@@ -186,15 +187,16 @@ class GuiTheme:
         "fontPixelSizeLarge",
         "fontPointSize",
         "getDecoration",
+        "getFlatButton",
         "getHeaderDecoration",
         "getHeaderDecorationNarrow",
         "getIcon",
+        "getIconButton",
         "getItemIcon",
         "getItemIconStyle",
         "getPixmap",
         "getStandardButton",
         "getToggleIcon",
-        "getToolButton",
         "guiFont",
         "guiFontB",
         "guiFontBU",
@@ -247,7 +249,8 @@ class GuiTheme:
         self.getItemIcon = self.iconCache.getItemIcon
         self.getToggleIcon = self.iconCache.getToggleIcon
         self.getDecoration = self.iconCache.getDecoration
-        self.getToolButton = self.iconCache.getToolButton
+        self.getIconButton = self.iconCache.getIconButton
+        self.getFlatButton = self.iconCache.getFlatButton
         self.getItemIconStyle = self.iconCache.getItemIconStyle
         self.getStandardButton = self.iconCache.getStandardButton
         self.getHeaderDecoration = self.iconCache.getHeaderDecoration
@@ -1030,10 +1033,17 @@ class GuiIcons:
             icon,
         )
 
-    def getToolButton(self, button: nwToolButton, parent: QWidget) -> NIconToolButton:
+    def getIconButton(self, button: nwToolButton, parent: QWidget) -> NIconButton:
         """Return a tool button with icon."""
         toolTip, icon = TOOL_BUTTONS.get(button, ("", ""))
-        toolButton = NIconToolButton(parent, self._theme.baseIconSize, icon)
+        toolButton = NIconButton(parent, self._theme.baseIconSize, icon)
+        toolButton.setToolTip(QCoreApplication.translate("Button", toolTip))
+        return toolButton
+
+    def getFlatButton(self, button: nwToolButton, parent: QWidget) -> NFlatIconButton:
+        """Return a tool button with icon."""
+        toolTip, icon = TOOL_BUTTONS.get(button, ("", ""))
+        toolButton = NFlatIconButton(parent, self._theme.baseIconSize, icon)
         toolButton.setToolTip(QCoreApplication.translate("Button", toolTip))
         return toolButton
 

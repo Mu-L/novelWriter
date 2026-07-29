@@ -51,7 +51,7 @@ from novelwriter.dialogs.docsplit import GuiDocSplit
 from novelwriter.dialogs.editlabel import GuiEditLabel
 from novelwriter.dialogs.projectsettings import GuiProjectSettings
 from novelwriter.enum import nwChange, nwDocMode, nwItemClass, nwItemLayout, nwItemType
-from novelwriter.extensions.modified import NIconToolButton
+from novelwriter.extensions.modified import NFlatIconButton
 from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 from novelwriter.models.itemmodel import ProjectModel, ProjectNode
 from novelwriter.types import (
@@ -265,17 +265,17 @@ class GuiProjectToolBar(QWidget):
         self.mQuick = QMenu(self)
         self.mQuick.triggered.connect(self._onQuickLinkSelected)
 
-        self.tbQuick = NIconToolButton(self, iSz, "bookmarks:action")
+        self.tbQuick = NFlatIconButton(self, iSz, "bookmarks:action")
         self.tbQuick.setToolTip("{0} [Ctrl+L]".format(self.tr("Quick Links")))
         self.tbQuick.setShortcut("Ctrl+L")
         self.tbQuick.setMenu(self.mQuick)
 
         # Move Buttons
-        self.tbMoveU = NIconToolButton(self, iSz, "chevron_up:action")
+        self.tbMoveU = NFlatIconButton(self, iSz, "chevron_up:action")
         self.tbMoveU.setToolTip("{0} [Ctrl+Up]".format(self.tr("Move Up")))
         self.tbMoveU.clicked.connect(self.projTree.moveItemUp)
 
-        self.tbMoveD = NIconToolButton(self, iSz, "chevron_down:action")
+        self.tbMoveD = NFlatIconButton(self, iSz, "chevron_down:action")
         self.tbMoveD.setToolTip("{0} [Ctrl+Down]".format(self.tr("Move Down")))
         self.tbMoveD.clicked.connect(self.projTree.moveItemDown)
 
@@ -309,7 +309,7 @@ class GuiProjectToolBar(QWidget):
         self.mAddRoot.triggered.connect(self._onAddRootSelected)
         self._buildRootMenu()
 
-        self.tbAdd = NIconToolButton(self, iSz, "add:add")
+        self.tbAdd = NFlatIconButton(self, iSz, "add:add")
         self.tbAdd.setToolTip("{0} [Ctrl+N]".format(self.tr("Add Item")))
         self.tbAdd.setShortcut("Ctrl+N")
         self.tbAdd.setMenu(self.mAdd)
@@ -326,7 +326,7 @@ class GuiProjectToolBar(QWidget):
         self.aEmptyTrash = qtAddAction(self.mMore, self.tr("Empty Trash"))
         self.aEmptyTrash.triggered.connect(self.projTree.emptyTrash)
 
-        self.tbMore = NIconToolButton(self, iSz, "more_vertical:default")
+        self.tbMore = NFlatIconButton(self, iSz, "more_vertical:default")
         self.tbMore.setToolTip(self.tr("More Options"))
         self.tbMore.setMenu(self.mMore)
 

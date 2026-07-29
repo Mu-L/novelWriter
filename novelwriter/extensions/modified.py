@@ -26,7 +26,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QEvent, QModelIndex, QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QPainter, QPaintEvent, QPalette
+from PyQt6.QtGui import QIcon, QPainter, QPaintEvent, QPalette
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -39,6 +39,7 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QSplitter,
     QSplitterHandle,
+    QStyleOptionToolButton,
     QTabBar,
     QTabWidget,
     QToolButton,
@@ -48,7 +49,7 @@ from PyQt6.QtWidgets import (
 
 from novelwriter import CONFIG, SHARED
 from novelwriter.enum import nwStandardButton
-from novelwriter.types import QtAlignCenter, QtHexArgb, QtMouseLeft, QtMouseMiddle, QtRoleAccept, QtRoleReject
+from novelwriter.types import QtAlignCenter, QtMouseLeft, QtMouseMiddle, QtMouseOver, QtRoleAccept, QtRoleReject
 
 if TYPE_CHECKING:
     from enum import Enum
@@ -311,10 +312,10 @@ class NPushButton(QPushButton):
             self.setIcon(SHARED.theme.getIcon(self._icon))
 
 
-class NIconToolButton(QToolButton):
-    """Custom: Modified QToolButton.
+class NIconButton(QToolButton):
+    """Custom: Icon Push Button.
 
-    A quicker way to create a tool button using the app theme.
+    A tool button that looks like an icon-only push button.
     """
 
     __slots__ = ("_icon",)
@@ -328,12 +329,39 @@ class NIconToolButton(QToolButton):
         if icon:  # pragma: no branch
             self.setThemeIcon(icon)
 
-    def setCheckable(self, checkable: bool) -> None:
-        """Overload the checkable setter to change the button style."""
-        super().setCheckable(checkable)
-        if checkable:
-            col = SHARED.theme.activeButton.name(QtHexArgb)
-            self.setStyleSheet(f"QToolButton:checked {{background: {col};}}")
+    def setThemeIcon(self, icon: str) -> None:
+        """Set an icon from the current theme."""
+        self._icon = icon
+        self.setIcon(SHARED.theme.getIcon(icon))
+
+    def refreshTheme(self) -> None:
+        """Refresh the icon for theme updates."""
+        if self._icon:  # pragma: no branch
+            self.setIcon(SHARED.theme.getIcon(self._icon))
+
+    def sizeHint(self) -> QSize:
+        """Pad the size hint to a square the height of a standard QPushButton."""
+        height = round(self.fontMetrics().height() * 1.5)
+        return QSize(height, height)
+
+
+class NFlatIconButton(QToolButton):
+    """Custom: Flat Icon Tool Button.
+
+    A flat icon-only tool button.
+    """
+
+    __slots__ = ("_icon",)
+
+    def __init__(self, parent: QWidget, iconSize: QSize, icon: str | None = None, padding: float = 0.23) -> None:
+        super().__init__(parent=parent)
+        self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.setIconSize(iconSize)
+        self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.setFixedSize(round(iconSize.width() * (1 + 2 * padding)), round(iconSize.height() * (1 + 2 * padding)))
+        self._icon = icon
+        if icon:  # pragma: no branch
+            self.setThemeIcon(icon)
 
     def setThemeIcon(self, icon: str) -> None:
         """Set an icon from the current theme."""
@@ -344,9 +372,27 @@ class NIconToolButton(QToolButton):
         """Refresh the icon for theme updates."""
         if self._icon:  # pragma: no branch
             self.setIcon(SHARED.theme.getIcon(self._icon))
-        if self.isCheckable():
-            col = SHARED.theme.activeButton.name(QtHexArgb)
-            self.setStyleSheet(f"QToolButton:checked {{background: {col};}}")
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Paint the icon with a background colour when hovered or checked."""
+        opt = QStyleOptionToolButton()
+        opt.initFrom(self)
+
+        painter = QPainter(self)
+        if self.isCheckable() and self.isChecked():
+            painter.fillRect(self.rect(), SHARED.theme.activeButton)
+        elif opt.state & QtMouseOver == QtMouseOver:
+            painter.fillRect(self.rect(), SHARED.theme.activeBase)
+
+        icon = self.icon()
+        if not icon.isNull():
+            size = self.iconSize()
+            rect = self.rect()
+            x = rect.x() + (rect.width() - size.width()) // 2
+            y = rect.y() + (rect.height() - size.height()) // 2
+            mode = QIcon.Mode.Normal if self.isEnabled() else QIcon.Mode.Disabled
+            state = QIcon.State.On if self.isChecked() else QIcon.State.Off
+            icon.paint(painter, x, y, size.width(), size.height(), QtAlignCenter, mode, state)
 
 
 class NIconToggleButton(QToolButton):

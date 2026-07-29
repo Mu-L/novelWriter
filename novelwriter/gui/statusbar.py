@@ -33,7 +33,7 @@ from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QStatusBar, QWidg
 from novelwriter import CONFIG, SHARED
 from novelwriter.common import formatPercent, formatTime, languageName
 from novelwriter.constants import nwConst, nwLabels, nwStats, trStats
-from novelwriter.extensions.modified import NClickableLabel, NIconToolButton
+from novelwriter.extensions.modified import NClickableLabel, NFlatIconButton
 from novelwriter.extensions.progressbars import NColorRangeProgress
 from novelwriter.extensions.statusled import StatusLED
 from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
@@ -67,7 +67,7 @@ class GuiMainStatus(QStatusBar):
         # =================
 
         # The Daily Progress Bar
-        self.dayReset = NIconToolButton(self, iSz, "revert:reset")
+        self.dayReset = NFlatIconButton(self, iSz, "revert:reset")
         self.dayReset.setToolTip(self.tr("Reset Daily Progress"))
         self.dayReset.setVisible(False)
         self.dayReset.clicked.connect(self._resetDailyProgress)

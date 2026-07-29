@@ -60,7 +60,7 @@ from novelwriter import CONFIG, SHARED
 from novelwriter.common import formatInt, formatPercent, fuzzyTime
 from novelwriter.constants import nwHeadFmt, nwLabels, nwStats, nwUnicode, trStats
 from novelwriter.enum import nwStandardButton
-from novelwriter.extensions.modified import NIconToolButton, NTabWidget, NToolDialog
+from novelwriter.extensions.modified import NFlatIconButton, NTabWidget, NToolDialog
 from novelwriter.extensions.progressbars import NProgressCircle
 from novelwriter.extensions.switch import NSwitch
 from novelwriter.formats.tokenizer import HeadingFormatter
@@ -120,19 +120,19 @@ class GuiManuscript(NToolDialog):
         # Build Controls
         # ==============
 
-        self.tbAdd = NIconToolButton(self, iSz, "add:add")
+        self.tbAdd = NFlatIconButton(self, iSz, "add:add")
         self.tbAdd.setToolTip(self.tr("Add New Build"))
         self.tbAdd.clicked.connect(self._createNewBuild)
 
-        self.tbDel = NIconToolButton(self, iSz, "remove:remove")
+        self.tbDel = NFlatIconButton(self, iSz, "remove:remove")
         self.tbDel.setToolTip(self.tr("Delete Selected Build"))
         self.tbDel.clicked.connect(self._deleteSelectedBuild)
 
-        self.tbCopy = NIconToolButton(self, iSz, "copy:action")
+        self.tbCopy = NFlatIconButton(self, iSz, "copy:action")
         self.tbCopy.setToolTip(self.tr("Duplicate Selected Build"))
         self.tbCopy.clicked.connect(self._copySelectedBuild)
 
-        self.tbEdit = NIconToolButton(self, iSz, "edit:change")
+        self.tbEdit = NFlatIconButton(self, iSz, "edit:change")
         self.tbEdit.setToolTip(self.tr("Edit Selected Build"))
         self.tbEdit.clicked.connect(self._editSelectedBuild)
 
