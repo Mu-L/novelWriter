@@ -25,6 +25,7 @@ from datetime import date
 
 import pytest
 
+from novelwriter import CONFIG
 from novelwriter.core import projectdata
 from novelwriter.core.project import NWProject
 from novelwriter.core.projectdata import ProjectData
@@ -42,6 +43,9 @@ class MockProject:
     def setProjectChanged(self, state: bool) -> None:
         """Fake project method."""
         self.changed += 1 if state else 0
+
+    def markCountsDirty(self) -> None:
+        """Fake project method."""
 
 
 class _FakeDate(date):
@@ -153,6 +157,41 @@ def testProjectData_AutoReplace(mockGUI):
 
 
 @pytest.mark.core
+def testProjectData_ProjectTarget(mockGUI):
+    """Test the setProjectTarget setter, including the count mode flag
+    that decides whether the project goal is tracked in words or
+    characters.
+    """
+    project = MockProject()
+
+    # The count mode defaults to the user's global preference
+    CONFIG.useCharCount = True
+    assert ProjectData(project).targetCountChars is True  # type: ignore
+    CONFIG.useCharCount = False
+    data = ProjectData(project)  # type: ignore
+    assert data.targetCountChars is False
+
+    # Setting the target updates the count, deadline and count mode together
+    project.changed = 0
+    data.setProjectTarget(50000, date(2030, 1, 1), True)
+    assert data.targetCount == 50000
+    assert data.targetDeadline == date(2030, 1, 1)
+    assert data.targetCountChars is True
+    assert project.changed == 1
+
+    # Setting the exact same values again is a no-op
+    project.changed = 0
+    data.setProjectTarget(50000, date(2030, 1, 1), True)
+    assert project.changed == 0
+
+    # Toggling the count mode alone still counts as a change
+    project.changed = 0
+    data.setProjectTarget(50000, date(2030, 1, 1), False)
+    assert data.targetCountChars is False
+    assert project.changed == 1
+
+
+@pytest.mark.core
 def testProjectData_TargetSkipRoots(mockGUI, mockRnd, fncPath, ipsumText):
     """Test the setTargetSkipRoots setter against a real project tree.
     The daily progress is tracked per item from the session baseline,
@@ -183,7 +222,7 @@ def testProjectData_TargetSkipRoots(mockGUI, mockRnd, fncPath, ipsumText):
     assert project.openProject(fncPath) is True
     data = project.data
     tree = project.tree
-    data.setProjectTarget(10000, None)
+    data.setProjectTarget(10000, None, False)
     data.resetDailyProgress()
 
     startWords = tree.sumCounts()[5]
@@ -290,7 +329,7 @@ def testProjectData_DailyProgress(monkeypatch, mockGUI):
 
     project = MockProject()
     data = ProjectData(project)  # type: ignore
-    data.setProjectTarget(1000, None)
+    data.setProjectTarget(1000, None, False)
 
     # First update of a session with no prior daily record and nothing
     # written yet: the progress is zero, and the remaining word count is
@@ -310,7 +349,7 @@ def testProjectData_DailyProgress(monkeypatch, mockGUI):
     # in the initial count, and the daily record ("last") carries the
     # 60-word progress forward
     data = ProjectData(project)  # type: ignore
-    data.setProjectTarget(1000, None)
+    data.setProjectTarget(1000, None, False)
     data.setInitDailyTarget(60, "2026-07-20")
 
     # No new typing yet in this session, so progress should still read
@@ -354,7 +393,7 @@ def testProjectData_EffectiveDailyGoal(monkeypatch, mockGUI):
 
     project = MockProject()
     data = ProjectData(project)  # type: ignore
-    data.setProjectTarget(1000, date(2026, 7, 24))
+    data.setProjectTarget(1000, date(2026, 7, 24), False)
     data.setDailyProgress(0, 400)
     assert data._remainingCount == 600
 
@@ -368,17 +407,17 @@ def testProjectData_EffectiveDailyGoal(monkeypatch, mockGUI):
     assert data.getEffectiveDailyGoal() == 600 // 5
 
     # When the deadline is today, all the remaining words are due today
-    data.setProjectTarget(1000, date(2026, 7, 20))
+    data.setProjectTarget(1000, date(2026, 7, 20), False)
     data.setDailyProgress(0, 400)
     assert data.getEffectiveDailyGoal() == 600
 
     # When the deadline has passed, fall back to the fixed daily goal
-    data.setProjectTarget(1000, date(2026, 7, 19))
+    data.setProjectTarget(1000, date(2026, 7, 19), False)
     data.setDailyProgress(0, 400)
     assert data.getEffectiveDailyGoal() == 50
 
     # When the remaining word count isn't positive, also fall back
-    data.setProjectTarget(400, date(2026, 7, 24))
+    data.setProjectTarget(400, date(2026, 7, 24), False)
     data.setDailyProgress(0, 400)
     assert data._remainingCount == 0
     assert data.getEffectiveDailyGoal() == 50
