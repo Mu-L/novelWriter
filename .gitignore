@@ -64,5 +64,14 @@ __pycache__
 .vscode
 .ruff_cache
 
+# No AI files
+AGENTS.md
+CLAUSE.md
+GEMINI.md
+.claude/
+.cursor*
+.codex/
+.gemini/
+
 # Debug
 /debug/

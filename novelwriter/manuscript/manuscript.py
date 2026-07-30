@@ -42,6 +42,7 @@ from PyQt6.QtPrintSupport import QPrinter, QPrintPreviewDialog
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -59,12 +60,11 @@ from novelwriter import CONFIG, SHARED
 from novelwriter.common import formatInt, formatPercent, fuzzyTime
 from novelwriter.constants import nwHeadFmt, nwLabels, nwStats, nwUnicode, trStats
 from novelwriter.enum import nwStandardButton
-from novelwriter.extensions.modified import NIconToolButton, NTabWidget, NToolDialog
+from novelwriter.extensions.modified import NFlatIconButton, NTabWidget, NToolDialog
 from novelwriter.extensions.progressbars import NProgressCircle
 from novelwriter.extensions.switch import NSwitch
 from novelwriter.formats.tokenizer import HeadingFormatter
 from novelwriter.formats.toqdoc import ToQTextDocument
-from novelwriter.gui.theme import STYLES_MIN_TOOLBUTTON
 from novelwriter.manuscript.buildsettings import BuildCollection, BuildSettings
 from novelwriter.manuscript.docbuild import DocumentBuilder
 from novelwriter.manuscript.manusbuild import GuiManuscriptBuild
@@ -102,6 +102,7 @@ class GuiManuscript(NToolDialog):
 
         self._builds = BuildCollection(SHARED.project)
         self._buildMap: dict[str, QListWidgetItem] = {}
+        self._generatingPreview = False
 
         self.setWindowTitle(self.tr("Manuscript Build"))
         self.setMinimumWidth(600)
@@ -119,19 +120,19 @@ class GuiManuscript(NToolDialog):
         # Build Controls
         # ==============
 
-        self.tbAdd = NIconToolButton(self, iSz, "add:add")
+        self.tbAdd = NFlatIconButton(self, iSz, "add:add")
         self.tbAdd.setToolTip(self.tr("Add New Build"))
         self.tbAdd.clicked.connect(self._createNewBuild)
 
-        self.tbDel = NIconToolButton(self, iSz, "remove:remove")
+        self.tbDel = NFlatIconButton(self, iSz, "remove:remove")
         self.tbDel.setToolTip(self.tr("Delete Selected Build"))
         self.tbDel.clicked.connect(self._deleteSelectedBuild)
 
-        self.tbCopy = NIconToolButton(self, iSz, "copy:action")
+        self.tbCopy = NFlatIconButton(self, iSz, "copy:action")
         self.tbCopy.setToolTip(self.tr("Duplicate Selected Build"))
         self.tbCopy.clicked.connect(self._copySelectedBuild)
 
-        self.tbEdit = NIconToolButton(self, iSz, "edit:change")
+        self.tbEdit = NFlatIconButton(self, iSz, "edit:change")
         self.tbEdit.setToolTip(self.tr("Edit Selected Build"))
         self.tbEdit.clicked.connect(self._editSelectedBuild)
 
@@ -296,12 +297,6 @@ class GuiManuscript(NToolDialog):
             self.btnBuild.refreshTheme()
             self.btnClose.refreshTheme()
 
-        buttonStyle = SHARED.theme.getStyleSheet(STYLES_MIN_TOOLBUTTON)
-        self.tbAdd.setStyleSheet(buttonStyle)
-        self.tbDel.setStyleSheet(buttonStyle)
-        self.tbCopy.setStyleSheet(buttonStyle)
-        self.tbEdit.setStyleSheet(buttonStyle)
-
         self.detailsTabs.refreshTheme()
 
         self.buildDetails.updateTheme()
@@ -387,39 +382,46 @@ class GuiManuscript(NToolDialog):
         """Run the document builder on the current build settings for
         the preview widget.
         """
-        if not (build := self._getSelectedBuild()):
+        # Re-entrancy guard
+        if self._generatingPreview or not (build := self._getSelectedBuild()):
             return
 
-        start = time()
-        showNewPage = self.swtNewPage.isChecked()
+        self._generatingPreview = True
+        self.btnPreview.setEnabled(False)
+        try:
+            start = time()
+            showNewPage = self.swtNewPage.isChecked()
 
-        # Make sure editor content is saved before we start
-        SHARED.saveEditor()
+            # Make sure editor content is saved before we start
+            SHARED.saveEditor()
 
-        docBuild = DocumentBuilder(SHARED.project, build)
-        docBuild.queueAll()
+            docBuild = DocumentBuilder(SHARED.project, build)
+            docBuild.queueAll()
 
-        self.docPreview.beginNewBuild(len(docBuild))
-        for step, _ in docBuild.iterBuildPreview(showNewPage):
-            self.docPreview.buildStep(step + 1)
-            QApplication.processEvents()
+            self.docPreview.beginNewBuild(len(docBuild))
+            for step, _ in docBuild.iterBuildPreview(showNewPage):
+                self.docPreview.buildStep(step + 1)
+                QApplication.processEvents()
 
-        buildObj = docBuild.lastBuild
-        assert isinstance(buildObj, ToQTextDocument)
+            buildObj = docBuild.lastBuild
+            assert isinstance(buildObj, ToQTextDocument)
 
-        font = QFont()
-        font.fromString(build.getStr("format.textFont"))
-        withDialog = build.getBool("format.showDialogue")
+            font = QFont()
+            font.fromString(build.getStr("format.textFont"))
+            withDialog = build.getBool("format.showDialogue")
 
-        self.docPreview.setTextFont(font)
-        self.docPreview.setContent(buildObj.document)
-        self.docPreview.setBuildName(build.name)
+            self.docPreview.setTextFont(font)
+            self.docPreview.setContent(buildObj.document)
+            self.docPreview.setBuildName(build.name)
 
-        self.buildOutline.updateOutline(buildObj.textOutline)
-        self.buildStats.updateStats(buildObj.textStats, withDialog)
-        self._updateCountsLabel(buildObj.textStats, withDialog)
+            self.buildOutline.updateOutline(buildObj.textOutline)
+            self.buildStats.updateStats(buildObj.textStats, withDialog)
+            self._updateCountsLabel(buildObj.textStats, withDialog)
 
-        logger.debug("Build completed in %.3f ms", 1000 * (time() - start))
+            logger.debug("Build completed in %.3f ms", 1000 * (time() - start))
+        finally:
+            self.btnPreview.setEnabled(True)
+            self._generatingPreview = False
 
         return
 
@@ -559,6 +561,7 @@ class _DetailsWidget(QWidget):
         self.listView.setHeaderLabels([self.tr("Setting"), self.tr("Value")])
         self.listView.setIndentation(SHARED.theme.baseIconHeight)
         self.listView.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.listView.setFrameStyle(QFrame.Shape.NoFrame)
 
         # Assemble
         self.outerBox = QVBoxLayout()
@@ -707,6 +710,7 @@ class _OutlineWidget(QWidget):
         self.listView = QTreeWidget(self)
         self.listView.setHeaderHidden(True)
         self.listView.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.listView.setFrameStyle(QFrame.Shape.NoFrame)
         self.listView.itemClicked.connect(self._onItemClick)
 
         # Assemble
@@ -722,7 +726,7 @@ class _OutlineWidget(QWidget):
 
             tFont = SHARED.theme.guiFontB
             hFont = SHARED.theme.guiFontBU
-            tBrush = self.palette().highlight()
+            tBrush = SHARED.theme.accentText
 
             indent = False
             if root := self.listView.invisibleRootItem():  # pragma: no branch
@@ -778,6 +782,7 @@ class _StatisticsWidget(QWidget):
         self.listView.setHeaderLabels([self.tr("Count"), self.tr("Value")])
         self.listView.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.listView.setIndentation(SHARED.theme.baseIconHeight)
+        self.listView.setFrameStyle(QFrame.Shape.NoFrame)
 
         # Entries
         self.cTitles = QTreeWidgetItem(self.listView, [trStats(nwLabels.STATS_NAME[nwStats.TITLES]), ""])
@@ -1001,7 +1006,6 @@ class _PreviewWidget(QTextBrowser):
 
         self.buildProgress.setCentreText(self.tr("Done"))
         QApplication.restoreOverrideCursor()
-        QApplication.processEvents()
         QTimer.singleShot(300, self._postUpdate)
 
     def updateTheme(self) -> None:

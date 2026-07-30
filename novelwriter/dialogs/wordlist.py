@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QAbstractItemView,
-    QApplication,
     QDialogButtonBox,
     QFileDialog,
     QHBoxLayout,
@@ -80,11 +79,11 @@ class GuiWordList(NDialog):
             scale=NColorLabel.HEADER_SCALE,
         )
 
-        self.importButton = SHARED.theme.getToolButton(nwToolButton.IMPORT, self)
+        self.importButton = SHARED.theme.getFlatButton(nwToolButton.IMPORT, self)
         self.importButton.setToolTip(self.tr("Import words from text file"))
         self.importButton.clicked.connect(self._importWords)
 
-        self.exportButton = SHARED.theme.getToolButton(nwToolButton.EXPORT, self)
+        self.exportButton = SHARED.theme.getFlatButton(nwToolButton.EXPORT, self)
         self.exportButton.setToolTip(self.tr("Export words to text file"))
         self.exportButton.clicked.connect(self._exportWords)
 
@@ -102,10 +101,10 @@ class GuiWordList(NDialog):
         # Add/Remove Form
         self.newEntry = QLineEdit(self)
 
-        self.addButton = SHARED.theme.getToolButton(nwToolButton.ADD, self)
+        self.addButton = SHARED.theme.getIconButton(nwToolButton.ADD, self)
         self.addButton.clicked.connect(self._doAdd)
 
-        self.delButton = SHARED.theme.getToolButton(nwToolButton.REMOVE, self)
+        self.delButton = SHARED.theme.getIconButton(nwToolButton.REMOVE, self)
         self.delButton.clicked.connect(self._doDelete)
 
         self.editBox = QHBoxLayout()
@@ -182,7 +181,6 @@ class GuiWordList(NDialog):
             userDict.add(word)
         userDict.save()
         self.newWordListReady.emit()
-        QApplication.processEvents()
         self.close()
 
     @pyqtSlot()

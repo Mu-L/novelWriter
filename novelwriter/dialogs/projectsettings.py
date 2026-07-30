@@ -31,7 +31,6 @@ from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QCloseEvent, QColor
 from PyQt6.QtWidgets import (
     QAbstractItemView,
-    QApplication,
     QColorDialog,
     QDateEdit,
     QDialogButtonBox,
@@ -50,11 +49,11 @@ from PyQt6.QtWidgets import (
 
 from novelwriter import CONFIG, SHARED
 from novelwriter.common import formatFileFilter, qtAddAction, qtLambda, simplified
-from novelwriter.constants import nwLabels, trConst
+from novelwriter.constants import nwLabels, trConst, trStats
 from novelwriter.core.status import CUSTOM_COL, ItemStatus, StatusEntry
 from novelwriter.enum import nwItemClass, nwStandardButton, nwStatusShape, nwToolButton
 from novelwriter.extensions.configlayout import NColorLabel, NFixedPage, NScrollableForm
-from novelwriter.extensions.modified import NComboBox, NDialog, NIconToolButton, NSpinBox
+from novelwriter.extensions.modified import NComboBox, NDialog, NIconButton, NSpinBox
 from novelwriter.extensions.pagedsidebar import NPagedSideBar
 from novelwriter.extensions.switch import NSwitch
 from novelwriter.types import QtRoleAccept, QtRoleReject, QtSizeMinimum, QtSizeMinimumExpanding, QtUserRole
@@ -210,14 +209,15 @@ class GuiProjectSettings(NDialog):
         project.data.setSpellLang(spellLang)
         project.data.setDoBackup(doBackup)
 
-        targetWordCount = self.goalsPage.targetWordCount.value()
+        targetCount = self.goalsPage.targetCount.value()
+        targetCountChars = self.goalsPage.countCharacters.isChecked()
         targetDeadline = self.goalsPage.targetDeadline.date().toPyDate()
         targetDeadline = targetDeadline if self.goalsPage.targetDeadlineEnabled.isChecked() else None
         dailyGoalAuto = self.goalsPage.dailyGoalAuto.isChecked()
         dailyGoal = self.goalsPage.dailyGoal.value()
         targetSkipRoots = [handle for handle, switch in self.goalsPage.skipRoots.items() if not switch.isChecked()]
 
-        project.data.setProjectTarget(targetWordCount, targetDeadline)
+        project.data.setProjectTarget(targetCount, targetDeadline, targetCountChars)
         project.data.setDailyTarget(dailyGoal, dailyGoalAuto)
         project.data.setTargetSkipRoots(targetSkipRoots)
 
@@ -234,7 +234,6 @@ class GuiProjectSettings(NDialog):
             project.data.setAutoReplace(self.replacePage.getNewList())
 
         self.newProjectSettingsReady.emit()
-        QApplication.processEvents()
         self.close()
 
     ##
@@ -345,14 +344,15 @@ class _GoalsPage(NScrollableForm):
         self.addGroupLabel(self.tr("Writing Goals"))
 
         # Project Goals
-        self.targetWordCount = NSpinBox(self, minVal=0, maxVal=9999999, step=1000)
-        self.targetWordCount.setFixedNumbersWidth(7)
-        self.targetWordCount.setValue(data.targetWordCount)
+        self.targetCount = NSpinBox(self, minVal=0, maxVal=9999999, step=1000)
+        self.targetCount.setFixedNumbersWidth(7)
+        self.targetCount.setValue(data.targetCount)
         self.addRow(
             self.tr("Project target"),
-            self.targetWordCount,
+            self.targetCount,
             self.tr("Set to zero to disable."),
-            unit=self.tr("words"),
+            unit="",
+            editable="targetCount",
         )
 
         # Daily Goal
@@ -363,8 +363,19 @@ class _GoalsPage(NScrollableForm):
             self.tr("Daily writing goal"),
             self.dailyGoal,
             self.tr("Set to zero to disable."),
-            unit=self.tr("words"),
+            unit="",
+            editable="dailyGoal",
         )
+
+        # Count Mode
+        self.countCharacters = NSwitch(self)
+        self.countCharacters.setChecked(data.targetCountChars)
+        self.countCharacters.toggled.connect(self._updateCountMode)
+        self.addRow(
+            self.tr("Count characters instead of words"),
+            self.countCharacters,
+        )
+        self._updateCountMode(data.targetCountChars)
 
         # Project Deadline
         self.targetDeadlineEnabled = NSwitch(self)
@@ -388,7 +399,7 @@ class _GoalsPage(NScrollableForm):
         self.addRow(
             self.tr("Calculate daily goal automatically"),
             self.dailyGoalAuto,
-            self.tr("Calculates daily goal based on target date and word count."),
+            self.tr("Calculates daily goal based on project target and date."),
         )
 
         # Connect Signals
@@ -406,6 +417,17 @@ class _GoalsPage(NScrollableForm):
             self.addRow(item.itemName, switch)
 
         self.finalise()
+
+    ##
+    #  Private Slots
+    ##
+
+    @pyqtSlot(bool)
+    def _updateCountMode(self, checked: bool) -> None:
+        """Update the unit label when the count mode is changed."""
+        unit = trStats("Characters" if checked else "Words")
+        self.setUnitText("targetCount", unit)
+        self.setUnitText("dailyGoal", unit)
 
 
 class _StatusPage(NFixedPage):
@@ -468,22 +490,22 @@ class _StatusPage(NFixedPage):
             self._addItem(key, StatusEntry.duplicate(entry))
 
         # List Controls
-        self.addButton = SHARED.theme.getToolButton(nwToolButton.ADD, self)
+        self.addButton = SHARED.theme.getFlatButton(nwToolButton.ADD, self)
         self.addButton.clicked.connect(self._onItemCreate)
 
-        self.delButton = SHARED.theme.getToolButton(nwToolButton.REMOVE, self)
+        self.delButton = SHARED.theme.getFlatButton(nwToolButton.REMOVE, self)
         self.delButton.clicked.connect(self._onItemDelete)
 
-        self.upButton = SHARED.theme.getToolButton(nwToolButton.MOVE_UP, self)
+        self.upButton = SHARED.theme.getFlatButton(nwToolButton.MOVE_UP, self)
         self.upButton.clicked.connect(qtLambda(self._moveItem, -1))
 
-        self.downButton = SHARED.theme.getToolButton(nwToolButton.MOVE_DOWN, self)
+        self.downButton = SHARED.theme.getFlatButton(nwToolButton.MOVE_DOWN, self)
         self.downButton.clicked.connect(qtLambda(self._moveItem, 1))
 
-        self.importButton = SHARED.theme.getToolButton(nwToolButton.IMPORT, self)
+        self.importButton = SHARED.theme.getFlatButton(nwToolButton.IMPORT, self)
         self.importButton.clicked.connect(self._importLabels)
 
-        self.exportButton = SHARED.theme.getToolButton(nwToolButton.EXPORT, self)
+        self.exportButton = SHARED.theme.getFlatButton(nwToolButton.EXPORT, self)
         self.exportButton.clicked.connect(self._exportLabels)
 
         # Edit Form
@@ -508,12 +530,9 @@ class _StatusPage(NFixedPage):
         self.labelColor = QLabel(self.tr("Colour"), self)
         self.labelColor.setBuddy(self.iconColor)
 
-        buttonStyle = "QToolButton {padding: 0 4px;} QToolButton::menu-indicator {image: none;}"
-
-        self.colorButton = NIconToolButton(self, iSz)
+        self.colorButton = NIconButton(self, iSz)
         self.colorButton.setToolTip(self.tr("Colour"))
         self.colorButton.setSizePolicy(QtSizeMinimum, QtSizeMinimumExpanding)
-        self.colorButton.setStyleSheet(buttonStyle)
         self.colorButton.setEnabled(False)
         self.colorButton.clicked.connect(self._onColorSelect)
 
@@ -531,11 +550,10 @@ class _StatusPage(NFixedPage):
         buildMenu(self.shapeMenu.addMenu(self.tr("Blocks ...")), nwLabels.SHAPES_BLOCKS)
         self.shapeMenu.triggered.connect(self._shapeSelected)
 
-        self.shapeButton = NIconToolButton(self, iSz)
+        self.shapeButton = NIconButton(self, iSz)
         self.shapeButton.setMenu(self.shapeMenu)
         self.shapeButton.setToolTip(self.tr("Shape"))
         self.shapeButton.setSizePolicy(QtSizeMinimum, QtSizeMinimumExpanding)
-        self.shapeButton.setStyleSheet(buttonStyle)
         self.shapeButton.setEnabled(False)
 
         self.labelShape = QLabel(self.tr("Shape"), self)
@@ -838,10 +856,10 @@ class _ReplacePage(NFixedPage):
         self.listBox.setSortingEnabled(True)
 
         # List Controls
-        self.addButton = SHARED.theme.getToolButton(nwToolButton.ADD, self)
+        self.addButton = SHARED.theme.getFlatButton(nwToolButton.ADD, self)
         self.addButton.clicked.connect(self._onEntryCreated)
 
-        self.delButton = SHARED.theme.getToolButton(nwToolButton.REMOVE, self)
+        self.delButton = SHARED.theme.getFlatButton(nwToolButton.REMOVE, self)
         self.delButton.clicked.connect(self._onEntryDeleted)
 
         # Edit Form
