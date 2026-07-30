@@ -1393,7 +1393,7 @@ class GuiDocEditor(QTextEdit):
     def inputMethodEvent(self, event: QInputMethodEvent) -> None:
         """Handle text being input from CJK input methods."""
         super().inputMethodEvent(event)
-        if event.commitString():
+        if event.commitString():  # pragma: no branch
             # See issues #2267 and #2517
             self.ensureCursorVisible(centre=False)
             # cursorRect() is still stale immediately after the commit,
