@@ -152,6 +152,7 @@ max-nested-blocks = 10
 
 [tool.ruff.format]
 quote-style = "double"
+preview = true
 
 [tool.pyright]
 include = ["novelwriter"]
