@@ -1006,7 +1006,6 @@ class _PreviewWidget(QTextBrowser):
 
         self.buildProgress.setCentreText(self.tr("Done"))
         QApplication.restoreOverrideCursor()
-        QApplication.processEvents()
         QTimer.singleShot(300, self._postUpdate)
 
     def updateTheme(self) -> None:

@@ -31,7 +31,6 @@ from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QCloseEvent, QColor
 from PyQt6.QtWidgets import (
     QAbstractItemView,
-    QApplication,
     QColorDialog,
     QDateEdit,
     QDialogButtonBox,
@@ -234,7 +233,6 @@ class GuiProjectSettings(NDialog):
             project.data.setAutoReplace(self.replacePage.getNewList())
 
         self.newProjectSettingsReady.emit()
-        QApplication.processEvents()
         self.close()
 
     ##
