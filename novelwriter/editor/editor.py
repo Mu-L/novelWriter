@@ -1462,7 +1462,13 @@ class GuiDocEditor(QTextEdit):
             cursor.insertText(text)
             cursor.endEditBlock()
             self.setTextCursor(cursor)
-            self.ensureCursorVisible(centre=False)
+            # For an internal drag-and-drop move, this call runs while Qt's
+            # own drop handler still has an edit block open on an
+            # overlapping selection, and ensureCursorVisible's
+            # processEvents() call can then re-enter on a document that is
+            # mid-mutation, so it must wait for the next event loop
+            # iteration, see #2917
+            QTimer.singleShot(0, lambda: self.ensureCursorVisible(centre=False))
 
     ##
     #  Public Slots
