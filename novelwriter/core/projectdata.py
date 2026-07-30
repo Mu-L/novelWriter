@@ -27,6 +27,7 @@ import uuid
 from datetime import date
 from typing import TYPE_CHECKING, Any, Literal
 
+from novelwriter import CONFIG
 from novelwriter.common import (
     checkBool,
     checkDateNone,
@@ -80,6 +81,7 @@ class ProjectData:
         "_spellLang",
         "_status",
         "_targetCount",
+        "_targetCountChars",
         "_targetDeadline",
         "_targetLastCount",
         "_targetSkipRoots",
@@ -107,6 +109,7 @@ class ProjectData:
 
         # Writing Target
         self._targetCount = 0
+        self._targetCountChars = CONFIG.useCharCount
         self._targetLastCount = 0
         self._targetDeadline = None
         self._targetSkipRoots: set[str] = set()
@@ -186,6 +189,11 @@ class ProjectData:
     def targetCount(self) -> int:
         """Return the project goal."""
         return self._targetCount
+
+    @property
+    def targetCountChars(self) -> bool:
+        """Return the project goal count type."""
+        return self._targetCountChars
 
     @property
     def targetLastCount(self) -> int:
@@ -355,11 +363,12 @@ class ProjectData:
             self._doBackup = checkBool(value, False)
             self._project.setProjectChanged(True)
 
-    def setProjectTarget(self, count: str | int | None, deadline: str | date | None) -> None:
+    def setProjectTarget(self, count: str | int | None, deadline: str | date | None, countChars: bool) -> None:
         """Set the project goal."""
-        if count != self._targetCount or deadline != self._targetDeadline:
+        if count != self._targetCount or deadline != self._targetDeadline or countChars != self._targetCountChars:
             self._targetCount = checkInt(count, 0)
             self._targetDeadline = checkDateNone(deadline, None)
+            self._targetCountChars = checkBool(countChars, True)
             self._project.setProjectChanged(True)
 
     def setTargetSkipRoots(self, updated: list[str]) -> None:

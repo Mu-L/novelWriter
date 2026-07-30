@@ -49,7 +49,7 @@ from PyQt6.QtWidgets import (
 
 from novelwriter import CONFIG, SHARED
 from novelwriter.common import formatFileFilter, qtAddAction, qtLambda, simplified
-from novelwriter.constants import nwLabels, trConst
+from novelwriter.constants import nwLabels, trConst, trStats
 from novelwriter.core.status import CUSTOM_COL, ItemStatus, StatusEntry
 from novelwriter.enum import nwItemClass, nwStandardButton, nwStatusShape, nwToolButton
 from novelwriter.extensions.configlayout import NColorLabel, NFixedPage, NScrollableForm
@@ -210,13 +210,14 @@ class GuiProjectSettings(NDialog):
         project.data.setDoBackup(doBackup)
 
         targetCount = self.goalsPage.targetCount.value()
+        targetCountChars = self.goalsPage.countCharacters.isChecked()
         targetDeadline = self.goalsPage.targetDeadline.date().toPyDate()
         targetDeadline = targetDeadline if self.goalsPage.targetDeadlineEnabled.isChecked() else None
         dailyGoalAuto = self.goalsPage.dailyGoalAuto.isChecked()
         dailyGoal = self.goalsPage.dailyGoal.value()
         targetSkipRoots = [handle for handle, switch in self.goalsPage.skipRoots.items() if not switch.isChecked()]
 
-        project.data.setProjectTarget(targetCount, targetDeadline)
+        project.data.setProjectTarget(targetCount, targetDeadline, targetCountChars)
         project.data.setDailyTarget(dailyGoal, dailyGoalAuto)
         project.data.setTargetSkipRoots(targetSkipRoots)
 
@@ -350,7 +351,8 @@ class _GoalsPage(NScrollableForm):
             self.tr("Project target"),
             self.targetCount,
             self.tr("Set to zero to disable."),
-            unit=self.tr("words"),
+            unit="",
+            editable="targetCount",
         )
 
         # Daily Goal
@@ -361,8 +363,19 @@ class _GoalsPage(NScrollableForm):
             self.tr("Daily writing goal"),
             self.dailyGoal,
             self.tr("Set to zero to disable."),
-            unit=self.tr("words"),
+            unit="",
+            editable="dailyGoal",
         )
+
+        # Count Mode
+        self.countCharacters = NSwitch(self)
+        self.countCharacters.setChecked(data.targetCountChars)
+        self.countCharacters.toggled.connect(self._updateCountMode)
+        self.addRow(
+            self.tr("Count characters instead of words"),
+            self.countCharacters,
+        )
+        self._updateCountMode(data.targetCountChars)
 
         # Project Deadline
         self.targetDeadlineEnabled = NSwitch(self)
@@ -404,6 +417,17 @@ class _GoalsPage(NScrollableForm):
             self.addRow(item.itemName, switch)
 
         self.finalise()
+
+    ##
+    #  Private Slots
+    ##
+
+    @pyqtSlot(bool)
+    def _updateCountMode(self, checked: bool) -> None:
+        """Update the unit label when the count mode is changed."""
+        unit = trStats("Characters" if checked else "Words")
+        self.setUnitText("targetCount", unit)
+        self.setUnitText("dailyGoal", unit)
 
 
 class _StatusPage(NFixedPage):
