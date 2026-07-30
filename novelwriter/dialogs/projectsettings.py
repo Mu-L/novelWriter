@@ -209,14 +209,14 @@ class GuiProjectSettings(NDialog):
         project.data.setSpellLang(spellLang)
         project.data.setDoBackup(doBackup)
 
-        targetWordCount = self.goalsPage.targetWordCount.value()
+        targetCount = self.goalsPage.targetCount.value()
         targetDeadline = self.goalsPage.targetDeadline.date().toPyDate()
         targetDeadline = targetDeadline if self.goalsPage.targetDeadlineEnabled.isChecked() else None
         dailyGoalAuto = self.goalsPage.dailyGoalAuto.isChecked()
         dailyGoal = self.goalsPage.dailyGoal.value()
         targetSkipRoots = [handle for handle, switch in self.goalsPage.skipRoots.items() if not switch.isChecked()]
 
-        project.data.setProjectTarget(targetWordCount, targetDeadline)
+        project.data.setProjectTarget(targetCount, targetDeadline)
         project.data.setDailyTarget(dailyGoal, dailyGoalAuto)
         project.data.setTargetSkipRoots(targetSkipRoots)
 
@@ -343,12 +343,12 @@ class _GoalsPage(NScrollableForm):
         self.addGroupLabel(self.tr("Writing Goals"))
 
         # Project Goals
-        self.targetWordCount = NSpinBox(self, minVal=0, maxVal=9999999, step=1000)
-        self.targetWordCount.setFixedNumbersWidth(7)
-        self.targetWordCount.setValue(data.targetWordCount)
+        self.targetCount = NSpinBox(self, minVal=0, maxVal=9999999, step=1000)
+        self.targetCount.setFixedNumbersWidth(7)
+        self.targetCount.setValue(data.targetCount)
         self.addRow(
             self.tr("Project target"),
-            self.targetWordCount,
+            self.targetCount,
             self.tr("Set to zero to disable."),
             unit=self.tr("words"),
         )

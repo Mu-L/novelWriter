@@ -74,15 +74,15 @@ class ProjectData:
         "_lastHandle",
         "_name",
         "_project",
-        "_remainingWordCount",
+        "_remainingCount",
         "_saveCount",
         "_spellCheck",
         "_spellLang",
         "_status",
+        "_targetCount",
         "_targetDeadline",
         "_targetLastCount",
         "_targetSkipRoots",
-        "_targetWordCount",
         "_titleFormat",
         "_uuid",
     )
@@ -106,11 +106,11 @@ class ProjectData:
         self._spellLang = None
 
         # Writing Target
-        self._targetWordCount = 0
+        self._targetCount = 0
         self._targetLastCount = 0
         self._targetDeadline = None
         self._targetSkipRoots: set[str] = set()
-        self._remainingWordCount = 0
+        self._remainingCount = 0
         self._dailyGoal = 0
         self._dailyGoalAuto = False
         self._dailyProgress = 0
@@ -183,9 +183,9 @@ class ProjectData:
         return self._doBackup
 
     @property
-    def targetWordCount(self) -> int:
+    def targetCount(self) -> int:
         """Return the project goal."""
-        return self._targetWordCount
+        return self._targetCount
 
     @property
     def targetLastCount(self) -> int:
@@ -302,11 +302,11 @@ class ProjectData:
         """
         if (
             self._dailyGoalAuto
-            and self._remainingWordCount > 0
+            and self._remainingCount > 0
             and self._targetDeadline is not None
             and self._targetDeadline >= date.today()
         ):
-            return self._remainingWordCount // ((self._targetDeadline - date.today()).days + 1)
+            return self._remainingCount // ((self._targetDeadline - date.today()).days + 1)
         return self._dailyGoal
 
     ##
@@ -357,8 +357,8 @@ class ProjectData:
 
     def setProjectTarget(self, count: str | int | None, deadline: str | date | None) -> None:
         """Set the project goal."""
-        if count != self._targetWordCount or deadline != self._targetDeadline:
-            self._targetWordCount = checkInt(count, 0)
+        if count != self._targetCount or deadline != self._targetDeadline:
+            self._targetCount = checkInt(count, 0)
             self._targetDeadline = checkDateNone(deadline, None)
             self._project.setProjectChanged(True)
 
@@ -386,7 +386,7 @@ class ProjectData:
             self._dailyLastDate = date.today()
 
         self._dailyProgress = self._dailyLastCount + session
-        self._remainingWordCount = self._targetWordCount - (target - self._dailyProgress)
+        self._remainingCount = self._targetCount - (target - self._dailyProgress)
         self._targetLastCount = target
 
     def setLanguage(self, value: str | None) -> None:
@@ -492,5 +492,5 @@ class ProjectData:
         self._dailyLastDate = date.today()
         self._dailyLastCount -= self._dailyProgress
         self._dailyProgress = 0
-        self._remainingWordCount = self._targetWordCount - self._targetLastCount
+        self._remainingCount = self._targetCount - self._targetLastCount
         self._project.setProjectChanged(True)

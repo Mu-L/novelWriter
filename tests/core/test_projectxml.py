@@ -169,7 +169,7 @@ def testProjectXMLReader_ReadCurrent(monkeypatch, mockGUI, tstPaths, fncPath):
     assert data.getLastHandle("novel") == "7031beac91f75"
     assert data.getLastHandle("outline") == "7031beac91f75"
 
-    assert data.targetWordCount == 100000
+    assert data.targetCount == 100000
     assert data.targetDeadline == date.fromisoformat("2026-08-20")
     assert data.dailyGoal == 1000
     assert data.dailyGoalAuto is False
@@ -331,7 +331,7 @@ def testProjectXMLReader_ReadLegacy10(tstPaths, fncPath, mockGUI, mockRnd):
     assert data.getLastHandle("novel") is None  # Doesn't exist in 1.0
     assert data.getLastHandle("outline") is None  # Doesn't exist in 1.0
 
-    assert data.targetWordCount == 0  # Doesn't exist in 1.0
+    assert data.targetCount == 0  # Doesn't exist in 1.0
     assert data.targetDeadline is None  # Doesn't exist in 1.0
     assert data.dailyGoal == 0  # Doesn't exist in 1.0
     assert data.dailyGoalAuto is False  # Doesn't exist in 1.0
@@ -496,7 +496,7 @@ def testProjectXMLReader_ReadLegacy11(tstPaths, fncPath, mockGUI, mockRnd):
     assert data.getLastHandle("novel") is None  # Doesn't exist in 1.1
     assert data.getLastHandle("outline") is None  # Doesn't exist in 1.1
 
-    assert data.targetWordCount == 0  # Doesn't exist in 1.1
+    assert data.targetCount == 0  # Doesn't exist in 1.1
     assert data.targetDeadline is None  # Doesn't exist in 1.1
     assert data.dailyGoal == 0  # Doesn't exist in 1.1
     assert data.dailyGoalAuto is False  # Doesn't exist in 1.1
@@ -661,7 +661,7 @@ def testProjectXMLReader_ReadLegacy12(tstPaths, fncPath, mockGUI, mockRnd):
     assert data.getLastHandle("novel") is None  # Doesn't exist in 1.2
     assert data.getLastHandle("outline") is None  # Doesn't exist in 1.2
 
-    assert data.targetWordCount == 0  # Doesn't exist in 1.2
+    assert data.targetCount == 0  # Doesn't exist in 1.2
     assert data.targetDeadline is None  # Doesn't exist in 1.2
     assert data.dailyGoal == 0  # Doesn't exist in 1.2
     assert data.dailyGoalAuto is False  # Doesn't exist in 1.2
@@ -829,7 +829,7 @@ def testProjectXMLReader_ReadLegacy13(tstPaths, fncPath, mockGUI, mockRnd):
     assert data.getLastHandle("novel") is None  # Doesn't exist in 1.3
     assert data.getLastHandle("outline") is None  # Doesn't exist in 1.3
 
-    assert data.targetWordCount == 0  # Doesn't exist in 1.3
+    assert data.targetCount == 0  # Doesn't exist in 1.3
     assert data.targetDeadline is None  # Doesn't exist in 1.3
     assert data.dailyGoal == 0  # Doesn't exist in 1.3
     assert data.dailyGoalAuto is False  # Doesn't exist in 1.3
@@ -997,7 +997,7 @@ def testProjectXMLReader_ReadLegacy14(tstPaths, fncPath, mockGUI, mockRnd):
     assert data.getLastHandle("novel") is None  # Doesn't exist in 1.4
     assert data.getLastHandle("outline") is None  # Doesn't exist in 1.4
 
-    assert data.targetWordCount == 0  # Doesn't exist in 1.4
+    assert data.targetCount == 0  # Doesn't exist in 1.4
     assert data.targetDeadline is None  # Doesn't exist in 1.4
     assert data.dailyGoal == 0  # Doesn't exist in 1.4
     assert data.dailyGoalAuto is False  # Doesn't exist in 1.4

@@ -531,7 +531,7 @@ class ProjectXMLWriter:
         self._packSingleValue(xSettings, "doBackup", yesNo(data.doBackup))
         self._packSingleValue(xSettings, "language", data.language)
         self._packSingleValue(xSettings, "spellChecking", data.spellLang, attrib={"auto": yesNo(data.spellCheck)})
-        self._packSingleValue(xSettings, "projectTarget", str(data.targetWordCount), attrib=targetAttr)
+        self._packSingleValue(xSettings, "projectTarget", str(data.targetCount), attrib=targetAttr)
         self._packSingleValue(xSettings, "dailyTarget", str(data.dailyGoal), attrib=dailyAttr)
         self._packListValues(xSettings, "targetSkipRoots", data.targetSkipRoots)
         self._packDictKeyValue(xSettings, "lastHandle", data.lastHandle)

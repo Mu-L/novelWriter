@@ -297,13 +297,13 @@ def testProjectData_DailyProgress(monkeypatch, mockGUI):
     # the full target less what already existed at the start of the day
     data.setDailyProgress(0, 500)
     assert data.dailyProgress == 0
-    assert data._remainingWordCount == 500
+    assert data._remainingCount == 500
 
     # As the session progresses, the progress grows by the session word
     # count, but the remaining count for the day stays fixed
     data.setDailyProgress(60, 560)
     assert data.dailyProgress == 60
-    assert data._remainingWordCount == 500
+    assert data._remainingCount == 500
 
     # A new session is opened later the same day. The project file was
     # saved with the 60 words from the previous session already included
@@ -319,12 +319,12 @@ def testProjectData_DailyProgress(monkeypatch, mockGUI):
     data.setDailyProgress(0, 560)
     assert data.dailyProgress == 60
     assert data.dailyLastCount == 60
-    assert data._remainingWordCount == 500
+    assert data._remainingCount == 500
 
     # More words are added in the second session
     data.setDailyProgress(40, 600)
     assert data.dailyProgress == 100
-    assert data._remainingWordCount == 500
+    assert data._remainingCount == 500
 
     # The clock ticks over to the next day mid-session. Progress resets
     # for the new day, and the remaining count drops by the full amount
@@ -334,13 +334,13 @@ def testProjectData_DailyProgress(monkeypatch, mockGUI):
     _FakeDate._today = date(2026, 7, 21)
     data.setDailyProgress(45, 605)
     assert data.dailyProgress == 5
-    assert data._remainingWordCount == 400
+    assert data._remainingCount == 400
     assert data._dailyLastDate == date(2026, 7, 21)
 
     # Further typing on the new day accumulates from the new baseline
     data.setDailyProgress(55, 615)
     assert data.dailyProgress == 15
-    assert data._remainingWordCount == 400
+    assert data._remainingCount == 400
 
 
 @pytest.mark.core
@@ -356,7 +356,7 @@ def testProjectData_EffectiveDailyGoal(monkeypatch, mockGUI):
     data = ProjectData(project)  # type: ignore
     data.setProjectTarget(1000, date(2026, 7, 24))
     data.setDailyProgress(0, 400)
-    assert data._remainingWordCount == 600
+    assert data._remainingCount == 600
 
     # With automatic calculation off, the fixed goal is always returned
     data.setDailyTarget(50, False)
@@ -380,5 +380,5 @@ def testProjectData_EffectiveDailyGoal(monkeypatch, mockGUI):
     # When the remaining word count isn't positive, also fall back
     data.setProjectTarget(400, date(2026, 7, 24))
     data.setDailyProgress(0, 400)
-    assert data._remainingWordCount == 0
+    assert data._remainingCount == 0
     assert data.getEffectiveDailyGoal() == 50
