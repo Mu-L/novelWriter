@@ -399,7 +399,7 @@ class _GoalsPage(NScrollableForm):
         self.addRow(
             self.tr("Calculate daily goal automatically"),
             self.dailyGoalAuto,
-            self.tr("Calculates daily goal based on target date and word count."),
+            self.tr("Calculates daily goal based on project target and date."),
         )
 
         # Connect Signals

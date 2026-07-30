@@ -365,11 +365,17 @@ class ProjectData:
 
     def setProjectTarget(self, count: str | int | None, deadline: str | date | None, countChars: bool) -> None:
         """Set the project goal."""
-        if count != self._targetCount or deadline != self._targetDeadline or countChars != self._targetCountChars:
+        if (
+            (updateCounts := countChars != self._targetCountChars)
+            or count != self._targetCount
+            or deadline != self._targetDeadline
+        ):
             self._targetCount = checkInt(count, 0)
             self._targetDeadline = checkDateNone(deadline, None)
             self._targetCountChars = checkBool(countChars, True)
             self._project.setProjectChanged(True)
+            if updateCounts:
+                self._project.markCountsDirty()
 
     def setTargetSkipRoots(self, updated: list[str]) -> None:
         """Set the target skip root handles dictionary."""
