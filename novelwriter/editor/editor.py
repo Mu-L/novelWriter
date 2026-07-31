@@ -2529,11 +2529,14 @@ class GuiDocEditor(QTextEdit):
 
     def _selectedBlocks(self, cursor: QTextCursor) -> list[QTextBlock]:
         """Return a list of all blocks selected by a cursor."""
+        blocks: list[QTextBlock] = []
         if cursor.hasSelection():
-            iS = self._qDocument.findBlock(cursor.selectionStart()).blockNumber()
-            iE = self._qDocument.findBlock(cursor.selectionEnd()).blockNumber()
-            return [self._qDocument.findBlockByNumber(i) for i in range(iS, iE + 1)]
-        return []
+            block = self._qDocument.findBlock(cursor.selectionStart())
+            lastNum = self._qDocument.findBlock(cursor.selectionEnd()).blockNumber()
+            while block.isValid() and block.blockNumber() <= lastNum:
+                blocks.append(block)
+                block = block.next()
+        return blocks
 
     def _removeInParLineBreaks(self) -> None:
         """Strip line breaks within paragraphs in the selected text."""
