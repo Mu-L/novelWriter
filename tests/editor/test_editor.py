@@ -821,7 +821,7 @@ def testGuiDocEditor_SpellChecking(qtbot, monkeypatch, nwGUI, projPath, ipsumTex
         # A full pass runs chunked worker jobs until the document is
         # done, which with a synchronous worker completes immediately
         docEditor._beginCheckPass()
-        assert docEditor._checkPassNo == -1
+        assert docEditor._checkPassPos is None
         assert docEditor._checkJob is None
 
         # A full spell check notifies when the pass completes
@@ -4265,9 +4265,9 @@ def testGuiDocEditor_BigDocLifecycle(qtbot, nwGUI, projPath, ipsumText, mockRnd)
     assert docEditor.getCursorPosition() != cursPos
 
     # A spell check pass is also skipped while busy
-    docEditor._checkPassNo = 99
+    docEditor._checkPassPos = 99
     docEditor.spellCheckDocument()
-    assert docEditor._checkPassNo == 99
+    assert docEditor._checkPassPos == 99
 
     with qtbot.waitSignal(docEditor._qDocument.layoutSettled, timeout=5000):
         pass
