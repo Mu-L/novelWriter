@@ -3199,11 +3199,11 @@ class GuiDocEditor(QTextEdit):
     def _skipToParagraph(self, step: int) -> None:
         """Move cursor to next paragraph by step."""
         if step != 0:
-            cursor = self.textCursor()
-            limit = -1 if step < 0 else self._qDocument.blockCount()
-            for i in range(cursor.blockNumber() + step, limit, step):
-                block = self._qDocument.findBlockByNumber(i)
+            block = self.textCursor().block()
+            while block.isValid():
+                block = block.next() if step > 0 else block.previous()
                 if block.isValid() and block.text().strip():
+                    cursor = self.textCursor()
                     cursor.setPosition(block.position())
                     self.setTextCursor(cursor)
                     break
