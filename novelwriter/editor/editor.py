@@ -192,6 +192,7 @@ class GuiDocEditor(QTextEdit):
         "_hoverPos",
         "_keyContext",
         "_lastActive",
+        "_lastDocTask",
         "_lastEdit",
         "_lastFind",
         "_lineColor",
@@ -278,6 +279,7 @@ class GuiDocEditor(QTextEdit):
         # Document Variables
         self._lastEdit = 0.0  # Timestamp of last edit
         self._lastActive = 0.0  # Timestamp of last activity
+        self._lastDocTask = -1.0  # Timestamp of last edit processed by _runDocumentTasks
         self._lastFind = None  # Position of the last found search word
         self._doReplace = False  # Switch to temporarily disable auto-replace
         self._lineColor = QtTransparent
@@ -489,6 +491,7 @@ class GuiDocEditor(QTextEdit):
         self._docHandle = None
         self._lastEdit = 0.0
         self._lastActive = 0.0
+        self._lastDocTask = -1.0
         self._lastFind = None
         self._doReplace = False
 
@@ -1877,8 +1880,9 @@ class GuiDocEditor(QTextEdit):
     @pyqtSlot()
     def _runDocumentTasks(self) -> None:
         """Run timer document tasks."""
-        if self._docHandle:
+        if self._docHandle and self._lastEdit > self._lastDocTask:
             logger.debug("Running document tasks")
+            self._lastDocTask = self._lastEdit
             if not self._docCounter.busy:
                 self._docCounter.count(self.getText())
 

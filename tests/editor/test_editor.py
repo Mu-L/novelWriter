@@ -3170,6 +3170,7 @@ def testGuiDocEditor_WordCounters(qtbot, monkeypatch, nwGUI, projPath, ipsumText
     assert docEditor._docCounter.busy is False
 
     # Run the full word counter
+    docEditor._lastEdit = time()  # Simulate an edit since the last run
     docEditor._runDocumentTasks()
     assert docEditor._docCounter.busy is True
 
@@ -3208,11 +3209,14 @@ def testGuiDocEditor_WordCounters(qtbot, monkeypatch, nwGUI, projPath, ipsumText
     assert docEditor._selCounter.busy is False
     assert docEditor.docFooter.wordsText.text() == f"Selected: {wC}"
 
-    # Document tasks run regardless of how long ago the last edit was,
-    # since the timer is only started in response to an actual edit,
-    # fires once, and then stops rather than polling indefinitely
+    # A repeated run with no edit since the last one is skipped entirely
     threadPool._runObj = None
     docEditor._lastEdit = time() - 100.0
+    docEditor._runDocumentTasks()
+    assert threadPool.runnable() is None
+
+    # A genuine new edit makes the next run go ahead again
+    docEditor._lastEdit = time()
     docEditor._runDocumentTasks()
     assert threadPool.runnable() is not None
 
