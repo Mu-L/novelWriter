@@ -404,12 +404,9 @@ def testGuiProjectSearch_ReentrancyGuard(nwGUI, fncPath, mockRnd, ipsumText, mon
     def nestedIterSearch(self, project, searchText):
         for i, result in enumerate(realIterSearch(self, project, searchText)):
             if i == 0:
-                # Simulate a nested invocation entering mid-iteration, as
-                # would happen through the incMainProgress() pump.
+                # Simulate a nested invocation entering mid-iteration
                 search._processSearch()
-                # The nested call must see the guard held and skip its
-                # body, but must not clear it out from under the outer,
-                # still-running call.
+                # The nested call must see the guard held and skip its body
                 assert search._blocked is True
             yield result
 
@@ -419,8 +416,7 @@ def testGuiProjectSearch_ReentrancyGuard(nwGUI, fncPath, mockRnd, ipsumText, mon
 
     # The guard is released once the outer call actually finishes
     assert search._blocked is False
-    # The model reflects the completed outer search, undisturbed by the
-    # nested no-op call
+    # The model reflects the completed outer search, undisturbed by the nested no-op call
     assert model.rowCount(root) == 2
 
 
