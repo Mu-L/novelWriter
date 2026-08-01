@@ -338,10 +338,10 @@ def testNWProject_Open(monkeypatch, caplog, mockGUI, fncPath, mockRnd):
     with monkeypatch.context() as mp:
         mp.setattr(ProjectXMLReader, "state", property(lambda *a: XMLReadState.WAS_LEGACY))
         mp.setattr("novelwriter.core.index.Index.loadIndex", lambda *a: True)
-        project.index._indexBroken = True
+        project.index._indexRevision = 0
         assert project.openProject(fncPath, clearLock=True) is True
         assert "The file format of your project is about to be" in SHARED.lastAlert[0]
-        assert project.index._indexBroken is False
+        assert project.index._indexRevision == 4
 
     project.closeProject()
 

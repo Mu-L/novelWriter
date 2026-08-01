@@ -173,7 +173,7 @@ def testGuiMain_Launch(qtbot, monkeypatch, nwGUI, projPath, fncPath):
     warnMock = Mock()
     rebuildMock = Mock()
     with monkeypatch.context() as mp:
-        mp.setattr(type(SHARED.project.index), "indexBroken", property(lambda self: True))
+        mp.setattr(type(SHARED.project.index), "indexRebuild", property(lambda self: True))
         mp.setattr(type(SHARED.project.index), "indexUpgrade", property(lambda self: True))
         mp.setattr(SHARED, "warn", warnMock)
         mp.setattr(nwGUI, "rebuildIndex", rebuildMock)

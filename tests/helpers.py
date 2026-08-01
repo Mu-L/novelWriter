@@ -186,7 +186,7 @@ def buildTestProject(project: NWProject, path: Path) -> None:
 
     project.session.startSession()
     project.setProjectChanged(True)
-    project.saveProject(autoSave=True)
+    project.saveProject()
     project._valid = True
     project._tree._ready = True
 

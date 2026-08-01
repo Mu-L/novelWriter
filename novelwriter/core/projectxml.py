@@ -120,7 +120,7 @@ class ProjectXMLReader:
         Rev 6: Replaced red, green and blue attributes with a single
                color attribute (2.8).
         Rev 7: Added projectTarget and dailyTarget nodes to settings,
-               and indexRevision in project (26.2).
+               and indexRevision attribute to project (26.2).
     """
 
     def __init__(self, path: str | Path) -> None:

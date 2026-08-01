@@ -151,11 +151,11 @@ def testIndex_LoadSave(qtbot, monkeypatch, prjLipsum, nwGUI, tstPaths):
     with monkeypatch.context() as mp:
         mp.setattr(json, "load", causeException)
         assert index.loadIndex() is False
-        assert index.indexBroken is True
+        assert index.indexRebuild is True
 
     # Make the load pass
     assert index.loadIndex() is True
-    assert index.indexBroken is False
+    assert index.indexRebuild is False
     assert index.indexUpgrade is False
 
     assert str(index._tagsIndex.packData()) == tagIndex
@@ -175,12 +175,12 @@ def testIndex_LoadSave(qtbot, monkeypatch, prjLipsum, nwGUI, tstPaths):
     # Write an empty index file and load it
     projFile.write_text("{}", encoding="utf-8")
     assert index.loadIndex() is False
-    assert index.indexBroken is True
+    assert index.indexRebuild is True
 
     # Write an index file that passes loading, but is still empty
     projFile.write_text('{"novelWriter.tagsIndex": {}, "novelWriter.itemIndex": {}}', encoding="utf-8")
     assert index.loadIndex() is True
-    assert index.indexBroken is False
+    assert index.indexRebuild is False
 
     # Check that the index is re-populated
     assert "04468803b92e1" in index._itemIndex
