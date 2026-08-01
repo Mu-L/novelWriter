@@ -1,8 +1,13 @@
-%%~name: Scene Two
-%%~path: 45e6b01ca35c1/f96ec11c6a3da
-%%~kind: NOVEL/DOCUMENT
-%%~hash: e95ff5b633e74c9cab8dc32b6a77b3e40d265f2b
-%%~date: Unknown/2025-06-19 21:01:41
++++
+name = "Scene Two"
+parent = "45e6b01ca35c1"
+handle = "f96ec11c6a3da"
+class = "NOVEL"
+layout = "DOCUMENT"
+textHash = "1e244658fc824003d462505fb463d9e95417fa9d"
+createdDate = "Unknown"
+updatedDate = "2026-08-01 21:51:15"
++++
 ### Scene Two
 
 @pov: Bod

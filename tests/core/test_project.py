@@ -172,18 +172,18 @@ def testNWProject_NewFileFolder(monkeypatch, fncPath, tstPaths, mockGUI, mockRnd
         assert bHandle in project.tree
 
     # Delete new files and folders
-    assert (fncPath / "content" / f"{dHandle}.nwd").exists()
-    assert (fncPath / "content" / f"{cHandle}.nwd").exists()
-    assert (fncPath / "content" / f"{bHandle}.nwd").exists()
+    assert (fncPath / "content" / f"{dHandle}.md").exists()
+    assert (fncPath / "content" / f"{cHandle}.md").exists()
+    assert (fncPath / "content" / f"{bHandle}.md").exists()
 
     assert project.removeItem(dHandle) is True
     assert project.removeItem(cHandle) is True
     assert project.removeItem(bHandle) is True
     assert project.removeItem(aHandle) is True
 
-    assert not (fncPath / "content" / f"{dHandle}.nwd").exists()
-    assert not (fncPath / "content" / f"{cHandle}.nwd").exists()
-    assert not (fncPath / "content" / f"{bHandle}.nwd").exists()
+    assert not (fncPath / "content" / f"{dHandle}.md").exists()
+    assert not (fncPath / "content" / f"{cHandle}.md").exists()
+    assert not (fncPath / "content" / f"{bHandle}.md").exists()
 
     assert aHandle not in project.tree
     assert bHandle not in project.tree

@@ -1,8 +1,13 @@
-%%~name: New Scene
-%%~path: 000000000000d/000000000000f
-%%~kind: NOVEL/DOCUMENT
-%%~hash: 52d11ed4600bb258bee51c56551ace4f164240a5
-%%~date: 2025-11-13 17:02:43/2025-11-13 17:02:47
++++
+name = "New Scene"
+parent = "000000000000d"
+handle = "000000000000f"
+class = "NOVEL"
+layout = "DOCUMENT"
+textHash = "52d11ed4600bb258bee51c56551ace4f164240a5"
+createdDate = "2026-08-01 21:45:56"
+updatedDate = "2026-08-01 21:46:00"
++++
 # Novel
 
 ## Chapter

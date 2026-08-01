@@ -408,7 +408,7 @@ class ProjectTree:
             item = node.item
             file = f"{item.itemHandle}.md"
             if safeIsFile(contentPath / file):
-                tocLine = "{0:<25s}  {1:<9s}  {2:<8s}  {3:s}".format(
+                tocLine = "{0:<24s}  {1:<9s}  {2:<8s}  {3:s}".format(
                     f"content/{file}",
                     item.itemClass.name,
                     item.itemLayout.name,
@@ -424,9 +424,9 @@ class ProjectTree:
                 toc.write("=================\n")
                 toc.write("\n")
                 toc.write(
-                    "{0:<25s}  {1:<9s}  {2:<8s}  {3:s}\n".format("File Name", "Class", "Layout", "Document Label")
+                    "{0:<24s}  {1:<9s}  {2:<8s}  {3:s}\n".format("File Name", "Class", "Layout", "Document Label")
                 )
-                toc.write("-" * max(maxLen, 62) + "\n")
+                toc.write("-" * max(maxLen, 61) + "\n")
                 toc.write("\n".join(entries))
                 toc.write("\n")
 
