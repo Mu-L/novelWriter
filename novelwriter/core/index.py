@@ -80,8 +80,8 @@ class Index:
     """
 
     __slots__ = (
-        "_indexBroken",
         "_indexChange",
+        "_indexRevision",
         "_indexUpgrade",
         "_itemIndex",
         "_novelExtra",
@@ -98,15 +98,15 @@ class Index:
         # Storage and State
         self._tagsIndex = TagsIndex()
         self._itemIndex = ItemIndex(project, self._tagsIndex)
-        self._indexBroken = False
         self._indexUpgrade = False
 
         # Models
         self._novelModels: dict[str, NovelModel] = {}
         self._novelExtra = nwNovelExtra.HIDDEN
 
-        # TimeStamps
+        # Track Changes
         self._indexChange = 0.0
+        self._indexRevision = 0
         self._rootChange = {}
 
     def __repr__(self) -> str:
@@ -118,12 +118,19 @@ class Index:
     ##
 
     @property
-    def indexBroken(self) -> bool:
-        return self._indexBroken
+    def indexRebuild(self) -> bool:
+        """Return True if the index needs to be rebuilt."""
+        return self._indexRevision != self._project.data.indexRevision
 
     @property
     def indexUpgrade(self) -> bool:
-        return self._indexUpgrade
+        """Return True if the index was loaded from an older version."""
+        return self._indexUpgrade or self._indexRevision != self._project.data.indexRevision
+
+    @property
+    def indexRevision(self) -> int:
+        """Return the current index revision number."""
+        return self._indexRevision
 
     ##
     #  Getters
@@ -152,6 +159,7 @@ class Index:
         self._tagsIndex.clear()
         self._itemIndex.clear()
         self._indexChange = 0.0
+        self._indexRevision += 1  # We must not reset the revision number
         self._rootChange = {}
         SHARED.emitIndexCleared(self._project)
 
@@ -164,7 +172,6 @@ class Index:
                 text = self._project.storage.getDocumentText(nwItem.itemHandle)
                 self.scanText(nwItem.itemHandle, text, blockSignal=True)
             SHARED.incMainProgress()
-        self._indexBroken = False
         SHARED.emitIndexAvailable(self._project)
         for tHandle in self._novelModels:
             self.refreshNovelModel(tHandle)
@@ -243,7 +250,6 @@ class Index:
             return False
 
         tStart = time()
-        self._indexBroken = False
         if safeExists(indexFile):
             logger.debug("Loading index file")
             try:
@@ -252,18 +258,17 @@ class Index:
             except Exception:
                 logger.error("Failed to load index file")
                 logException()
-                self._indexBroken = True
                 return False
 
             try:
                 meta = data.get("novelWriter.meta", {})
                 self._indexUpgrade = meta.get("version") != __hexversion__
+                self._indexRevision = meta.get("revision", 0)
                 self._tagsIndex.unpackData(data["novelWriter.tagsIndex"])
                 self._itemIndex.unpackData(data["novelWriter.itemIndex"])
             except Exception:
                 logger.error("The index content is invalid")
                 logException()
-                self._indexBroken = True
                 return False
 
         logger.debug("Checking index")
@@ -293,7 +298,11 @@ class Index:
         start = time()
 
         try:
-            meta = {"version": __hexversion__, "timestamp": formatTimeStamp(start)}
+            meta = {
+                "version": __hexversion__,
+                "timestamp": formatTimeStamp(start),
+                "revision": self._indexRevision,
+            }
             with open(indexFile, mode="w+", encoding="utf-8") as outFile:
                 outFile.write(
                     jsonCombine({
@@ -363,6 +372,7 @@ class Index:
         # Update timestamps for index changes
         nowTime = time()
         self._indexChange = nowTime
+        self._indexRevision += 1
         self._rootChange[tItem.itemRoot] = nowTime
         if not blockSignal:
             if changedRefs := sorted(oldRefs | self._itemRefHandles(tHandle)):

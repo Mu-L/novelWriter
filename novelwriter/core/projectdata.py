@@ -70,6 +70,7 @@ class ProjectData:
         "_doBackup",
         "_editTime",
         "_import",
+        "_indexRevision",
         "_initCounts",
         "_language",
         "_lastHandle",
@@ -100,6 +101,7 @@ class ProjectData:
         self._saveCount = 0
         self._autoCount = 0
         self._editTime = 0
+        self._indexRevision = 0
 
         # Project Settings
         self._doBackup = True
@@ -179,6 +181,11 @@ class ProjectData:
     def editTime(self) -> int:
         """Return the number of seconds the project has been edited."""
         return self._editTime
+
+    @property
+    def indexRevision(self) -> int:
+        """Return the last known index revision number."""
+        return self._indexRevision
 
     @property
     def doBackup(self) -> bool:
@@ -356,6 +363,10 @@ class ProjectData:
         """Set the edit time from last session."""
         self._editTime = checkInt(value, 0)
         self._project.setProjectChanged(True)
+
+    def setIndexRevision(self, value: Any) -> None:
+        """Set the index revision number from last session."""
+        self._indexRevision = checkInt(value, 0)
 
     def setDoBackup(self, value: Any) -> None:
         """Set the do write backup flag."""

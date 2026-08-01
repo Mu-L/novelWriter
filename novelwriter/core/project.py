@@ -447,6 +447,10 @@ class NWProject:
         if not isinstance(xmlWriter, ProjectXMLWriter):
             return False
 
+        if not autoSave:
+            # We only update the index revision on full save
+            self._data.setIndexRevision(self._index.indexRevision)
+
         saveTime = time()
         SHARED.clearErrorCache()
         editTime = self._data.editTime + max(round(saveTime - self._session.start), 0)
@@ -456,8 +460,10 @@ class NWProject:
             return False
 
         # Save other project data
-        self._options.saveSettings()
-        self._index.saveIndex()
+        if not autoSave:
+            self._options.saveSettings()
+            self._index.saveIndex()
+
         self._storage.runPostSaveTasks(autoSave=autoSave)
 
         # Update recent projects

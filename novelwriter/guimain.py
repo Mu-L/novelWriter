@@ -501,7 +501,7 @@ class GuiMain(QMainWindow):
             self.viewDocument(lastViewed)
 
         # Check if we need to rebuild the index
-        if SHARED.project.index.indexBroken:
+        if SHARED.project.index.indexRebuild:
             if not SHARED.project.index.indexUpgrade:
                 SHARED.warn(self.tr("The project index is broken. Rebuilding index."))
             self.rebuildIndex()
