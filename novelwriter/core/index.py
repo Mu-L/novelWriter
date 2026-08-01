@@ -273,6 +273,7 @@ class Index:
 
             try:
                 meta = data.get("novelWriter.meta", {})
+                self._indexUpgrade = meta.get("version") != __hexversion__
                 self._tagsIndex.unpackData(data["novelWriter.tagsIndex"])
                 self._itemIndex.unpackData(data["novelWriter.itemIndex"])
             except Exception:
@@ -280,7 +281,6 @@ class Index:
                 logException()
                 return False
 
-            self._indexUpgrade = meta.get("version") != __hexversion__
             self._indexRevision = checkInt(meta.get("revision"), 0)
 
         logger.debug("Checking index")
