@@ -1,8 +1,13 @@
-%%~name: Another Scene
-%%~path: 780f67364ea6a/bc0cbd2a407f3
-%%~kind: NOVEL/DOCUMENT
-%%~hash: d35e2629876e627b1a2418affa40d477022984f8
-%%~date: Unknown/2024-03-11 22:56:28
++++
+name = "Another Scene"
+parent = "780f67364ea6a"
+handle = "bc0cbd2a407f3"
+class = "NOVEL"
+layout = "DOCUMENT"
+textHash = "d35e2629876e627b1a2418affa40d477022984f8"
+createdDate = "Unknown"
+updatedDate = "2024-03-11 22:56:28"
++++
 ### Another Scene
 
 @pov: John

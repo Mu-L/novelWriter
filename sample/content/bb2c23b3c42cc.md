@@ -1,8 +1,13 @@
-%%~name: Jane Smith
-%%~path: f7e2d9f330615/bb2c23b3c42cc
-%%~kind: CHARACTER/NOTE
-%%~hash: 6f88d1bc88e50e7c55bb03578729cb1d64753e86
-%%~date: Unknown/2025-11-01 16:10:22
++++
+name = "Jane Smith"
+parent = "f7e2d9f330615"
+handle = "bb2c23b3c42cc"
+class = "CHARACTER"
+layout = "NOTE"
+textHash = "6f88d1bc88e50e7c55bb03578729cb1d64753e86"
+createdDate = "Unknown"
+updatedDate = "2025-11-01 16:10:22"
++++
 # Jane Smith
 
 @tag: Jane | Jane Smith

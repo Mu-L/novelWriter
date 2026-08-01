@@ -1,8 +1,13 @@
-%%~name: Title Page
-%%~path: 7031beac91f75/53b69b83cdafc
-%%~kind: NOVEL/DOCUMENT
-%%~hash: 39e663fbb588aa570e1310fafb8e549c5728a9ae
-%%~date: Unknown/2025-11-01 20:44:19
++++
+name = "Title Page"
+parent = "7031beac91f75"
+handle = "53b69b83cdafc"
+class = "NOVEL"
+layout = "DOCUMENT"
+textHash = "39e663fbb588aa570e1310fafb8e549c5728a9ae"
+createdDate = "Unknown"
+updatedDate = "2025-11-01 20:44:19"
++++
 Jane Smith[br]
 42 Main Street[br]
 1234 Capital City <<
