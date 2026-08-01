@@ -30,7 +30,16 @@ from time import time
 from typing import TYPE_CHECKING
 
 from novelwriter import SHARED, __hexversion__
-from novelwriter.common import formatTimeStamp, isHandle, isItemClass, isTitleTag, jsonCombine, jsonEncode, safeExists
+from novelwriter.common import (
+    checkInt,
+    formatTimeStamp,
+    isHandle,
+    isItemClass,
+    isTitleTag,
+    jsonCombine,
+    jsonEncode,
+    safeExists,
+)
 from novelwriter.constants import nwFiles, nwKeyWords, nwStyles
 from novelwriter.core.indexdata import NOTE_TYPES, TT_NONE, IndexHeading, IndexNode, T_NoteTypes
 from novelwriter.enum import nwComment, nwItemClass, nwItemLayout, nwItemType, nwNovelExtra
@@ -73,10 +82,12 @@ class Index:
     lookups from the tags and back to items where they are defined.
 
     The index data is cached in a JSON file between writing sessions in
-    order to save startup time. The cached index is validated on input,
-    and a broken flag set if it is not valid. If it is invalid, the
-    loaded data is cleared and it is up to the calling code to initiate
-    a rebuild of the index data.
+    order to save startup time. The cache is only written on a full save,
+    not on autosave, so its revision number is compared against the one
+    recorded in the project file to determine whether it is up to date.
+    A mismatch, either because the cache is invalid/missing or because
+    it is older than the project file's revision, means the calling code
+    must initiate a rebuild of the index data.
     """
 
     __slots__ = (
@@ -125,7 +136,7 @@ class Index:
     @property
     def indexUpgrade(self) -> bool:
         """Return True if the index was loaded from an older version."""
-        return self._indexUpgrade or self._indexRevision != self._project.data.indexRevision
+        return self._indexUpgrade
 
     @property
     def indexRevision(self) -> int:
@@ -262,14 +273,15 @@ class Index:
 
             try:
                 meta = data.get("novelWriter.meta", {})
-                self._indexUpgrade = meta.get("version") != __hexversion__
-                self._indexRevision = meta.get("revision", 0)
                 self._tagsIndex.unpackData(data["novelWriter.tagsIndex"])
                 self._itemIndex.unpackData(data["novelWriter.itemIndex"])
             except Exception:
                 logger.error("The index content is invalid")
                 logException()
                 return False
+
+            self._indexUpgrade = meta.get("version") != __hexversion__
+            self._indexRevision = checkInt(meta.get("revision"), 0)
 
         logger.debug("Checking index")
 

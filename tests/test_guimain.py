@@ -229,6 +229,32 @@ def testGuiMain_Launch(qtbot, monkeypatch, nwGUI, projPath, fncPath):
 
 
 @pytest.mark.gui
+def testGuiMain_IndexRebuild(qtbot, monkeypatch, nwGUI, projPath):
+    """Test that a genuinely invalid index cache, as opposed to one
+    from a version upgrade, triggers the "index is broken" warning as
+    well as a rebuild of the index.
+    """
+    buildTestProject(NWProject(), projPath)
+    indexFile = projPath / "meta" / nwFiles.INDEX_FILE
+    assert indexFile.is_file()
+
+    # Corrupt the cached index file on disk
+    indexFile.write_text("{not valid json", encoding="utf-8")
+
+    warnMock = Mock()
+    rebuildMock = Mock()
+    with monkeypatch.context() as mp:
+        mp.setattr(SHARED, "warn", warnMock)
+        mp.setattr(nwGUI, "rebuildIndex", rebuildMock)
+        assert nwGUI.openProject(projPath) is True
+
+    assert SHARED.project.index.indexUpgrade is False
+    assert any("index is broken" in str(call) for call in warnMock.call_args_list)
+    assert rebuildMock.called is True
+    nwGUI.closeProject()
+
+
+@pytest.mark.gui
 def testGuiMain_ProjectTreeItems(qtbot, monkeypatch, nwGUI, projPath, mockRnd):
     """Test handling of project tree items based on GUI focus states."""
     buildTestProject(NWProject(), projPath)

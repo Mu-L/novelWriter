@@ -447,12 +447,9 @@ class NWProject:
         if not isinstance(xmlWriter, ProjectXMLWriter):
             return False
 
-        if not autoSave:
-            # We only update the index revision on full save
-            self._data.setIndexRevision(self._index.indexRevision)
-
         saveTime = time()
         SHARED.clearErrorCache()
+        self._data.setIndexRevision(self._index.indexRevision)
         editTime = self._data.editTime + max(round(saveTime - self._session.start), 0)
         content = self._tree.pack()
         if not xmlWriter.write(self._data, content, saveTime, editTime):

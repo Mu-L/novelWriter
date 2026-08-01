@@ -100,6 +100,10 @@ def testIndex_LoadSave(qtbot, monkeypatch, prjLipsum, nwGUI, tstPaths):
     # Make the save pass
     assert index.saveIndex() is True
 
+    # A full save also records the index revision on the project, which
+    # is normally done by NWProject.saveProject before it calls saveIndex
+    project.data.setIndexRevision(index.indexRevision)
+
     # Take a copy of the index
     tagIndex = str(index._tagsIndex.packData())
     itemsIndex = str(index._itemIndex.packData())
@@ -170,7 +174,7 @@ def testIndex_LoadSave(qtbot, monkeypatch, prjLipsum, nwGUI, tstPaths):
 
     # Check File
     copyfile(projFile, testFile)
-    assert cmpFiles(testFile, compFile, ignLines=[3, 4])
+    assert cmpFiles(testFile, compFile, ignLines=[3, 4, 5])
 
     # Write an empty index file and load it
     projFile.write_text("{}", encoding="utf-8")
@@ -1169,7 +1173,7 @@ def testTagsIndex_Main():
     # Pack Data
     assert tagsIndex.packData() == content
 
-    # Delete the second key and a non-existant key. Deleting must also
+    # Delete the second key and a non-existent key. Deleting must also
     # drop the tag from the all-tags bucket, unlike a reclassification
     del tagsIndex["Tag2"]
     del tagsIndex["Tag4"]

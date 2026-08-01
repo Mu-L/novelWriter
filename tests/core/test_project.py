@@ -380,6 +380,42 @@ def testNWProject_Save(monkeypatch, mockGUI, mockRnd, fncPath):
 
 
 @pytest.mark.core
+def testNWProject_AutoSaveIndexRevision(mockGUI, mockRnd, fncPath):
+    """Test that the index revision is kept current in the project file
+    on every save, including autosave.
+    """
+    project = NWProject()
+    mockRnd.reset()
+    buildTestProject(project, fncPath)  # Performs a full save
+
+    savedRevision = project.index.indexRevision
+    assert project.data.indexRevision == savedRevision
+
+    # Edit a document and only autosave, so the index cache on disk is left untouched
+    tHandle = next(i.itemHandle for i in project.tree if i.isFileType())
+    doc = project.storage.getDocument(tHandle)
+    doc.writeDocument("### More Content\n\n")
+    project.index.reIndexHandle(tHandle)
+    assert project.index.indexRevision > savedRevision
+
+    assert project.saveProject(autoSave=True) is True
+    autoSavedRevision = project.index.indexRevision
+    assert project.data.indexRevision == autoSavedRevision
+    assert autoSavedRevision > savedRevision
+    project.closeProject()
+
+    # Simulate recovering after a crash.
+    # The cached index.json on disk still reflects the state as of the
+    # last full save, so it must be flagged as needing a rebuild.
+    recovered = NWProject()
+    assert recovered.openProject(fncPath, clearLock=True) is True
+    assert recovered.index.indexRevision == savedRevision
+    assert recovered.data.indexRevision == autoSavedRevision
+    assert recovered.index.indexRebuild is True
+    recovered.closeProject()
+
+
+@pytest.mark.core
 def testNWProject_Methods(monkeypatch, mockGUI, fncPath, mockRnd):
     """Test other project class methods and functions."""
     project = NWProject()
