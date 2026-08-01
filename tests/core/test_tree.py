@@ -780,11 +780,16 @@ def testProjectTree_CheckConsistency(monkeypatch, caplog, mockGUI, fncPath, mock
     yHandle = "0123456789abd"
     (contentPath / f"{yHandle}.md").write_text(
         (
-            "%%~name: Stuff\n"
-            f"%%~path: {C.hNovelRoot}/{yHandle}\n"
-            "%%~kind: NOVEL/DOCUMENT\n"
-            "%%~hash: 0000000000000000000000000000000000000000\n"
-            "%%~date: Unknown/Unknown\n"
+            "+++\n"
+            'name = "Stuff"\n'
+            f'parent = "{C.hNovelRoot}"\n'
+            f'handle = "{yHandle}"\n'
+            'class = "NOVEL"\n'
+            'layout = "DOCUMENT"\n'
+            'textHash = "0000000000000000000000000000000000000000"\n'
+            'createdDate = "Unknown"\n'
+            'updatedDate = "Unknown"\n'
+            "+++\n"
             "### Stuff\n"
         ),
         encoding="utf-8",
