@@ -22,6 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import json
+import logging
 
 from pathlib import Path
 from zipfile import ZipFile
@@ -34,6 +35,7 @@ from novelwriter.core.document import ProjectDocument
 from novelwriter.core.project import NWProject
 from novelwriter.core.projectxml import ProjectXMLReader, ProjectXMLWriter
 from novelwriter.core.storage import ProjectStorage, ProjectStorageCreate, ProjectStorageOpen, _LegacyStorage
+from novelwriter.enum import nwItemClass, nwItemLayout
 
 from tests.helpers import C, buildTestProject
 from tests.mocked import causeOSError
@@ -308,9 +310,9 @@ def testProjectStorage_ZipIt(monkeypatch, mockGUI, fncPath, tstPaths, mockRnd):
         assert nwFiles.PROJ_FILE in names
         assert f"meta/{nwFiles.OPTS_FILE}" in names
         assert f"meta/{nwFiles.INDEX_FILE}" in names
-        assert f"content/{C.hTitlePage}.nwd" in names
-        assert f"content/{C.hChapterDoc}.nwd" in names
-        assert f"content/{C.hSceneDoc}.nwd" in names
+        assert f"content/{C.hTitlePage}.md" in names
+        assert f"content/{C.hChapterDoc}.md" in names
+        assert f"content/{C.hSceneDoc}.md" in names
         assert "content/not-a-handle.txt" not in names
 
     project.closeProject()
@@ -376,10 +378,118 @@ def testProjectStorage_LegacyDataFolder(monkeypatch, fncPath):
         assert data[9].exists()
         assert not (fncPath / "content" / "9000000000009.nwd").exists()
 
-    # Run the remaining through the prepare storage call
+    # Run the remaining through the prepare storage call, which also
+    # converts the moved .nwd files to .md
     assert storage.initProjectStorage(fncPath, clearLock=True) == ProjectStorageOpen.READY
     for c in "0123456789abcdef":
-        assert (fncPath / "content" / f"{c}00000000000{c}.nwd").exists()
+        assert not (fncPath / "content" / f"{c}00000000000{c}.nwd").exists()
+        assert (fncPath / "content" / f"{c}00000000000{c}.md").exists()
+
+
+@pytest.mark.core
+def testProjectStorage_OldDocumentFormat(monkeypatch, fncPath):
+    """Test conversion of old .nwd document files to .md with a TOML header."""
+    project = MockProject()
+    storage = ProjectStorage(project)  # type: ignore
+    storage._runtimePath = fncPath
+    (fncPath / nwFiles.PROJ_FILE).touch()
+    storage.initProjectStorage(fncPath)
+    legacy = _LegacyStorage(project)  # type: ignore
+
+    content = fncPath / "content"
+
+    # A regular old-format document with a full meta header
+    nwdFile = content / f"{C.hSceneDoc}.nwd"
+    nwdFile.write_text(
+        (
+            "%%~name: Scene One\n"
+            f"%%~path: {C.hChapterDir}/{C.hSceneDoc}\n"
+            "%%~kind: NOVEL/DOCUMENT\n"
+            "%%~hash: abc123\n"
+            "%%~date: 2020-01-01 00:00:00/2020-01-02 00:00:00\n"
+            "### Scene One\n\nSome text.\n"
+        ),
+        encoding="utf-8",
+    )
+
+    legacy.oldDocumentFormat(fncPath)
+
+    assert not nwdFile.exists()
+    mdFile = content / f"{C.hSceneDoc}.md"
+    assert mdFile.read_text(encoding="utf-8") == (
+        "+++\n"
+        'name = "Scene One"\n'
+        f'parent = "{C.hChapterDir}"\n'
+        f'handle = "{C.hSceneDoc}"\n'
+        'class = "NOVEL"\n'
+        'layout = "DOCUMENT"\n'
+        'textHash = "abc123"\n'
+        'createdDate = "2020-01-01 00:00:00"\n'
+        'updatedDate = "2020-01-02 00:00:00"\n'
+        "+++\n"
+        "### Scene One\n\nSome text.\n"
+    )
+
+    # A document with more than 10 meta lines never reaches the body
+    # text, but is still converted
+    longFile = content / f"{C.hTitlePage}.nwd"
+    longFile.write_text("".join(f"%%~junk{i}: value\n" for i in range(12)), encoding="utf-8")
+    legacy.oldDocumentFormat(fncPath)
+    assert not longFile.exists()
+    assert (content / f"{C.hTitlePage}.md").exists()
+
+    # Conversion failure is logged and the source file is kept
+    badFile = content / f"{C.hChapterDoc}.nwd"
+    badFile.write_text("### Text\n", encoding="utf-8")
+    with monkeypatch.context() as mp:
+        mp.setattr("pathlib.Path.write_text", causeOSError)
+        legacy.oldDocumentFormat(fncPath)
+        assert badFile.exists()
+        assert not (content / f"{C.hChapterDoc}.md").exists()
+
+
+@pytest.mark.core
+def testProjectStorage_ParseOldDocumentMeta(caplog):
+    """Test parsing of individual old-format meta data lines."""
+    caplog.set_level(logging.DEBUG, logger="novelwriter")
+    legacy = _LegacyStorage(MockProject())  # type: ignore
+
+    # Name
+    assert legacy._parseOldDocumentMeta(["%%~name: Test File\n"]) == {"name": "Test File"}
+
+    # Path: valid parent and handle
+    meta = legacy._parseOldDocumentMeta([f"%%~path: {C.hChapterDir}/{C.hSceneDoc}\n"])
+    assert meta == {"parent": C.hChapterDir, "handle": C.hSceneDoc}
+
+    # Path: malformed value is ignored entirely
+    assert legacy._parseOldDocumentMeta(["%%~path: onlyonepart\n"]) == {}
+
+    # Path: invalid handles are dropped individually
+    assert legacy._parseOldDocumentMeta(["%%~path: notahandle/alsonot\n"]) == {}
+
+    # Kind: valid class and layout
+    meta = legacy._parseOldDocumentMeta(["%%~kind: NOVEL/DOCUMENT\n"])
+    assert meta == {"class": nwItemClass.NOVEL, "layout": nwItemLayout.DOCUMENT}
+
+    # Kind: malformed value is ignored entirely
+    assert legacy._parseOldDocumentMeta(["%%~kind: onlyonepart\n"]) == {}
+
+    # Kind: unknown class/layout names are dropped individually
+    assert legacy._parseOldDocumentMeta(["%%~kind: BADCLASS/BADLAYOUT\n"]) == {}
+
+    # Hash
+    assert legacy._parseOldDocumentMeta(["%%~hash: abc123\n"]) == {"textHash": "abc123"}
+
+    # Date: valid
+    meta = legacy._parseOldDocumentMeta(["%%~date: 2020-01-01 00:00:00/2020-01-02 00:00:00\n"])
+    assert meta == {"createdDate": "2020-01-01 00:00:00", "updatedDate": "2020-01-02 00:00:00"}
+
+    # Date: malformed value is ignored entirely
+    assert legacy._parseOldDocumentMeta(["%%~date: onlyonepart\n"]) == {}
+
+    # Unknown meta lines are logged and otherwise ignored
+    assert legacy._parseOldDocumentMeta(["%%~unknown: stuff\n"]) == {}
+    assert "Unknown meta data" in caplog.text
 
 
 @pytest.mark.core

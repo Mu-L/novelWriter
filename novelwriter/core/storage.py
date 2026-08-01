@@ -330,9 +330,8 @@ class ProjectStorage:
                 (baseMeta / nwFiles.SESS_FILE, f"meta/{nwFiles.SESS_FILE}"),
             ]
             for contItem in baseCont.iterdir():
-                name = contItem.name
-                if contItem.is_file() and len(name) == 17 and name.endswith("md"):
-                    files.append((contItem, f"content/{name}"))
+                if contItem.is_file() and contItem.suffix == ".md" and isHandle(contItem.stem):
+                    files.append((contItem, f"content/{contItem.name}"))  # noqa: PERF401
 
             comp = ZIP_STORED if compression is None else ZIP_DEFLATED
             level = minmax(compression, 0, 9) if isinstance(compression, int) else None
@@ -342,6 +341,7 @@ class ProjectStorage:
                     if srcPath.is_file():
                         zipObj.write(srcPath, zipPath)
                         logger.debug("Added: %s", zipPath)
+
         except Exception:
             logger.error("Failed to create archive")
             logException()
