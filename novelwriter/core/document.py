@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 
 from pathlib import Path
 from time import time
@@ -58,6 +59,7 @@ class ProjectDocument:
         self._docMeta = {}  # The meta data of the currently open item
         self._docError = ""  # The latest encountered IO error
         self._lastHash = ""  # The last known SHA hash
+        self._lastStat = None  # The (mtime_ns, size) of the file at last read/write
         self._hashError = False  # Hash mismatch on last write attempt
 
         if isHandle(tHandle):
@@ -168,6 +170,7 @@ class ProjectDocument:
         text = ""
         self._docMeta = {}
         self._lastHash = ""
+        self._lastStat = None
 
         if safeExists(docPath):
             try:
@@ -183,6 +186,11 @@ class ProjectDocument:
 
                     # Load the rest of the file
                     text += inFile.read()
+
+                    # Record the file's stat so future saves can check for
+                    # external changes without a full re-read and hash
+                    stat = os.fstat(inFile.fileno())
+                    self._lastStat = (stat.st_mtime_ns, stat.st_size)
 
             except Exception as exc:
                 self._docError = formatException(exc)
@@ -218,13 +226,22 @@ class ProjectDocument:
         docPath = contentPath / docFile
         docTemp = docPath.with_suffix(".tmp")
 
-        # Re-read the document on disk to check if it has changed
+        # Check if the document has changed on disk
         prevHash = self._lastHash
-        self.readDocument()
-        if prevHash and self._lastHash != prevHash and not forceWrite:
-            logger.error("File has been altered on disk since opened")
-            self._hashError = True
-            return False
+        if prevHash:
+            try:
+                stat = docPath.stat()
+                statSig = (stat.st_mtime_ns, stat.st_size)
+            except OSError:
+                statSig = None
+
+            if statSig != self._lastStat:
+                # Verify by checking the hash
+                self.readDocument()
+                if self._lastHash != prevHash and not forceWrite:
+                    logger.error("File has been altered on disk since opened")
+                    self._hashError = True
+                    return False
 
         if text and not text.endswith("\n"):
             text += "\n"
@@ -267,6 +284,13 @@ class ProjectDocument:
             return False
 
         self._lastHash = writeHash
+        self._docMeta["created"] = createdDate
+        self._docMeta["updated"] = updatedDate
+        try:
+            stat = docPath.stat()
+            self._lastStat = (stat.st_mtime_ns, stat.st_size)
+        except OSError:
+            self._lastStat = None
         self._hashError = False
 
         return True

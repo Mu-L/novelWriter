@@ -21,6 +21,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from novelwriter.core.document import ProjectDocument
@@ -115,6 +117,12 @@ def testProjectDocument_LoadSave(monkeypatch, mockGUI, fncPath, mockRnd):
         "Text ...\n\n"
     )
 
+    # Touch the document on disk without changing its content
+    stat = docPath.stat()
+    touched = stat.st_mtime_ns + 10_000_000_000
+    os.utime(docPath, ns=(touched, touched))
+    assert doc.writeDocument(text) is True
+
     # Alter the document on disk and save again
     writeFile(docPath, "blablabla")
     assert doc.writeDocument(text) is False
@@ -148,6 +156,20 @@ def testProjectDocument_LoadSave(monkeypatch, mockGUI, fncPath, mockRnd):
     # Saving with no handle
     doc._handle = None
     assert doc.writeDocument(text) is False
+
+    # Cause stat() to fail right after a successful write
+    origStat = type(docPath).stat
+
+    def failDocStat(path, *a, **kw):
+        if path == docPath:
+            raise OSError("Mock OSError")
+        return origStat(path, *a, **kw)
+
+    doc = ProjectDocument(project, xHandle)
+    with monkeypatch.context() as mp:
+        mp.setattr("pathlib.Path.stat", failDocStat)
+        assert doc.writeDocument("Stat Failure") is True
+        assert doc._lastStat is None
 
     # Trailing line break
     doc = ProjectDocument(project, xHandle)
