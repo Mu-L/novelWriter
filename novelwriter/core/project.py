@@ -449,6 +449,7 @@ class NWProject:
 
         saveTime = time()
         SHARED.clearErrorCache()
+        self._data.setIndexRevision(self._index.indexRevision)
         editTime = self._data.editTime + max(round(saveTime - self._session.start), 0)
         content = self._tree.pack()
         if not xmlWriter.write(self._data, content, saveTime, editTime):
@@ -456,8 +457,10 @@ class NWProject:
             return False
 
         # Save other project data
-        self._options.saveSettings()
-        self._index.saveIndex()
+        if not autoSave:
+            self._options.saveSettings()
+            self._index.saveIndex()
+
         self._storage.runPostSaveTasks(autoSave=autoSave)
 
         # Update recent projects
