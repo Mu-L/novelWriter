@@ -775,7 +775,7 @@ class GuiDocEditor(QTextEdit):
                 saveOk = self._nwDocument.writeDocument(text, forceWrite=True)
 
             if not saveOk:
-                SHARED.error(self.tr("Could not save document."), info=self._nwDocument.getError())
+                SHARED.error(self.tr("Could not save document."), info=self._nwDocument.error)
                 return False
 
         self.setDocumentChanged(False)
