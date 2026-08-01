@@ -667,7 +667,7 @@ class GuiMain(QMainWindow):
             return False
 
         lastPath = CONFIG.lastPath("import")
-        ffilter = formatFileFilter(["*.txt", "*.md", "*.nwd", "*"])
+        ffilter = formatFileFilter(["*.txt", "*.md", "*"])
         loadFile, _ = QFileDialog.getOpenFileName(self, self.tr("Import File"), str(lastPath), filter=ffilter)
         if not loadFile:
             return False

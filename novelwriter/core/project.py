@@ -215,7 +215,7 @@ class NWProject:
             SHARED.closeDocument(tHandle)
             doc = self._storage.getDocument(tHandle)
             if not doc.deleteDocument():
-                SHARED.error(self.tr("Could not delete document file."), info=doc.getError())
+                SHARED.error(self.tr("Could not delete document file."), info=doc.error)
                 return False
         self._index.deleteHandle(tHandle)
         self._tree.remove(tHandle)

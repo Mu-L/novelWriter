@@ -36,10 +36,13 @@ from novelwriter.constants import nwFiles
 from novelwriter.core.document import ProjectDocument
 from novelwriter.core.projectxml import ProjectXMLReader, ProjectXMLWriter
 from novelwriter.core.spellcheck import UserDictionary
+from novelwriter.enum import nwItemClass, nwItemLayout
 from novelwriter.error import logException
+from novelwriter.formats.tomlparser import NTomlParser
 
 if TYPE_CHECKING:
     from novelwriter.core.project import NWProject
+    from novelwriter.formats.tomlparser import T_TomlObject
 
 logger = logging.getLogger(__name__)
 
@@ -231,6 +234,7 @@ class ProjectStorage:
             for child in basePath.iterdir():
                 if child.is_dir() and child.name.startswith("data_"):
                     legacy.legacyDataFolder(basePath, child)
+            legacy.oldDocumentFormat(basePath)
         except Exception as exc:
             logger.error("Failed to scan project folder content", exc_info=exc)
             self.clear()
@@ -299,7 +303,7 @@ class ProjectStorage:
         """
         contentPath = self.contentPath
         return (
-            [item.stem for item in safeIterDir(contentPath) if item.suffix == ".nwd" and isHandle(item.stem)]
+            [item.stem for item in safeIterDir(contentPath) if item.suffix == ".md" and isHandle(item.stem)]
             if contentPath
             else []
         )
@@ -327,7 +331,7 @@ class ProjectStorage:
             ]
             for contItem in baseCont.iterdir():
                 name = contItem.name
-                if contItem.is_file() and len(name) == 17 and name.endswith(".nwd"):
+                if contItem.is_file() and len(name) == 17 and name.endswith("md"):
                     files.append((contItem, f"content/{name}"))
 
             comp = ZIP_STORED if compression is None else ZIP_DEFLATED
@@ -480,6 +484,36 @@ class _LegacyStorage:
                 except Exception as exc:
                     logger.warning("Failed to delete: %s", item, exc_info=exc)
 
+    def oldDocumentFormat(self, path: Path) -> None:
+        """Check if the documents are .nwd files and convert them to .md."""
+        content = path / "content"
+        for item in content.iterdir():
+            if item.is_file() and item.suffix == ".nwd":
+                meta = []
+                text = ""
+                with open(item, mode="r", encoding="utf-8") as fObj:
+                    for _ in range(10):
+                        line = fObj.readline()
+                        if line.startswith(r"%%~"):
+                            meta.append(line)
+                        else:
+                            text = line
+                            break
+
+                    text += fObj.read()
+
+                try:
+                    parser = NTomlParser(flat=True)
+                    toml = parser.writeString(self._parseOldDocumentMeta(meta)).strip()
+                    output = content / f"{item.stem}.md"
+                    output.write_text(f"+++\n{toml}\n+++\n{text}", encoding="utf-8")
+                    logger.info("Converted file: %s -> %s", item.name, output.name)
+                except Exception:
+                    logger.error("Failed to convert: %s", item.name)
+                    continue
+
+                item.unlink()
+
     ##
     #  Internal Functions
     ##
@@ -584,3 +618,45 @@ class _LegacyStorage:
             logException()
 
         return
+
+    def _parseOldDocumentMeta(self, lines: list[str]) -> T_TomlObject:
+        """Parse a line from the document starting with the characters
+        %%~ that may contain meta data.
+        """
+        meta: T_TomlObject = {}
+        for line in lines:
+            if line.startswith("%%~name:"):
+                meta["name"] = line[8:].strip()
+
+            elif line.startswith("%%~path:"):
+                metaVal = line[8:].strip()
+                metaBits = metaVal.split("/")
+                if len(metaBits) == 2:
+                    if isHandle(metaBits[0]):
+                        meta["parent"] = metaBits[0]
+                    if isHandle(metaBits[1]):
+                        meta["handle"] = metaBits[1]
+
+            elif line.startswith("%%~kind:"):
+                metaVal = line[8:].strip()
+                metaBits = metaVal.split("/")
+                if len(metaBits) == 2:
+                    if metaBits[0] in nwItemClass.__members__:
+                        meta["class"] = nwItemClass[metaBits[0]]
+                    if metaBits[1] in nwItemLayout.__members__:
+                        meta["layout"] = nwItemLayout[metaBits[1]]
+
+            elif line.startswith("%%~hash:"):
+                meta["textHash"] = line[8:].strip()
+
+            elif line.startswith("%%~date:"):
+                metaVal = line[8:].strip()
+                metaBits = metaVal.split("/")
+                if len(metaBits) == 2:
+                    meta["createdDate"] = metaBits[0].strip()
+                    meta["updatedDate"] = metaBits[1].strip()
+
+            else:
+                logger.debug("Unknown meta data: '%s'", line.strip())
+
+        return meta
