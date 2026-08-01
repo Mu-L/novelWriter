@@ -457,8 +457,8 @@ class ProjectData:
         if isinstance(value, dict):
             self._autoReplace = {}
             for key, entry in value.items():
-                if isinstance(entry, str):
-                    self._autoReplace[key] = simplified(entry)
+                if isinstance(key, str) and isinstance(entry, str) and (cleanKey := simplified(key)):
+                    self._autoReplace[cleanKey] = simplified(entry)
             self._project.setProjectChanged(True)
 
     ##

@@ -49,6 +49,7 @@ from PyQt6.QtWidgets import QApplication
 from novelwriter.common import (
     checkInt,
     checkPath,
+    compact,
     describeFont,
     fontMatcher,
     formatTimeStamp,
@@ -58,6 +59,7 @@ from novelwriter.common import (
     safeExists,
     safeIsDir,
     simplified,
+    uniqueCompact,
 )
 from novelwriter.constants import nwFiles, nwQuotes, nwUnicode, trStats
 from novelwriter.enum import nwTheme
@@ -452,6 +454,7 @@ class Config:
 
     @property
     def hasError(self) -> bool:
+        """Return True if the config class encountered an error."""
         return self._hasError
 
     @property
@@ -461,20 +464,23 @@ class Config:
 
     @property
     def nwLangPath(self) -> Path:
+        """Return the path to the novelWriter language files."""
         return self._nwLangPath
 
     @property
     def locale(self) -> QLocale:
+        """Return the current GUI locale."""
         return self._dLocale
 
     @property
     def recentProjects(self) -> RecentProjects:
+        """Return the recent projects list."""
         return self._recentProjects
 
     @property
     def lastAuthor(self) -> str:
         """Return the last author name used."""
-        return simplified(self._lastAuthor)
+        return self._lastAuthor
 
     ##
     #  Getters
@@ -825,7 +831,7 @@ class Config:
         self.backupInterval = parser.getStr(sec, "backupInterval", self.backupInterval)
         self.askBeforeBackup = parser.getBool(sec, "askBeforeBackup", self.askBeforeBackup)
         self.askBeforeExit = parser.getBool(sec, "askBeforeExit", self.askBeforeExit)
-        self._lastAuthor = parser.getStr(sec, "lastAuthor", self._lastAuthor)
+        self._lastAuthor = simplified(parser.getStr(sec, "lastAuthor", self._lastAuthor))
 
         # Editor
         sec = "Editor"
@@ -848,12 +854,12 @@ class Config:
         self.autoScroll = parser.getBool(sec, "autoScroll", self.autoScroll)
         self.autoScrollPos = parser.getInt(sec, "autoScrollPos", self.autoScrollPos)
         self.scrollPastEnd = parser.getBool(sec, "scrollPastEnd", self.scrollPastEnd)
-        self.fmtSQuoteOpen = parser.getStr(sec, "fmtSQuoteOpen", self.fmtSQuoteOpen)
-        self.fmtSQuoteClose = parser.getStr(sec, "fmtSQuoteClose", self.fmtSQuoteClose)
-        self.fmtDQuoteOpen = parser.getStr(sec, "fmtDQuoteOpen", self.fmtDQuoteOpen)
-        self.fmtDQuoteClose = parser.getStr(sec, "fmtDQuoteClose", self.fmtDQuoteClose)
-        self.fmtPadBefore = parser.getStr(sec, "fmtPadBefore", self.fmtPadBefore)
-        self.fmtPadAfter = parser.getStr(sec, "fmtPadAfter", self.fmtPadAfter)
+        self.fmtSQuoteOpen = compact(parser.getStr(sec, "fmtSQuoteOpen", self.fmtSQuoteOpen))
+        self.fmtSQuoteClose = compact(parser.getStr(sec, "fmtSQuoteClose", self.fmtSQuoteClose))
+        self.fmtDQuoteOpen = compact(parser.getStr(sec, "fmtDQuoteOpen", self.fmtDQuoteOpen))
+        self.fmtDQuoteClose = compact(parser.getStr(sec, "fmtDQuoteClose", self.fmtDQuoteClose))
+        self.fmtPadBefore = uniqueCompact(parser.getStr(sec, "fmtPadBefore", self.fmtPadBefore))
+        self.fmtPadAfter = uniqueCompact(parser.getStr(sec, "fmtPadAfter", self.fmtPadAfter))
         self.fmtPadThin = parser.getBool(sec, "fmtPadThin", self.fmtPadThin)
         self.spellLanguage = parser.getStr(sec, "spellCheck", self.spellLanguage)
         self.showTabsNSpaces = parser.getBool(sec, "showTabsNSpaces", self.showTabsNSpaces)
@@ -868,8 +874,8 @@ class Config:
         dialogLine = parser.getStr(sec, "dialogLine", self.dialogLine)
         narratorBreak = parser.getStr(sec, "narratorBreak", self.narratorBreak)
         narratorDialog = parser.getStr(sec, "narratorDialog", self.narratorDialog)
-        self.altDialogOpen = parser.getStr(sec, "altDialogOpen", self.altDialogOpen)
-        self.altDialogClose = parser.getStr(sec, "altDialogClose", self.altDialogClose)
+        self.altDialogOpen = compact(parser.getStr(sec, "altDialogOpen", self.altDialogOpen))
+        self.altDialogClose = compact(parser.getStr(sec, "altDialogClose", self.altDialogClose))
         self.highlightEmph = parser.getBool(sec, "highlightEmph", self.highlightEmph)
         self.dottedModCodes = parser.getBool(sec, "dottedModCodes", self.dottedModCodes)
         self.stopWhenIdle = parser.getBool(sec, "stopWhenIdle", self.stopWhenIdle)

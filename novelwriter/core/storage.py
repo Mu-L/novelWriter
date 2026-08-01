@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile
 
 from novelwriter import CONFIG
-from novelwriter.common import isHandle, minmax, safeExists, safeIsDir, safeIsFile, safeIterDir
+from novelwriter.common import isHandle, minmax, safeExists, safeIsDir, safeIsFile, safeIterDir, simplified
 from novelwriter.constants import nwFiles
 from novelwriter.core.document import ProjectDocument
 from novelwriter.core.projectxml import ProjectXMLReader, ProjectXMLWriter
@@ -661,7 +661,7 @@ class _LegacyDocuments:
         meta: T_TomlObject = {}
         for line in lines:
             if line.startswith("%%~name:"):
-                meta["name"] = line[8:].strip()
+                meta["name"] = simplified(line[8:])
 
             elif line.startswith("%%~path:"):
                 metaVal = line[8:].strip()

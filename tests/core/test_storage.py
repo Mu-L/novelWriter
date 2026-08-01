@@ -549,6 +549,10 @@ def testLegacyDocuments_ParseOldDocumentMeta(caplog):
     # Name
     assert legacy._parseOldDocumentMeta(["%%~name: Test File\n"]) == {"name": "Test File"}
 
+    # Name: control characters from an old, unvalidated file are cleaned,
+    # as they would otherwise end up unescaped in the new TOML header
+    assert legacy._parseOldDocumentMeta(["%%~name: Bad\x1bTitle\n"]) == {"name": "BadTitle"}
+
     # Path: valid parent and handle
     meta = legacy._parseOldDocumentMeta([f"%%~path: {C.hChapterDir}/{C.hSceneDoc}\n"])
     assert meta == {"parent": C.hChapterDir, "handle": C.hSceneDoc}
