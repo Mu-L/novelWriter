@@ -291,7 +291,7 @@ class ProjectDocument:
                 "updatedDate": updatedDate,
             }
             toml = NTomlParser(flat=True).writeString(meta).strip()
-            docMeta = f"{'+++'}\n{toml}\n{'+++'}\n"
+            docMeta = f"+++\n{toml}\n+++\n"
 
         try:
             with open(docTemp, mode="w", encoding="utf-8") as outFile:
@@ -310,6 +310,7 @@ class ProjectDocument:
             return False
 
         self._lastHash = writeHash
+        self._meta.textHash = writeHash
         self._meta.createdDate = createdDate
         self._meta.updatedDate = updatedDate
         try:
@@ -369,18 +370,17 @@ class ProjectDocument:
 
     @staticmethod
     def _splitHeader(stream: TextIO) -> tuple[list[str], str]:
-        """Split an open document file into the raw lines of its TOML
-        header, if it has one delimited by +++, and the remaining body
-        text. Documents without such a header are returned as body text
-        only, with an empty list of header lines.
-        """
+        """Split an open document file into TOML header and text."""
         first = stream.readline()
         if first.strip() == "+++":
             meta = []
             for _ in range(MAX_META_LINES):
                 line = stream.readline()
-                if not line or line.strip() == "+++":
+                if not line:
                     break
+                if line.strip() == "+++":
+                    return meta, stream.read()
                 meta.append(line)
-            return meta, stream.read()
+            stream.seek(0)
+            return [], stream.read()
         return [], first + stream.read()

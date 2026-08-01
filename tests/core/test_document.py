@@ -115,9 +115,9 @@ def testProjectDocument_LoadSave(monkeypatch, mockGUI, fncPath, mockRnd):
         f'handle = "{xHandle}"\n'
         'class = "NOVEL"\n'
         'layout = "DOCUMENT"\n'
-        'hash = "b288c3ab03181027d9a16d7fd2291262f5de9ac8"\n'
-        'created = "2019-05-10 18:52:00"\n'
-        'updated = "2019-05-10 18:52:00"\n'
+        'textHash = "b288c3ab03181027d9a16d7fd2291262f5de9ac8"\n'
+        'createdDate = "2019-05-10 18:52:00"\n'
+        'updatedDate = "2019-05-10 18:52:00"\n'
         "+++\n"
         "### Test File\n\n"
         "Text ...\n\n"
@@ -134,6 +134,13 @@ def testProjectDocument_LoadSave(monkeypatch, mockGUI, fncPath, mockRnd):
     assert doc.writeDocument(text) is False
 
     # Force the overwrite
+    assert doc.writeDocument(text, forceWrite=True) is True
+
+    # Delete the document on disk and save again
+    docPath.unlink()
+    assert doc.writeDocument(text) is False
+
+    # Force the overwrite to restore the file
     assert doc.writeDocument(text, forceWrite=True) is True
 
     # Force no meta data
@@ -203,20 +210,18 @@ def testProjectDocument_LoadSave(monkeypatch, mockGUI, fncPath, mockRnd):
         mp.setattr("builtins.open", causeOSError)
         assert ProjectDocument.quickReadText(contPath, xHandle) == ""
 
-    # A header with more than the max meta lines and no closing +++
-    # returns everything past the cap as body text
-    noClose = "+++\n" + "".join(f"meta{i} = 1\n" for i in range(MAX_META_LINES + 5))
+    # A missing closing +++ is treated as having no header at all
+    noClose = '+++\nname = "Test"\n### Chapter 1\n\nSome real body text.\n'
     (contPath / f"{xHandle}.md").write_text(noClose, encoding="utf-8")
-    assert ProjectDocument.quickReadText(contPath, xHandle) == "".join(
-        f"meta{i} = 1\n" for i in range(MAX_META_LINES, MAX_META_LINES + 5)
-    )
+    assert ProjectDocument.quickReadText(contPath, xHandle) == noClose
 
-    # A header that is exactly the max meta lines with no closing +++
-    # returns just the trailing content
     doc = ProjectDocument(project, xHandle)
-    metaOnly = "+++\n" + "".join(f"meta{i} = 1\n" for i in range(MAX_META_LINES)) + "Trailing Text\n"
-    (contPath / f"{xHandle}.md").write_text(metaOnly, encoding="utf-8")
-    assert doc.readDocument() == "Trailing Text\n"
+    assert doc.readDocument() == noClose
+
+    # Same, but exceeding the max meta lines first
+    noCloseLong = "+++\n" + "".join(f"meta{i} = 1\n" for i in range(MAX_META_LINES + 5))
+    (contPath / f"{xHandle}.md").write_text(noCloseLong, encoding="utf-8")
+    assert ProjectDocument.quickReadText(contPath, xHandle) == noCloseLong
 
     # Malformed meta values are parsed defensively and otherwise ignored
     doc._meta = DocumentMeta()
@@ -279,8 +284,7 @@ def testProjectDocument_Methods(monkeypatch, mockGUI, fncPath, mockRnd):
     assert doc.meta.itemClass == nwItemClass.NOVEL
     assert doc.meta.itemLayout == nwItemLayout.DOCUMENT
 
-    # Body text resembling an old-style meta line is preserved verbatim,
-    # since it falls outside the +++ delimited header
+    # Old-style meta lines in the body are preserved verbatim
     assert doc.writeDocument("%%~ stuff\n### Test File\n\nText ...\n\n")
     assert readFile(docPath) == (
         "+++\n"
@@ -289,9 +293,9 @@ def testProjectDocument_Methods(monkeypatch, mockGUI, fncPath, mockRnd):
         f'handle = "{C.hSceneDoc}"\n'
         'class = "NOVEL"\n'
         'layout = "DOCUMENT"\n'
-        'hash = "dd350c602de803554b2a7c17f191ae25dea1df63"\n'
-        'created = "2019-05-10 18:52:00"\n'
-        'updated = "2019-05-10 18:52:00"\n'
+        'textHash = "dd350c602de803554b2a7c17f191ae25dea1df63"\n'
+        'createdDate = "2019-05-10 18:52:00"\n'
+        'updatedDate = "2019-05-10 18:52:00"\n'
         "+++\n"
         "%%~ stuff\n"
         "### Test File\n\n"
