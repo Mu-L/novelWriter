@@ -26,7 +26,7 @@ from pathlib import Path
 import pytest
 
 from novelwriter.enum import nwItemClass
-from novelwriter.formats.tomlparser import NTomlParser
+from novelwriter.formats.tomlparser import NTomlParser, T_TomlConfig, T_TomlObject
 
 from tests.helpers import writeFile
 
@@ -128,28 +128,127 @@ def testTomlParser_NTomlParser(fncPath):
 
 
 @pytest.mark.base
-def testTomlParser_NTomlParserInvalid(fncPath, caplog):
-    """Test that NTomlParser logs and skips top-level entries that
-    aren't valid [section] tables, for both write and read.
+def testTomlParser_Flat(fncPath):
+    """Test reading and writing a flat, section-less structure using
+    a parser constructed with flat=True.
     """
-    # Write: a non-dict top-level entry should be skipped and logged
-    path = fncPath / "invalid_write.toml"
+    data: T_TomlObject = {"name": "Document Name", "hash": "abc123"}
+
+    parser = NTomlParser(flat=True)
+    text = parser.writeString(data)
+    assert text == 'name = "Document Name"\nhash = "abc123"\n'
+
+    path = fncPath / "flat.toml"
+    parser.write(path, data)
+    assert text == path.read_text(encoding="utf-8")
+
+    reader = NTomlParser(flat=True)
+    reader.readString(text)
+    assert reader.getStr(None, "name", "") == "Document Name"
+    assert reader.getStr(None, "hash", "") == "abc123"
+    assert reader.getStr(None, "nope", "") == ""
+
+    # An empty dict produces an empty string
+    assert parser.writeString({}) == ""
+
+    # Sections aren't a concept in this mode: a section in the source
+    # asking for one via a non-None section also finds nothing
+    assert reader.getStr("Meta", "name", "") == ""
+
+
+@pytest.mark.base
+def testTomlParser_NTomlParserInvalid(fncPath, caplog):
+    """Test that NTomlParser logs and drops entries nested deeper than
+    the supported structure for each mode, for both write and read.
+    """
+    # Read: a nested table within a section is dropped, but the rest
+    # of the section is kept
+    path = fncPath / "invalid_read.toml"
+    writeFile(path, '[Main]\nfont = "Sans Serif"\n\n[Main.sub]\nbad = "nope"\n')
+    reader = NTomlParser()
+    reader.read(path)
+    assert "Invalid config entry 'Main.sub'" in caplog.text
+    assert reader.getStr("Main", "font", "") == "Sans Serif"
+    caplog.clear()
+
+    # Write: a non-dict section entry is skipped and logged
+    path2 = fncPath / "invalid_write.toml"
     parser = NTomlParser()
-    parser.write(path, {"Main": {"font": "Sans Serif"}, "bad": "not a section"})  # type: ignore
+    parser.write(path2, {"Main": {"font": "Sans Serif"}, "bad": "not a section"})  # type: ignore
+    assert "Invalid config section 'bad'" in caplog.text
+    caplog.clear()
+
+    reader2 = NTomlParser()
+    reader2.read(path2)
+    assert reader2.getStr("Main", "font", "") == "Sans Serif"
+
+    # Read (flat mode): a table isn't a supported value and is dropped
+    path3 = fncPath / "invalid_flat.toml"
+    writeFile(path3, 'font = "Sans Serif"\n\n[Main]\nbad = "nope"\n')
+    reader3 = NTomlParser(flat=True)
+    reader3.read(path3)
+    assert "Invalid config entry 'Main', sections are not supported in flat mode" in caplog.text
+    assert reader3.getStr(None, "font", "") == "Sans Serif"
+
+
+@pytest.mark.base
+def testTomlParser_ReadWriteString(fncPath):
+    """Test the readString and writeString methods, and that they
+    produce output identical to the file-based read and write.
+    """
+    data: T_TomlConfig = {
+        "main": {
+            "stropt": "value",
+            "intopt1": 42,
+            "boolopt1": True,
+            "list1": ["a", "b", "c"],
+            "float1": 4.2,
+            "enum1": nwItemClass.NOVEL,
+        },
+    }
+
+    parser = NTomlParser()
+    text = parser.writeString(data)
+
+    path = fncPath / "string.toml"
+    parser.write(path, data)
+    assert text == path.read_text(encoding="utf-8")
+
+    reader = NTomlParser()
+    reader.readString(text)
+    assert reader.getStr("main", "stropt", "") == "value"
+    assert reader.getInt("main", "intopt1", 0) == 42
+    assert reader.getBool("main", "boolopt1", False) is True
+    assert reader.getStrList("main", "list1", ["", "", ""]) == ["a", "b", "c"]
+    assert reader.getFloat("main", "float1", 0.0) == 4.2
+    assert reader.getEnum("main", "enum1", nwItemClass.NO_CLASS) == nwItemClass.NOVEL
+
+    # An empty dict produces an empty string, not just section boilerplate
+    assert parser.writeString({}) == ""
+
+
+@pytest.mark.base
+def testTomlParser_ReadWriteStringInvalid(caplog):
+    """Test that readString and writeString log and drop entries
+    nested deeper than the supported structure, mirroring the
+    file-based test but through strings.
+    """
+    parser = NTomlParser()
+    text = parser.writeString({"Main": {"font": "Sans Serif"}, "bad": "not a section"})  # type: ignore
     assert "Invalid config section 'bad'" in caplog.text
     caplog.clear()
 
     reader = NTomlParser()
-    reader.read(path)
+    reader.readString(text)
     assert reader.getStr("Main", "font", "") == "Sans Serif"
 
-    # Read: a bare top-level key not inside a table is also invalid
-    path2 = fncPath / "invalid_read.toml"
-    writeFile(
-        path2,
-        ('bad = "not a section"\n\n[Main]\nfont = "Sans Serif"\n'),
-    )
     reader2 = NTomlParser()
-    reader2.read(path2)
-    assert "Invalid config section 'bad'" in caplog.text
+    reader2.readString('[Main]\nfont = "Sans Serif"\n\n[Main.sub]\nbad = "nope"\n')
+    assert "Invalid config entry 'Main.sub'" in caplog.text
     assert reader2.getStr("Main", "font", "") == "Sans Serif"
+
+    # A bare top-level key is invalid outside of flat mode
+    reader3 = NTomlParser()
+    reader3.readString('bad = "not a section"\n\n[Main]\nfont = "Sans Serif"\n')
+    assert "Invalid config section 'bad'" in caplog.text
+    assert reader3.getStr("Main", "font", "") == "Sans Serif"

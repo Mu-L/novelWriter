@@ -69,7 +69,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from novelwriter.core.projectdata import ProjectData
-    from novelwriter.formats.tomlparser import T_ConfData
+    from novelwriter.formats.tomlparser import T_TomlConfig
     from novelwriter.splash import NSplashScreen
 
 logger = logging.getLogger(__name__)
@@ -925,7 +925,7 @@ class Config:
         """Save the current preferences to file."""
         logger.debug("Saving config file")
 
-        config: T_ConfData = {}
+        config: T_TomlConfig = {}
 
         config["Meta"] = {
             "timeStamp": formatTimeStamp(time()),

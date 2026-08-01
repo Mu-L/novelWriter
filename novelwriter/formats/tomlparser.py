@@ -36,67 +36,89 @@ logger = logging.getLogger(__name__)
 
 _T_Enum = TypeVar("_T_Enum", bound=Enum)
 
-T_ConfValue = str | int | float | bool | Path | list[str] | list[int] | Enum | QFont
-T_ConfEntry = dict[str, T_ConfValue]
-T_ConfData = dict[str, T_ConfEntry]
+T_TomlValue = str | int | float | bool | Path | list[str] | list[int] | Enum | QFont
+T_TomlObject = dict[str, T_TomlValue]
+T_TomlConfig = dict[str, T_TomlObject]
 
 
 class NTomlParser:
     """Core: Toml Config Parser.
 
-    This is a wrapper around the standard tomllib module, and assumes a
-    two level section and key/value structure. It has type safe getters
-    for all the supported types.
+    This is a wrapper around the standard tomllib module. By default it
+    assumes a two level section and key/value structure. If flat is set,
+    it instead assumes a single flat level of key/value pairs with no
+    sections at all. Either way, values may not be nested any deeper
+    than this. The get* methods and _value take an optional section,
+    which should always be None when flat is set.
     """
 
-    def __init__(self) -> None:
-        self._data: T_ConfData = {}
+    def __init__(self, flat: bool = False) -> None:
+        self._flat = flat
+        self._data: T_TomlConfig = {}
+        self._root: T_TomlObject = {}
 
     def read(self, path: Path) -> None:
         """Read and parse TOML data from a file."""
         with open(path, mode="r", encoding="utf-8") as fileObj:
-            data = tomllib.loads(fileObj.read())
+            self.readString(fileObj.read())
 
-        self._data = {}
-        for section, values in data.items():
-            if not isinstance(values, dict):
-                logger.error("Invalid config section '%s', expected key/value pairs", section)
-                continue
-            self._data[section] = values
-
-    def write(self, path: Path, data: T_ConfData) -> None:
-        """Write a dict of sections to a file in TOML format."""
-        with open(path, mode="w", encoding="utf-8") as fileObj:
+    def readString(self, text: str) -> None:
+        """Read and parse TOML data from a string."""
+        data = tomllib.loads(text)
+        if self._flat:
+            self._root = self._filterRoot(data)
+        else:
+            self._data = {}
             for section, values in data.items():
                 if not isinstance(values, dict):
                     logger.error("Invalid config section '%s', expected key/value pairs", section)
                     continue
-                fileObj.write(f"[{section}]\n")
-                for key, value in values.items():
-                    fileObj.write(f"{key} = {self._dump(value)}\n")
-                fileObj.write("\n")
+                self._data[section] = self._filterSection(section, values)
 
-    def getStr(self, section: str, option: str, default: str) -> str:
+    def write(self, path: Path, data: T_TomlConfig | T_TomlObject) -> None:
+        """Write a dict of sections, or a flat dict, to a file."""
+        with open(path, mode="w", encoding="utf-8") as fileObj:
+            fileObj.write(self.writeString(data))
+
+    def writeString(self, data: T_TomlConfig | T_TomlObject) -> str:
+        """Format a dict of sections, or a flat dict, as TOML."""
+        if self._flat:
+            lines = [f"{key} = {self._dump(value)}" for key, value in data.items()]  # type: ignore[union-attr]
+            return "\n".join(lines) + "\n" if lines else ""
+
+        lines = []
+        for section, values in data.items():
+            if not isinstance(values, dict):
+                logger.error("Invalid config section '%s', expected key/value pairs", section)
+                continue
+            lines.append(f"[{section}]")
+            for key, value in values.items():
+                lines.append(f"{key} = {self._dump(value)}")
+            lines.append("")
+
+        return "\n".join(lines) + "\n" if lines else ""
+
+    def getStr(self, section: str | None, option: str, default: str) -> str:
         """Read string value."""
         return checkString(self._value(section, option), default)
 
-    def getInt(self, section: str, option: str, default: int) -> int:
+    def getInt(self, section: str | None, option: str, default: int) -> int:
         """Read integer value."""
         return checkInt(self._value(section, option), default)
 
-    def getFloat(self, section: str, option: str, default: float) -> float:
+    def getFloat(self, section: str | None, option: str, default: float) -> float:
         """Read float value."""
         return checkFloat(self._value(section, option), default)
 
-    def getBool(self, section: str, option: str, default: bool) -> bool:
+    def getBool(self, section: str | None, option: str, default: bool) -> bool:
         """Read boolean value."""
         return checkBool(self._value(section, option), default)
 
-    def getPath(self, section: str, option: str, default: Path) -> Path:
+    def getPath(self, section: str | None, option: str, default: Path) -> Path:
         """Read a Path value."""
         return checkPath(self._value(section, option), default)
 
-    def getStrList(self, section: str, option: str, default: list[str]) -> list[str]:
+    def getStrList(self, section: str | None, option: str, default: list[str]) -> list[str]:
         """Read string list, keeping the length of the default."""
         result = default.copy() if isinstance(default, list) else []
         data = self._value(section, option)
@@ -105,7 +127,7 @@ class NTomlParser:
                 result[i] = str(data[i])
         return result
 
-    def getIntList(self, section: str, option: str, default: list[int]) -> list[int]:
+    def getIntList(self, section: str | None, option: str, default: list[int]) -> list[int]:
         """Read integer list, keeping the length of the default."""
         result = default.copy() if isinstance(default, list) else []
         data = self._value(section, option)
@@ -114,7 +136,7 @@ class NTomlParser:
                 result[i] = checkInt(data[i], result[i])
         return result
 
-    def getEnum(self, section: str, option: str, default: _T_Enum) -> _T_Enum:
+    def getEnum(self, section: str | None, option: str, default: _T_Enum) -> _T_Enum:
         """Read enum value."""
         data = self._value(section, option)
         if isinstance(data, str):
@@ -125,12 +147,38 @@ class NTomlParser:
     # Internal Functions
     ##
 
-    def _value(self, section: str, option: str) -> T_ConfValue | None:
+    def _value(self, section: str | None, option: str) -> T_TomlValue | None:
         """Look up a raw value, or None if the section or option is unset."""
-        return self._data.get(section, {}).get(option)
+        return (self._data.get(section, {}) if section else self._root).get(option)
 
     @staticmethod
-    def _dump(value: T_ConfValue) -> str:
+    def _filterSection(section: str, values: dict) -> T_TomlObject:
+        """Drop any further nested tables from a section, which aren't
+        supported, logging each one that is dropped.
+        """
+        entry: T_TomlObject = {}
+        for key, value in values.items():
+            if isinstance(value, dict):
+                logger.error("Invalid config entry '%s.%s', nested tables are not supported", section, key)
+                continue
+            entry[key] = value
+        return entry
+
+    @staticmethod
+    def _filterRoot(values: dict) -> T_TomlObject:
+        """Drop any tables from a flat, section-less document, which
+        aren't supported, logging each one that is dropped.
+        """
+        entry: T_TomlObject = {}
+        for key, value in values.items():
+            if isinstance(value, dict):
+                logger.error("Invalid config entry '%s', sections are not supported in flat mode", key)
+                continue
+            entry[key] = value
+        return entry
+
+    @staticmethod
+    def _dump(value: T_TomlValue) -> str:
         """Format a value as a TOML literal."""
         if isinstance(value, bool):
             return "true" if value else "false"
