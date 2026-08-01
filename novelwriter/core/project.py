@@ -360,7 +360,7 @@ class NWProject:
         # Check Legacy Upgrade
         # ====================
 
-        if xmlReader.state == XMLReadState.WAS_LEGACY and not SHARED.question(
+        if (xmlReader.state == XMLReadState.WAS_LEGACY or self._storage.hasBreakingChanges()) and not SHARED.question(
             self.tr(
                 "The file format of your project is about to be updated. "
                 "If you proceed, older versions of novelWriter will no "
@@ -383,6 +383,9 @@ class NWProject:
             warn=True,
         ):
             return False
+
+        # Post XML Loading
+        self._storage.runPostXMLTasks()
 
         # Extract Data
         # ============

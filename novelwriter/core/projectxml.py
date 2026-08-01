@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 FILE_VERSION = "1.5"  # The current project file format version
 FILE_REVISION = "7"  # The current project file format revision
 HEX_VERSION = 0x0105
+LAST_BREAKING = 0x260200B1  # Last project format breaking change (not XML)
 
 NUM_VERSION = {
     "1.0": 0x0100,  # Up to 0.7
@@ -223,7 +224,9 @@ class ProjectXMLReader:
 
         if self._version == HEX_VERSION:
             self._state = XMLReadState.PARSED_OK
-        else:
+        elif self._hexVersion < LAST_BREAKING:
+            self._state = XMLReadState.WAS_LEGACY
+        else:  # Not reachable with 1.5 format, but kept for future proofing
             self._state = XMLReadState.WAS_LEGACY
 
         logger.debug("Project XML loaded in %.3f ms", (time() - tStart) * 1000)

@@ -34,7 +34,13 @@ from novelwriter.constants import nwFiles
 from novelwriter.core.document import ProjectDocument
 from novelwriter.core.project import NWProject
 from novelwriter.core.projectxml import ProjectXMLReader, ProjectXMLWriter
-from novelwriter.core.storage import ProjectStorage, ProjectStorageCreate, ProjectStorageOpen, _LegacyStorage
+from novelwriter.core.storage import (
+    ProjectStorage,
+    ProjectStorageCreate,
+    ProjectStorageOpen,
+    _LegacyDocuments,
+    _LegacyStorage,
+)
 from novelwriter.enum import nwItemClass, nwItemLayout
 
 from tests.helpers import C, buildTestProject
@@ -378,23 +384,75 @@ def testProjectStorage_LegacyDataFolder(monkeypatch, fncPath):
         assert data[9].exists()
         assert not (fncPath / "content" / "9000000000009.nwd").exists()
 
-    # Run the remaining through the prepare storage call, which also
-    # converts the moved .nwd files to .md
+    # Run the remaining through the prepare storage call, which finds
+    # the moved .nwd files, but does not convert them yet
     assert storage.initProjectStorage(fncPath, clearLock=True) == ProjectStorageOpen.READY
+    assert storage.hasBreakingChanges() is True
     for c in "0123456789abcdef":
-        assert not (fncPath / "content" / f"{c}00000000000{c}.nwd").exists()
-        assert (fncPath / "content" / f"{c}00000000000{c}.md").exists()
+        assert (fncPath / "content" / f"{c}00000000000{c}.nwd").exists()
 
 
 @pytest.mark.core
-def testProjectStorage_OldDocumentFormat(monkeypatch, fncPath):
-    """Test conversion of old .nwd document files to .md with a TOML header."""
+def testProjectStorage_FindOldDocuments(fncPath):
+    """Test scanning the content folder for old .nwd document files."""
     project = MockProject()
     storage = ProjectStorage(project)  # type: ignore
     storage._runtimePath = fncPath
     (fncPath / nwFiles.PROJ_FILE).touch()
     storage.initProjectStorage(fncPath)
     legacy = _LegacyStorage(project)  # type: ignore
+
+    content = fncPath / "content"
+    nwdFile = content / f"{C.hSceneDoc}.nwd"
+    nwdFile.write_text("### Text\n", encoding="utf-8")
+    (content / f"{C.hChapterDoc}.md").write_text("### Text\n", encoding="utf-8")
+    (content / "folder.nwd").mkdir()
+
+    assert legacy.findOldDocuments(content) == [nwdFile]
+
+
+@pytest.mark.core
+def testProjectStorage_RunPostXMLTasks(monkeypatch, fncPath):
+    """Test running the post-XML-load document conversion tasks."""
+    project = MockProject()
+    storage = ProjectStorage(project)  # type: ignore
+    storage._runtimePath = fncPath
+    (fncPath / nwFiles.PROJ_FILE).touch()
+    storage.initProjectStorage(fncPath)
+
+    # No old documents found, so there is nothing to do
+    assert storage.hasBreakingChanges() is False
+    assert storage.runPostXMLTasks() is True
+
+    # Add an old-format document and re-scan for it
+    content = fncPath / "content"
+    nwdFile = content / f"{C.hSceneDoc}.nwd"
+    nwdFile.write_text("### Text\n", encoding="utf-8")
+    storage._oldDocuments = _LegacyStorage(project).findOldDocuments(content)  # type: ignore
+    assert storage.hasBreakingChanges() is True
+
+    # A successful conversion
+    assert storage.runPostXMLTasks() is True
+    assert not nwdFile.exists()
+    assert (content / f"{C.hSceneDoc}.md").exists()
+
+    # A failed conversion records the exception
+    storage._oldDocuments = [nwdFile]
+    with monkeypatch.context() as mp:
+        mp.setattr("novelwriter.core.storage._LegacyDocuments.convertDocuments", causeOSError)
+        assert storage.runPostXMLTasks() is False
+        assert isinstance(storage.exc, OSError)
+
+
+@pytest.mark.core
+def testLegacyDocuments_ConvertDocuments(monkeypatch, fncPath):
+    """Test conversion of old .nwd document files to .md with a TOML header."""
+    project = MockProject()
+    storage = ProjectStorage(project)  # type: ignore
+    storage._runtimePath = fncPath
+    (fncPath / nwFiles.PROJ_FILE).touch()
+    storage.initProjectStorage(fncPath)
+    legacy = _LegacyDocuments(project)  # type: ignore
 
     content = fncPath / "content"
 
@@ -412,7 +470,7 @@ def testProjectStorage_OldDocumentFormat(monkeypatch, fncPath):
         encoding="utf-8",
     )
 
-    legacy.oldDocumentFormat(fncPath)
+    legacy.convertDocuments([nwdFile])
 
     assert not nwdFile.exists()
     mdFile = content / f"{C.hSceneDoc}.md"
@@ -434,25 +492,31 @@ def testProjectStorage_OldDocumentFormat(monkeypatch, fncPath):
     # text, but is still converted
     longFile = content / f"{C.hTitlePage}.nwd"
     longFile.write_text("".join(f"%%~junk{i}: value\n" for i in range(12)), encoding="utf-8")
-    legacy.oldDocumentFormat(fncPath)
+    legacy.convertDocuments([longFile])
     assert not longFile.exists()
     assert (content / f"{C.hTitlePage}.md").exists()
+
+    # A path that is not a .nwd file is ignored
+    txtFile = content / "not-a-doc.txt"
+    txtFile.write_text("stuff", encoding="utf-8")
+    legacy.convertDocuments([txtFile])
+    assert txtFile.exists()
 
     # Conversion failure is logged and the source file is kept
     badFile = content / f"{C.hChapterDoc}.nwd"
     badFile.write_text("### Text\n", encoding="utf-8")
     with monkeypatch.context() as mp:
         mp.setattr("pathlib.Path.write_text", causeOSError)
-        legacy.oldDocumentFormat(fncPath)
+        legacy.convertDocuments([badFile])
         assert badFile.exists()
         assert not (content / f"{C.hChapterDoc}.md").exists()
 
 
 @pytest.mark.core
-def testProjectStorage_ParseOldDocumentMeta(caplog):
+def testLegacyDocuments_ParseOldDocumentMeta(caplog):
     """Test parsing of individual old-format meta data lines."""
     caplog.set_level(logging.DEBUG, logger="novelwriter")
-    legacy = _LegacyStorage(MockProject())  # type: ignore
+    legacy = _LegacyDocuments(MockProject())  # type: ignore
 
     # Name
     assert legacy._parseOldDocumentMeta(["%%~name: Test File\n"]) == {"name": "Test File"}

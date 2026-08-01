@@ -84,6 +84,7 @@ class ProjectStorage:
         self._openMode = self.MODE_INACTIVE
         self._ready = False
         self._exception = None
+        self._oldDocuments = []
 
     def clear(self) -> None:
         """Reset internal variables."""
@@ -92,6 +93,7 @@ class ProjectStorage:
         self._lockFilePath = None
         self._openMode = self.MODE_INACTIVE
         self._ready = False
+        self._oldDocuments = []
 
     ##
     #  Properties
@@ -136,6 +138,12 @@ class ProjectStorage:
     def isOpen(self) -> bool:
         """Check if the storage location is open."""
         return self._ready and self._runtimePath is not None
+
+    def hasBreakingChanges(self) -> bool:
+        """Check if the project has breaking changes that need to be
+        converted before it can be opened.
+        """
+        return len(self._oldDocuments) > 0
 
     def createNewProject(self, path: str | Path) -> ProjectStorageCreate:
         """Create a new project at the given location."""
@@ -234,7 +242,7 @@ class ProjectStorage:
             for child in basePath.iterdir():
                 if child.is_dir() and child.name.startswith("data_"):
                     legacy.legacyDataFolder(basePath, child)
-            legacy.oldDocumentFormat(basePath)
+            self._oldDocuments = legacy.findOldDocuments(contPath)
         except Exception as exc:
             logger.error("Failed to scan project folder content", exc_info=exc)
             self.clear()
@@ -243,6 +251,17 @@ class ProjectStorage:
         self._ready = True
 
         return ProjectStorageOpen.READY
+
+    def runPostXMLTasks(self) -> bool:
+        """Run tasks after the project XML has been loaded."""
+        if self._oldDocuments:
+            try:
+                legacy = _LegacyDocuments(self._project)
+                legacy.convertDocuments(self._oldDocuments)
+            except Exception as exc:
+                self._exception = exc
+                return False
+        return True
 
     def runPostSaveTasks(self, autoSave: bool = False) -> bool:  # pragma: no cover
         """Run tasks after the project has been saved.
@@ -484,35 +503,9 @@ class _LegacyStorage:
                 except Exception as exc:
                     logger.warning("Failed to delete: %s", item, exc_info=exc)
 
-    def oldDocumentFormat(self, path: Path) -> None:
-        """Check if the documents are .nwd files and convert them to .md."""
-        content = path / "content"
-        for item in content.iterdir():
-            if item.is_file() and item.suffix == ".nwd":
-                meta = []
-                text = ""
-                with open(item, mode="r", encoding="utf-8") as fObj:
-                    for _ in range(10):
-                        line = fObj.readline()
-                        if line.startswith(r"%%~"):
-                            meta.append(line)
-                        else:
-                            text = line
-                            break
-
-                    text += fObj.read()
-
-                try:
-                    parser = NTomlParser(flat=True)
-                    toml = parser.writeString(self._parseOldDocumentMeta(meta)).strip()
-                    output = content / f"{item.stem}.md"
-                    output.write_text(f"+++\n{toml}\n+++\n{text}", encoding="utf-8")
-                    logger.info("Converted file: %s -> %s", item.name, output.name)
-                except Exception:
-                    logger.error("Failed to convert: %s", item.name)
-                    continue
-
-                item.unlink()
+    def findOldDocuments(self, content: Path) -> list[Path]:
+        """Check if the documents are .nwd files."""
+        return [item for item in content.iterdir() if item.is_file() and item.suffix == ".nwd"]
 
     ##
     #  Internal Functions
@@ -618,6 +611,46 @@ class _LegacyStorage:
             logException()
 
         return
+
+
+class _LegacyDocuments:
+    """Core: Legacy Document Format Converter."""
+
+    def __init__(self, project: NWProject) -> None:
+        self._project = project
+
+    def convertDocuments(self, documents: list[Path]) -> None:
+        """Check if the documents are .nwd files and convert them to .md."""
+        for item in documents:
+            if item.is_file() and item.suffix == ".nwd":
+                meta = []
+                text = ""
+                with open(item, mode="r", encoding="utf-8") as fObj:
+                    for _ in range(10):
+                        line = fObj.readline()
+                        if line.startswith(r"%%~"):
+                            meta.append(line)
+                        else:
+                            text = line
+                            break
+
+                    text += fObj.read()
+
+                try:
+                    parser = NTomlParser(flat=True)
+                    toml = parser.writeString(self._parseOldDocumentMeta(meta)).strip()
+                    output = item.with_suffix(".md")
+                    output.write_text(f"+++\n{toml}\n+++\n{text}", encoding="utf-8")
+                    logger.info("Converted file: %s -> %s", item.name, output.name)
+                except Exception:
+                    logger.error("Failed to convert: %s", item.name)
+                    continue
+
+                item.unlink()
+
+    ##
+    #  Internal Functions
+    ##
 
     def _parseOldDocumentMeta(self, lines: list[str]) -> T_TomlObject:
         """Parse a line from the document starting with the characters
