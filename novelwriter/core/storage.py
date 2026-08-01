@@ -623,27 +623,29 @@ class _LegacyDocuments:
         """Check if the documents are .nwd files and convert them to .md."""
         for item in documents:
             if item.is_file() and item.suffix == ".nwd":
-                meta = []
-                text = ""
-                with open(item, mode="r", encoding="utf-8") as fObj:
-                    for _ in range(10):
-                        line = fObj.readline()
-                        if line.startswith(r"%%~"):
-                            meta.append(line)
-                        else:
-                            text = line
-                            break
-
-                    text += fObj.read()
-
                 try:
+                    meta = []
+                    text = ""
+                    with open(item, mode="r", encoding="utf-8") as fObj:
+                        for _ in range(10):
+                            line = fObj.readline()
+                            if line.startswith(r"%%~"):
+                                meta.append(line)
+                            else:
+                                text = line
+                                break
+
+                        text += fObj.read()
+
                     parser = NTomlParser(flat=True)
                     toml = parser.writeString(self._parseOldDocumentMeta(meta)).strip()
                     output = item.with_suffix(".md")
                     output.write_text(f"+++\n{toml}\n+++\n{text}", encoding="utf-8")
                     logger.info("Converted file: %s -> %s", item.name, output.name)
+
                 except Exception:
                     logger.error("Failed to convert: %s", item.name)
+                    item.replace(item.with_suffix(".md"))
                     continue
 
                 item.unlink()

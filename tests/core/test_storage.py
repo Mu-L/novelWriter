@@ -502,14 +502,42 @@ def testLegacyDocuments_ConvertDocuments(monkeypatch, fncPath):
     legacy.convertDocuments([txtFile])
     assert txtFile.exists()
 
-    # Conversion failure is logged and the source file is kept
+    # If conversion fails, the file is renamed to .md as a fallback so
+    # it can still be opened, even with its raw, unconverted content
     badFile = content / f"{C.hChapterDoc}.nwd"
-    badFile.write_text("### Text\n", encoding="utf-8")
+    rawText = "%%~name: Bad\n### Text\n"
+    badFile.write_text(rawText, encoding="utf-8")
     with monkeypatch.context() as mp:
         mp.setattr("pathlib.Path.write_text", causeOSError)
         legacy.convertDocuments([badFile])
-        assert badFile.exists()
-        assert not (content / f"{C.hChapterDoc}.md").exists()
+    assert not badFile.exists()
+    fallbackFile = content / f"{C.hChapterDoc}.md"
+    assert fallbackFile.read_text(encoding="utf-8") == rawText
+
+    # A partial output file left behind by the failed write does not
+    # block the fallback from overwriting it (replace, not rename, so
+    # this also works on platforms that don't allow renaming onto an
+    # existing file, e.g. Windows)
+    fallbackFile.unlink()
+    badFile.write_text(rawText, encoding="utf-8")
+    fallbackFile.write_text("partial junk", encoding="utf-8")
+    with monkeypatch.context() as mp:
+        mp.setattr("pathlib.Path.write_text", causeOSError)
+        legacy.convertDocuments([badFile])
+    assert not badFile.exists()
+    assert fallbackFile.read_text(encoding="utf-8") == rawText
+
+    # If the fallback rename also fails, there is nothing more that can
+    # be done, so the exception is left to propagate to the caller
+    fallbackFile.unlink()
+    badFile.write_text(rawText, encoding="utf-8")
+    with monkeypatch.context() as mp:
+        mp.setattr("pathlib.Path.write_text", causeOSError)
+        mp.setattr("pathlib.Path.replace", causeOSError)
+        with pytest.raises(OSError, match="Mock OSError"):
+            legacy.convertDocuments([badFile])
+    assert badFile.exists()
+    assert not fallbackFile.exists()
 
 
 @pytest.mark.core
