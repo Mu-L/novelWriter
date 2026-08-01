@@ -249,6 +249,11 @@ class GuiDocEditor(QTextEdit):
         "wheelEventFilter",
     )
 
+    SEP_TABLE = str.maketrans({
+        nwUnicode.U_LSEP: "\n",  # Line Separator
+        nwUnicode.U_PSEP: "\n",  # Paragraph Separator
+    })
+
     closeEditorRequest = pyqtSignal()
     docTextChanged = pyqtSignal(str, float)
     editedStatusChanged = pyqtSignal(bool)
@@ -854,16 +859,12 @@ class GuiDocEditor(QTextEdit):
 
         See: https://doc.qt.io/qt-6/qtextdocument.html#toPlainText
         """
-        text = self._qDocument.toRawText()
-        text = text.replace(nwUnicode.U_LSEP, "\n")  # Line separators
-        return text.replace(nwUnicode.U_PSEP, "\n")  # Paragraph separators
+        return self._qDocument.toRawText().translate(self.SEP_TABLE)
 
     def getSelectedText(self) -> str:
         """Get currently selected text."""
         if (cursor := self.textCursor()).hasSelection():
-            text = cursor.selectedText()
-            text = text.replace(nwUnicode.U_LSEP, "\n")  # Line separators
-            return text.replace(nwUnicode.U_PSEP, "\n")  # Paragraph separators
+            return cursor.selectedText().translate(self.SEP_TABLE)
         return ""
 
     def getCursorPosition(self) -> int:
