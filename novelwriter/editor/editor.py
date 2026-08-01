@@ -98,7 +98,6 @@ from novelwriter.enum import (
 from novelwriter.extensions.eventfilters import WheelEventFilter
 from novelwriter.formats.fromqdoc import FromQTextDocument
 from novelwriter.text.autoreplace import TextAutoReplace
-from novelwriter.text.counting import standardCounter
 from novelwriter.text.formats import processHeading
 from novelwriter.tools.lipsum import GuiLipsum
 from novelwriter.types import (
@@ -760,9 +759,6 @@ class GuiDocEditor(QTextEdit):
             return False
 
         text = self.getText()
-        cC, wC, pC = standardCounter(text)
-        self._updateDocCounts(cC, wC, pC)
-
         if not self._nwDocument.writeDocument(text):
             saveOk = False
             if self._nwDocument.hashError and SHARED.question(
