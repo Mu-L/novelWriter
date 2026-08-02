@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import re
 
+from pathlib import Path
 from time import time
 from unittest.mock import MagicMock
 
@@ -79,7 +80,7 @@ from novelwriter.types import (
     QtSelectWord,
 )
 
-from tests.helpers import C, buildTestProject
+from tests.helpers import C, buildTestProject, writeFile
 from tests.mocked import causeOSError
 
 KEY_DELAY = 1
@@ -307,7 +308,7 @@ def testGuiDocEditor_SaveTextEdgeCases(qtbot, monkeypatch, nwGUI, projPath, ipsu
 
     # A hash mismatch that the user confirms overwriting for, and which
     # then succeeds, is treated as a successful save
-    nwDocument._lastHash = "0" * 40
+    writeFile(Path(nwDocument.fileLocation), "Changed outside of novelWriter")
     docEditor.setDocumentChanged(True)
     assert docEditor.saveText() is True
     assert docEditor.docChanged is False
@@ -821,7 +822,7 @@ def testGuiDocEditor_SpellChecking(qtbot, monkeypatch, nwGUI, projPath, ipsumTex
         # A full pass runs chunked worker jobs until the document is
         # done, which with a synchronous worker completes immediately
         docEditor._beginCheckPass()
-        assert docEditor._checkPassNo == -1
+        assert docEditor._checkPassPos is None
         assert docEditor._checkJob is None
 
         # A full spell check notifies when the pass completes
@@ -3170,6 +3171,7 @@ def testGuiDocEditor_WordCounters(qtbot, monkeypatch, nwGUI, projPath, ipsumText
     assert docEditor._docCounter.busy is False
 
     # Run the full word counter
+    docEditor._lastEdit = time()  # Simulate an edit since the last run
     docEditor._runDocumentTasks()
     assert docEditor._docCounter.busy is True
 
@@ -3208,11 +3210,14 @@ def testGuiDocEditor_WordCounters(qtbot, monkeypatch, nwGUI, projPath, ipsumText
     assert docEditor._selCounter.busy is False
     assert docEditor.docFooter.wordsText.text() == f"Selected: {wC}"
 
-    # Document tasks run regardless of how long ago the last edit was,
-    # since the timer is only started in response to an actual edit,
-    # fires once, and then stops rather than polling indefinitely
+    # A repeated run with no edit since the last one is skipped entirely
     threadPool._runObj = None
     docEditor._lastEdit = time() - 100.0
+    docEditor._runDocumentTasks()
+    assert threadPool.runnable() is None
+
+    # A genuine new edit makes the next run go ahead again
+    docEditor._lastEdit = time()
     docEditor._runDocumentTasks()
     assert threadPool.runnable() is not None
 
@@ -4261,9 +4266,9 @@ def testGuiDocEditor_BigDocLifecycle(qtbot, nwGUI, projPath, ipsumText, mockRnd)
     assert docEditor.getCursorPosition() != cursPos
 
     # A spell check pass is also skipped while busy
-    docEditor._checkPassNo = 99
+    docEditor._checkPassPos = 99
     docEditor.spellCheckDocument()
-    assert docEditor._checkPassNo == 99
+    assert docEditor._checkPassPos == 99
 
     with qtbot.waitSignal(docEditor._qDocument.layoutSettled, timeout=5000):
         pass

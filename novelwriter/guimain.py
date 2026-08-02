@@ -21,6 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+import gc
 import logging
 import sys
 
@@ -317,10 +318,16 @@ class GuiMain(QMainWindow):
         self.asDocTimer = QTimer(self)
         self.asDocTimer.timeout.connect(self._autoSaveDocument)
 
+        # Set Up Garbage Collector Timer
+        self.gcTimer = QTimer(self)
+        self.gcTimer.setInterval(5000)
+        self.gcTimer.timeout.connect(self._runGarbageCollect)
+
         # Initialise Main GUI
         self.initMain()
         self.asProjTimer.start()
         self.asDocTimer.start()
+        self.gcTimer.start()
         self.mainStatus.clearStatus()
 
         logger.debug("Ready: GUI")
@@ -494,7 +501,7 @@ class GuiMain(QMainWindow):
             self.viewDocument(lastViewed)
 
         # Check if we need to rebuild the index
-        if SHARED.project.index.indexBroken:
+        if SHARED.project.index.indexRebuild:
             if not SHARED.project.index.indexUpgrade:
                 SHARED.warn(self.tr("The project index is broken. Rebuilding index."))
             self.rebuildIndex()
@@ -660,7 +667,7 @@ class GuiMain(QMainWindow):
             return False
 
         lastPath = CONFIG.lastPath("import")
-        ffilter = formatFileFilter(["*.txt", "*.md", "*.nwd", "*"])
+        ffilter = formatFileFilter(["*.txt", "*.md", "*"])
         loadFile, _ = QFileDialog.getOpenFileName(self, self.tr("Import File"), str(lastPath), filter=ffilter)
         if not loadFile:
             return False
@@ -892,6 +899,10 @@ class GuiMain(QMainWindow):
             self.refreshThemeColors(syntax=True)
             self.docEditor.initEditor()
             self.docViewer.initViewer()
+
+            # This also forces the icon to update if there was already a message on the status bar (#2886)
+            meta = SHARED.theme.themeInfo
+            self.mainStatus.setStatusMessage(self.tr('Loaded theme "{0}" by {1}').format(meta.name, meta.author))
 
     def refreshThemeColors(self, syntax: bool = False, force: bool = False) -> None:
         """Refresh the GUI theme."""
@@ -1251,6 +1262,13 @@ class GuiMain(QMainWindow):
         if SHARED.hasProject and self.docEditor.docChanged:
             logger.debug("Auto-saving document")
             self.saveDocument()
+
+    @pyqtSlot()
+    def _runGarbageCollect(self) -> None:
+        """Run the cyclic garbage collector on the main thread, since
+        automatic collection is disabled at startup. See #2927.
+        """
+        gc.collect()
 
     @pyqtSlot()
     def _updateStatusWordCount(self) -> None:

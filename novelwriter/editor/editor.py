@@ -98,7 +98,6 @@ from novelwriter.enum import (
 from novelwriter.extensions.eventfilters import WheelEventFilter
 from novelwriter.formats.fromqdoc import FromQTextDocument
 from novelwriter.text.autoreplace import TextAutoReplace
-from novelwriter.text.counting import standardCounter
 from novelwriter.text.formats import processHeading
 from novelwriter.tools.lipsum import GuiLipsum
 from novelwriter.types import (
@@ -177,7 +176,7 @@ class GuiDocEditor(QTextEdit):
         "_checkDispatcher",
         "_checkJob",
         "_checkJobId",
-        "_checkPassNo",
+        "_checkPassPos",
         "_completer",
         "_dirtyBlocks",
         "_doReplace",
@@ -192,6 +191,7 @@ class GuiDocEditor(QTextEdit):
         "_hoverPos",
         "_keyContext",
         "_lastActive",
+        "_lastDocTask",
         "_lastEdit",
         "_lastFind",
         "_lineColor",
@@ -249,6 +249,11 @@ class GuiDocEditor(QTextEdit):
         "wheelEventFilter",
     )
 
+    SEP_TABLE = str.maketrans({
+        nwUnicode.U_LSEP: "\n",  # Line Separator
+        nwUnicode.U_PSEP: "\n",  # Paragraph Separator
+    })
+
     closeEditorRequest = pyqtSignal()
     docTextChanged = pyqtSignal(str, float)
     editedStatusChanged = pyqtSignal(bool)
@@ -278,6 +283,7 @@ class GuiDocEditor(QTextEdit):
         # Document Variables
         self._lastEdit = 0.0  # Timestamp of last edit
         self._lastActive = 0.0  # Timestamp of last activity
+        self._lastDocTask = -1.0  # Timestamp of last edit processed by _runDocumentTasks
         self._lastFind = None  # Position of the last found search word
         self._doReplace = False  # Switch to temporarily disable auto-replace
         self._lineColor = QtTransparent
@@ -296,7 +302,7 @@ class GuiDocEditor(QTextEdit):
         self._selCacheFormat: T_SelCache = {}
         self._dirtyBlocks: dict[int, QTextBlock] = {}
         self._suppressed = False
-        self._checkPassNo = -1
+        self._checkPassPos: int | None = None
         self._spellPassNotify = False
         self._checkJob: T_TextCheckJob | None = None
         self._checkJobId = 0
@@ -489,6 +495,7 @@ class GuiDocEditor(QTextEdit):
         self._docHandle = None
         self._lastEdit = 0.0
         self._lastActive = 0.0
+        self._lastDocTask = -1.0
         self._lastFind = None
         self._doReplace = False
 
@@ -502,7 +509,7 @@ class GuiDocEditor(QTextEdit):
         self._timerHover.stop()
         self._hoverCard.hide()
         self._hoverCard.clearCache()
-        self._checkPassNo = -1
+        self._checkPassPos = None
         self._spellPassNotify = False
         self._checkJob = None
         self._dirtyBlocks.clear()
@@ -757,9 +764,6 @@ class GuiDocEditor(QTextEdit):
             return False
 
         text = self.getText()
-        cC, wC, pC = standardCounter(text)
-        self._updateDocCounts(cC, wC, pC)
-
         if not self._nwDocument.writeDocument(text):
             saveOk = False
             if self._nwDocument.hashError and SHARED.question(
@@ -771,7 +775,7 @@ class GuiDocEditor(QTextEdit):
                 saveOk = self._nwDocument.writeDocument(text, forceWrite=True)
 
             if not saveOk:
-                SHARED.error(self.tr("Could not save document."), info=self._nwDocument.getError())
+                SHARED.error(self.tr("Could not save document."), info=self._nwDocument.error)
                 return False
 
         self.setDocumentChanged(False)
@@ -855,16 +859,12 @@ class GuiDocEditor(QTextEdit):
 
         See: https://doc.qt.io/qt-6/qtextdocument.html#toPlainText
         """
-        text = self._qDocument.toRawText()
-        text = text.replace(nwUnicode.U_LSEP, "\n")  # Line separators
-        return text.replace(nwUnicode.U_PSEP, "\n")  # Paragraph separators
+        return self._qDocument.toRawText().translate(self.SEP_TABLE)
 
     def getSelectedText(self) -> str:
         """Get currently selected text."""
         if (cursor := self.textCursor()).hasSelection():
-            text = cursor.selectedText()
-            text = text.replace(nwUnicode.U_LSEP, "\n")  # Line separators
-            return text.replace(nwUnicode.U_PSEP, "\n")  # Paragraph separators
+            return cursor.selectedText().translate(self.SEP_TABLE)
         return ""
 
     def getCursorPosition(self) -> int:
@@ -1713,12 +1713,11 @@ class GuiDocEditor(QTextEdit):
     def _dispatchTextCheck(self) -> None:
         """Send the next batch of text blocks to the text check worker.
         Modified blocks are prioritised, then the blocks queued for the
-        background document pass. The pass position is tracked by block
-        number, which may drift when the document is edited during the
-        pass, but modified blocks are covered by the debounce anyway.
+        background document pass, resolved by character position since
+        the document can be edited between dispatches.
         """
         if self._checkJob is not None:
-            # There is already a job running, and a new dispatch is made when its results come in
+            # There is already a job running
             return
 
         job: list[T_TextCheckBlock] = []
@@ -1729,15 +1728,16 @@ class GuiDocEditor(QTextEdit):
                 payload.append((len(job), *data.checkData()))
                 job.append((block, data, data.revision))
 
-        while self._checkPassNo >= 0 and len(job) < nwConst.CHECK_PASS_CHUNK:
-            block = self._qDocument.findBlockByNumber(self._checkPassNo)
-            if block.isValid():
+        if self._checkPassPos is not None:
+            block = self._qDocument.findBlock(self._checkPassPos)
+            while block.isValid() and len(job) < nwConst.CHECK_PASS_CHUNK:
                 if isinstance(data := block.userData(), TextBlockData):
                     payload.append((len(job), *data.checkData()))
                     job.append((block, data, data.revision))
-                self._checkPassNo += 1
-            else:
-                self._checkPassNo = -1
+                block = block.next()
+            self._checkPassPos = block.position() if block.isValid() else None
+            if self._checkPassPos is None:
+                logger.debug("Text check background pass complete")
 
         if job:
             self._checkJobId += 1
@@ -1877,8 +1877,9 @@ class GuiDocEditor(QTextEdit):
     @pyqtSlot()
     def _runDocumentTasks(self) -> None:
         """Run timer document tasks."""
-        if self._docHandle:
+        if self._docHandle and self._lastEdit > self._lastDocTask:
             logger.debug("Running document tasks")
+            self._lastDocTask = self._lastEdit
             if not self._docCounter.busy:
                 self._docCounter.count(self.getText())
 
@@ -2525,11 +2526,14 @@ class GuiDocEditor(QTextEdit):
 
     def _selectedBlocks(self, cursor: QTextCursor) -> list[QTextBlock]:
         """Return a list of all blocks selected by a cursor."""
+        blocks: list[QTextBlock] = []
         if cursor.hasSelection():
-            iS = self._qDocument.findBlock(cursor.selectionStart()).blockNumber()
-            iE = self._qDocument.findBlock(cursor.selectionEnd()).blockNumber()
-            return [self._qDocument.findBlockByNumber(i) for i in range(iS, iE + 1)]
-        return []
+            block = self._qDocument.findBlock(cursor.selectionStart())
+            lastNum = self._qDocument.findBlock(cursor.selectionEnd()).blockNumber()
+            while block.isValid() and block.blockNumber() <= lastNum:
+                blocks.append(block)
+                block = block.next()
+        return blocks
 
     def _removeInParLineBreaks(self) -> None:
         """Strip line breaks within paragraphs in the selected text."""
@@ -2970,7 +2974,7 @@ class GuiDocEditor(QTextEdit):
         self._timerTextCheck.stop()
         self._dirtyBlocks.clear()
         self._checkJob = None
-        self._checkPassNo = -1
+        self._checkPassPos = None
         if checkSpell or checkFormat:
             if viewport := self.viewport():  # pragma: no branch
                 # Check the visible blocks first so that their result
@@ -2984,7 +2988,8 @@ class GuiDocEditor(QTextEdit):
                         if checkFormat:
                             data.formatCheck()
                     block = block.next()
-            self._checkPassNo = 0
+            self._checkPassPos = 0
+            logger.debug("Text check starting background pass over %d blocks", self._qDocument.blockCount())
             self._dispatchTextCheck()
         self._updateCheckSelections()
 
@@ -3191,11 +3196,11 @@ class GuiDocEditor(QTextEdit):
     def _skipToParagraph(self, step: int) -> None:
         """Move cursor to next paragraph by step."""
         if step != 0:
-            cursor = self.textCursor()
-            limit = -1 if step < 0 else self._qDocument.blockCount()
-            for i in range(cursor.blockNumber() + step, limit, step):
-                block = self._qDocument.findBlockByNumber(i)
+            block = self.textCursor().block()
+            while block.isValid():
+                block = block.next() if step > 0 else block.previous()
                 if block.isValid() and block.text().strip():
+                    cursor = self.textCursor()
                     cursor.setPosition(block.position())
                     self.setTextCursor(cursor)
                     break
