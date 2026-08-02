@@ -49,9 +49,9 @@ __license__    = "GPLv3"
 __author__     = "Veronica Berglyd Olsen"
 __maintainer__ = "Veronica Berglyd Olsen"
 __email__      = "code@vkbo.net"
-__version__    = "26.2b1"
-__hexversion__ = "0x260200b1"
-__date__       = "2026-07-26"
+__version__    = "26.2b2"
+__hexversion__ = "0x260200b2"
+__date__       = "2026-08-02"
 __status__     = "Stable"
 __domain__     = "novelwriter.io"
 # fmt: on
@@ -278,7 +278,9 @@ def main(sysArgs: list | None = None) -> GuiMain | None:
 
     nwGUI.postLaunchTasks(cmdOpen)
 
-    sys.exit(app.exec())
+    code = app.exec()
+    logger.info("novelWriter exited with code %d", code)
+    sys.exit(code)
 
 
 def _createApp() -> QApplication:

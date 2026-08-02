@@ -53,8 +53,8 @@ logger = logging.getLogger(__name__)
 
 FILE_VERSION = "1.5"  # The current project file format version
 FILE_REVISION = "7"  # The current project file format revision
-HEX_VERSION = 0x0105
-LAST_BREAKING = 0x260200B1  # Last project format breaking change (not XML)
+HEX_VERSION = 0x0105  # The current project file format version as hex
+LAST_BREAKING = 0x260200B2  # Last project format breaking change (not XML)
 
 NUM_VERSION = {
     "1.0": 0x0100,  # Up to 0.7
