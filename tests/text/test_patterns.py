@@ -403,18 +403,6 @@ def testTextPatterns_DialogueStyle():
     assert allMatches(regEx, "one \u2018two\u2019 three \u201cfour\u201d five") == [[("\u2018two\u2019", 4, 9)]]
 
     # Check detecting closing single quote, see #2633
-    assert allMatches(regEx, "\u2018An evening at the book club,\u2019 she said.") == [
-        [("\u2018An evening at the book club,\u2019", 0, 30)]
-    ]
-
-    assert allMatches(regEx, "\u2018There's an evening at the book club,\u2019 she said.") == [
-        [("\u2018There's an evening at the book club,\u2019", 0, 38)]
-    ]
-
-    assert allMatches(regEx, "\u2018There\u2019s an author\u2019s evening at the book club,\u2019 she said.") == [
-        [("\u2018There\u2019s an author\u2019s evening at the book club,\u2019", 0, 47)]
-    ]
-
     assert allMatches(
         regEx,
         "\u2018There\u2019s an author\u2019s evening at the book club,\u2019 "
@@ -424,8 +412,39 @@ def testTextPatterns_DialogueStyle():
         [("\u2018I\u2019m going there tomorrow.\u2019", 58, 85)],
     ]
 
-    assert allMatches(regEx, "\u2018There\u2019s an authors\u2019 evening at the book club,\u2019 she said.") == [
-        [("\u2018There\u2019s an authors\u2019 evening at the book club,\u2019", 0, 47)]
+    assert allMatches(
+        regEx,
+        "\u2018There\u2019s an authors\u2019 evening at the book club,\u2019 "
+        "she said, \u2018I\u2019m going there tomorrow.\u2019",
+    ) == [
+        [("\u2018There\u2019s an authors\u2019 evening at the book club,\u2019", 0, 47)],
+        [("\u2018I\u2019m going there tomorrow.\u2019", 58, 85)],
+    ]
+
+    assert allMatches(
+        regEx,
+        "\u2018There\u2019s an \u201980s authors\u2019 evening at the book club,\u2019 "
+        "she said, \u2018I\u2019m going there tomorrow.\u2019",
+    ) == [
+        [("\u2018There\u2019s an \u201980s authors\u2019 evening at the book club,\u2019", 0, 52)],
+        [("\u2018I\u2019m going there tomorrow.\u2019", 63, 90)],
+    ]
+
+    # Using single quotes for double should yield the same result
+    CONFIG.fmtDQuoteOpen = nwUnicode.U_LSQUO
+    CONFIG.fmtDQuoteClose = nwUnicode.U_RSQUO
+
+    CONFIG.dialogStyle = 2
+    regEx = REGEX_PATTERNS.dialogStyle
+    assert regEx is not None
+
+    assert allMatches(
+        regEx,
+        "\u2018There\u2019s an author\u2019s evening at the book club,\u2019 "
+        "she said, \u2018I\u2019m going there tomorrow.\u2019",
+    ) == [
+        [("\u2018There\u2019s an author\u2019s evening at the book club,\u2019", 0, 47)],
+        [("\u2018I\u2019m going there tomorrow.\u2019", 58, 85)],
     ]
 
     assert allMatches(
