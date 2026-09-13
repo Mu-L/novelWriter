@@ -1,12 +1,12 @@
 name: Feature Request
 description: Suggest a new feature you'd like added.
-title: "[Feature]: "
+title: "Feature: "
 labels: ["enhancement"]
 type: feature
 body:
   - type: markdown
     attributes:
-      value: |
+      value: >
         Thank you for taking the time to fill out this feature request.
         Note that feature requests without a description will not be considered.
         Please also check if a request already exists for this feature.
