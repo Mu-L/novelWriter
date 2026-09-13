@@ -1,12 +1,12 @@
 name: Bug Report
 description: Report a bug or issue.
-title: "[Bug]: "
+title: "Bug: "
 labels: ["bug", "triage"]
 type: bug
 body:
   - type: markdown
     attributes:
-      value: |
+      value: >
         Thank you for taking the time to fill out this bug report.
         Note that issues without a description will not be considered.
         Please also check if an issue already exists on this problem.
@@ -51,7 +51,7 @@ body:
     id: logs
     attributes:
       label: Log or Error Output
-      description: |
+      description: >
         If the error dialog popped up, copy/paste the content here.
         Or provide relevant log output from the console.
       render: shell
