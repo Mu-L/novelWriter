@@ -70,7 +70,7 @@ class nwConst:
 class nwRegEx:
     """Common RegExes."""
 
-    URL = r"\bhttps?://(?:www\.|(?!www))[\w/()@:%_\+-.~#!?&=]+\b"
+    URL = r"\b(?:https?|file)://(?:www\.|(?!www))[\w/()@:%_\+-.~#!?&=]+\b"
     WORDS = r"\b[^\s\-\+\/–—\[\]:]+\b"  # noqa: RUF001
     BREAK = r"(?i)(?<!\\)(\[br\]\n?)"
     FMT_IT = r"(?<![\w\\])(_)(?![\s_])(.+?)(?<![\s\\])(\1)(?!\w)"
