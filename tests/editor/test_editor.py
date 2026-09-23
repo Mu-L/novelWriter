@@ -2977,6 +2977,41 @@ def testGuiDocEditor_InsertFromMimeData_Markdown(qtbot, nwGUI, projPath, mockRnd
 
 
 @pytest.mark.gui
+def testGuiDocEditor_InsertFromMimeData_Urls(qtbot, nwGUI, projPath, mockRnd):
+    """Test that dropped file and web URLs are inserted as properly
+    encoded URLs rather than as raw, unencoded text.
+    """
+    buildTestProject(NWProject(), projPath)
+    nwGUI.openProject(projPath)
+    docEditor = nwGUI.docEditor
+    assert docEditor.loadText(C.hSceneDoc) is True
+    docEditor.setCursorPosition(0)
+
+    # A local file path with a space, as provided by a file manager drag,
+    # must be percent-encoded so that it is recognised as a single URL
+    mime = QMimeData()
+    mime.setUrls([QUrl.fromLocalFile("/some/path/my file.txt")])
+    docEditor.insertFromMimeData(mime)
+    assert docEditor.getText().startswith("file:///some/path/my%20file.txt")
+
+    # Multiple dropped files are inserted one per line
+    docEditor.replaceText("")
+    docEditor.setCursorPosition(0)
+    mime = QMimeData()
+    mime.setUrls([QUrl.fromLocalFile("/some/one.txt"), QUrl.fromLocalFile("/some/two.txt")])
+    docEditor.insertFromMimeData(mime)
+    assert docEditor.getText().startswith("file:///some/one.txt\nfile:///some/two.txt")
+
+    # A regular web URL is preserved as-is
+    docEditor.replaceText("")
+    docEditor.setCursorPosition(0)
+    mime = QMimeData()
+    mime.setUrls([QUrl("https://example.com/page")])
+    docEditor.insertFromMimeData(mime)
+    assert docEditor.getText().startswith("https://example.com/page")
+
+
+@pytest.mark.gui
 def testGuiDocEditor_PasteAsPlainText(qtbot, nwGUI, projPath, mockRnd):
     """Test that the Ctrl+Shift+V shortcut always inserts the
     clipboard's plain text, ignoring any HTML or Markdown formatting

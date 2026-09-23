@@ -36,6 +36,7 @@ from PyQt6.QtCore import (
     QRect,
     Qt,
     QTimer,
+    QUrl,
     QVariant,
     pyqtSignal,
     pyqtSlot,
@@ -1451,6 +1452,8 @@ class GuiDocEditor(QTextEdit):
 
         if document is not None:
             text = FromQTextDocument(document).convertText().strip("\n")
+        elif urls := source.urls():
+            text = "\n".join(url.toString(QUrl.ComponentFormattingOption.FullyEncoded) for url in urls)
         elif source.hasText():
             text = source.text()
         else:
