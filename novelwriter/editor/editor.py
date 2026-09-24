@@ -2519,7 +2519,8 @@ class GuiDocEditor(QTextEdit):
         url = ""
         posS = posE = cursor.position()
         if cursor.hasSelection():
-            posS, posE = cursor.selectionStart(), cursor.selectionEnd()
+            posS = cursor.selectionStart()
+            posE = cursor.selectionEnd()
             text = cursor.selectedText()
 
         if isinstance(data := block.userData(), TextBlockData):
