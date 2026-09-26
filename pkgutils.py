@@ -81,6 +81,7 @@ def cleanBuildDirs(args: argparse.Namespace) -> None:
         ROOT_DIR / "dist_flathub",
         ROOT_DIR / "dist_flatpak",
         ROOT_DIR / "dist_pypi",
+        ROOT_DIR / "dist_upload",
         ROOT_DIR / "dist",
         ROOT_DIR / "novelWriter.egg-info",
     ]
